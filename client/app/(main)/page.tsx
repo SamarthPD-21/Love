@@ -286,7 +286,7 @@ export default function HomePage() {
                     </div>
                   )}
                 </div>
-                <span className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[8px] font-black px-1 py-0.5 rounded-full border border-white dark:border-zinc-950 uppercase tracking-widest leading-none scale-90">Me</span>
+                <span className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[8px] font-black px-1 py-0.5 rounded-full border border-background uppercase tracking-widest leading-none scale-90">Me</span>
               </div>
 
               {/* Connector */}
@@ -309,13 +309,13 @@ export default function HomePage() {
                       </div>
                     )}
                   </div>
-                  <span className="absolute -bottom-1 -right-1 bg-secondary text-secondary-foreground text-[8px] font-black px-1 py-0.5 rounded-full border border-white dark:border-zinc-950 uppercase tracking-widest leading-none scale-90">Love</span>
+                  <span className="absolute -bottom-1 -right-1 bg-secondary text-secondary-foreground text-[8px] font-black px-1 py-0.5 rounded-full border border-background uppercase tracking-widest leading-none scale-90">Love</span>
                 </div>
               ) : (
                 <Link
                   href="/settings"
                   onClick={() => playSound("tap")}
-                  className="w-12 h-12 rounded-full border-2 border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-xs text-muted-foreground hover:border-primary transition-colors cursor-pointer"
+                  className="w-12 h-12 rounded-full border-2 border-dashed border-border flex items-center justify-center text-xs text-muted-foreground hover:border-primary transition-colors cursor-pointer"
                 >
                   +
                 </Link>

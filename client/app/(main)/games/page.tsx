@@ -70,7 +70,7 @@ export default function GamesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Gamepad2 className="w-8 h-8 text-primary" /> Cozy Games
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -81,7 +81,7 @@ export default function GamesPage() {
         {/* Sound toggle button */}
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
-          className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-primary transition-all cursor-pointer shadow-sm hover:shadow"
+          className="p-2.5 rounded-xl border border-border bg-card text-muted-foreground hover:text-primary transition-all cursor-pointer shadow-sm hover:shadow"
           title={soundEnabled ? "Mute sounds" : "Unmute sounds"}
         >
           {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -106,7 +106,7 @@ export default function GamesPage() {
             >
               <span className="text-5xl animate-float">❤️</span>
               <div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Tic-Tac-Love</h3>
+                <h3 className="text-lg font-bold text-foreground">Tic-Tac-Love</h3>
                 <p className="text-xs text-muted-foreground mt-1.5 max-w-xs mx-auto">
                   A romantic spin on the classic Tic-Tac-Toe using hearts and flowers. Take turns on the same screen!
                 </p>
@@ -121,7 +121,7 @@ export default function GamesPage() {
             >
               <span className="text-5xl animate-float" style={{ animationDelay: "1s" }}>🧩</span>
               <div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Scrapbook Match</h3>
+                <h3 className="text-lg font-bold text-foreground">Scrapbook Match</h3>
                 <p className="text-xs text-muted-foreground mt-1.5 max-w-xs mx-auto">
                   Flip tiles to pair cute scrapbook emojis (cameras, gifts, rings, hearts) and test your memory!
                 </p>
@@ -215,8 +215,8 @@ function TicTacToe({ onBack, playSound }: TicTacToeProps) {
   };
 
   return (
-    <div className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 sm:p-8 w-full text-center space-y-6 shadow-xl">
-      <div className="flex justify-between items-center pb-2 border-b border-zinc-200 dark:border-zinc-800">
+    <div className="bg-card/80 border border-border/50 backdrop-blur-md rounded-3xl p-6 sm:p-8 w-full text-center space-y-6 shadow-xl">
+      <div className="flex justify-between items-center pb-2 border-b border-border">
         <button
           onClick={onBack}
           className="text-xs text-muted-foreground hover:text-foreground font-semibold cursor-pointer"
@@ -240,7 +240,7 @@ function TicTacToe({ onBack, playSound }: TicTacToeProps) {
         ) : isDraw ? (
           <p className="text-sm font-bold text-zinc-500">It&apos;s a lovely draw! 🤍</p>
         ) : (
-          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm font-semibold text-muted-foreground">
             Turn: <span className="text-base font-bold">{isHeartTurn ? "❤️" : "🌸"}</span>
           </p>
         )}
@@ -252,7 +252,7 @@ function TicTacToe({ onBack, playSound }: TicTacToeProps) {
           <motion.div
             key={idx}
             onClick={() => handleClick(idx)}
-            className="rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-3xl cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="rounded-2xl bg-background border border-border flex items-center justify-center text-3xl cursor-pointer hover:bg-muted transition-colors"
             whileTap={{ scale: 0.95 }}
           >
             <AnimatePresence mode="wait">
@@ -273,7 +273,7 @@ function TicTacToe({ onBack, playSound }: TicTacToeProps) {
 
       <button
         onClick={handleReset}
-        className="flex items-center gap-1.5 px-4 py-2.5 mx-auto rounded-xl bg-zinc-50 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 transition-all cursor-pointer shadow-sm active:scale-[0.98]"
+        className="flex items-center gap-1.5 px-4 py-2.5 mx-auto rounded-xl bg-background hover:bg-muted text-xs font-bold text-muted-foreground border border-border transition-all cursor-pointer shadow-sm active:scale-[0.98]"
       >
         <RotateCcw className="w-4.5 h-4.5" />
         Reset Board
@@ -363,8 +363,8 @@ function MemoryMatch({ onBack, playSound }: MemoryMatchProps) {
   };
 
   return (
-    <div className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 sm:p-8 w-full text-center space-y-6 shadow-xl">
-      <div className="flex justify-between items-center pb-2 border-b border-zinc-200 dark:border-zinc-800">
+    <div className="bg-card/80 border border-border/50 backdrop-blur-md rounded-3xl p-6 sm:p-8 w-full text-center space-y-6 shadow-xl">
+      <div className="flex justify-between items-center pb-2 border-b border-border">
         <button
           onClick={onBack}
           className="text-xs text-muted-foreground hover:text-foreground font-semibold cursor-pointer"
@@ -398,8 +398,8 @@ function MemoryMatch({ onBack, playSound }: MemoryMatchProps) {
               className={cn(
                 "h-20 rounded-2xl flex items-center justify-center text-2xl border transition-all cursor-pointer",
                 show
-                  ? "bg-primary/15 border-primary/40 text-zinc-900 dark:text-zinc-50"
-                  : "bg-zinc-100 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-transparent"
+                  ? "bg-primary/15 border-primary/40 text-foreground"
+                  : "bg-muted border-border text-transparent"
               )}
               whileHover={!show ? { scale: 1.05 } : {}}
               whileTap={{ scale: 0.95 }}
@@ -424,7 +424,7 @@ function MemoryMatch({ onBack, playSound }: MemoryMatchProps) {
 
       <button
         onClick={() => { playSound("click"); initGame(); }}
-        className="flex items-center gap-1.5 px-4 py-2.5 mx-auto rounded-xl bg-zinc-50 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 transition-all cursor-pointer shadow-sm active:scale-[0.98]"
+        className="flex items-center gap-1.5 px-4 py-2.5 mx-auto rounded-xl bg-background hover:bg-muted text-xs font-bold text-muted-foreground border border-border transition-all cursor-pointer shadow-sm active:scale-[0.98]"
       >
         <RotateCcw className="w-4.5 h-4.5" />
         Restart Game

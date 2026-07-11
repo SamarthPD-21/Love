@@ -100,7 +100,7 @@ export default function JournalPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <BookOpen className="w-8 h-8 text-primary" /> Our Journal
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -121,9 +121,9 @@ export default function JournalPage() {
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       ) : entries.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-zinc-800/50 rounded-3xl backdrop-blur-sm text-center">
-          <BookOpen className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3 animate-float" />
-          <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">No journal logs</h3>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-card/50 border border-border/50 rounded-3xl backdrop-blur-sm text-center">
+          <BookOpen className="w-12 h-12 text-muted-foreground/30 mb-3 animate-float" />
+          <h3 className="text-lg font-bold text-foreground">No journal logs</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
             Write down your first entry today! Tell them how much you love them or write about your week.
           </p>
@@ -149,21 +149,21 @@ export default function JournalPage() {
                   {format(new Date(entry.createdAt), "PP")}
                 </span>
 
-                <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 leading-tight mb-3">
+                <h3 className="text-lg font-bold text-foreground leading-tight mb-3">
                   {entry.title}
                 </h3>
 
-                <p className="handwritten text-2xl text-zinc-800 dark:text-zinc-200 leading-relaxed whitespace-pre-wrap">
+                <p className="handwritten text-2xl text-foreground leading-relaxed whitespace-pre-wrap">
                   {entry.content}
                 </p>
               </div>
 
-              <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-4 flex items-center justify-between mt-6">
+              <div className="border-t border-border/60 pt-4 flex items-center justify-between mt-6">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center font-bold text-[10px] text-primary uppercase">
                     {entry.userId.name.slice(0, 1)}
                   </div>
-                  <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300">
+                  <span className="text-[10px] font-bold text-muted-foreground">
                     Written by {entry.userId.name}
                   </span>
                 </div>
@@ -196,7 +196,7 @@ export default function JournalPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-lg bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -205,25 +205,25 @@ export default function JournalPage() {
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-6">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
                 <BookOpen className="w-5 h-5 text-primary" /> New Journal Entry
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Entry Title</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Entry Title</label>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. A Cozy Evening, Missing You Extra Today"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Mood</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Mood</label>
                   <div className="flex gap-2">
                     {(Object.keys(moodEmojis) as Array<"loved" | "cozy" | "happy" | "excited" | "thoughtful">).map((m) => (
                       <button
@@ -234,7 +234,7 @@ export default function JournalPage() {
                           "px-3 py-2 rounded-xl border text-xs font-semibold capitalize flex items-center gap-1.5 cursor-pointer transition-all",
                           mood === m
                             ? "bg-primary border-primary text-white"
-                            : "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400 hover:text-zinc-600"
+                            : "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted"
                         )}
                       >
                         <span>{moodEmojis[m]}</span>
@@ -245,14 +245,14 @@ export default function JournalPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Your Story</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Story</label>
                   <textarea
                     required
                     rows={8}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Write your thoughts..."
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 

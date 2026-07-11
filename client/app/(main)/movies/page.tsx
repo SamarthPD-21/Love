@@ -166,7 +166,7 @@ export default function MoviesPage() {
       </div>
 
       {/* Tabs Menu */}
-      <div className="flex border-b border-zinc-200 dark:border-zinc-800/80 mb-6">
+      <div className="flex border-b border-border/80 mb-6">
         <button
           onClick={() => setActiveTab("watchlist")}
           className={cn(
@@ -197,9 +197,9 @@ export default function MoviesPage() {
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       ) : filteredMovies.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-zinc-800/50 rounded-3xl backdrop-blur-sm text-center">
-          <Film className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3 animate-float" />
-          <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">Watchlist empty</h3>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-card/50 border border-border/50 rounded-3xl backdrop-blur-sm text-center">
+          <Film className="w-12 h-12 text-muted-foreground/30 mb-3 animate-float" />
+          <h3 className="text-lg font-bold text-foreground">Watchlist empty</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
             {activeTab === "watchlist"
               ? "Add shows or movies you both want to watch on a rainy night!"
@@ -243,7 +243,7 @@ export default function MoviesPage() {
                             "w-3.5 h-3.5",
                             idx < (movie.rating || 0)
                               ? "text-amber-400 fill-amber-400"
-                              : "text-zinc-200 dark:text-zinc-700"
+                              : "text-muted-foreground/30"
                           )}
                         />
                       ))}
@@ -251,13 +251,13 @@ export default function MoviesPage() {
                   )}
 
                   {movie.status === "watched" && movie.review && (
-                    <p className="handwritten text-base text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800 p-3 rounded-xl mb-4 leading-relaxed italic">
+                    <p className="handwritten text-base text-foreground bg-background border border-border p-3 rounded-xl mb-4 leading-relaxed italic">
                       &ldquo;{movie.review}&rdquo;
                     </p>
                   )}
                 </div>
 
-                <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-4 flex items-center justify-between mt-4">
+                <div className="border-t border-border/60 pt-4 flex items-center justify-between mt-4">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
                     Added: {format(new Date(movie.createdAt), "MMM d, yyyy")}
                   </span>
@@ -297,7 +297,7 @@ export default function MoviesPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -324,7 +324,7 @@ export default function MoviesPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Type</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Type</label>
                   <div className="grid grid-cols-2 gap-4">
                     <button
                       type="button"
@@ -333,7 +333,7 @@ export default function MoviesPage() {
                         "py-3 rounded-xl border text-sm font-semibold cursor-pointer transition-all",
                         type === "movie"
                           ? "bg-primary border-primary text-white"
-                          : "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400"
+                          : "bg-muted/50 border-border/50 text-muted-foreground"
                       )}
                     >
                       🎬 Movie
@@ -345,7 +345,7 @@ export default function MoviesPage() {
                         "py-3 rounded-xl border text-sm font-semibold cursor-pointer transition-all",
                         type === "show"
                           ? "bg-primary border-primary text-white"
-                          : "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400"
+                          : "bg-muted/50 border-border/50 text-muted-foreground"
                       )}
                     >
                       📺 TV Show
@@ -394,7 +394,7 @@ export default function MoviesPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setEditingMovieId(null)}
@@ -403,14 +403,14 @@ export default function MoviesPage() {
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-6">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
                 <AlertCircle className="w-5 h-5 text-primary" /> Movie Review Note
               </h3>
 
               <form onSubmit={handleSaveReview} className="space-y-4">
                 {/* Stars selector */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Rating</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Rating</label>
                   <div className="flex gap-2 text-2xl">
                     {Array.from({ length: 5 }).map((_, idx) => (
                       <button
@@ -422,7 +422,7 @@ export default function MoviesPage() {
                         <Star
                           className={cn(
                             "w-8 h-8 transition-colors",
-                            idx < ratingVal ? "text-amber-400 fill-amber-400" : "text-zinc-300 dark:text-zinc-700"
+                            idx < ratingVal ? "text-amber-400 fill-amber-400" : "text-muted-foreground/30"
                           )}
                         />
                       </button>
@@ -431,13 +431,13 @@ export default function MoviesPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Cozy Review</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cozy Review</label>
                   <textarea
                     rows={3}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                     placeholder="Write your review notes (e.g. loved the soundtrack, cried three times!)"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 

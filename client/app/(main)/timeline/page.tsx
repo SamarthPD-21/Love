@@ -123,9 +123,9 @@ export default function TimelinePage() {
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       ) : milestones.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-zinc-800/50 rounded-3xl backdrop-blur-sm text-center">
-          <Sparkles className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3 animate-float" />
-          <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">No milestones yet</h3>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-card/50 border border-border/50 rounded-3xl backdrop-blur-sm text-center">
+          <Sparkles className="w-12 h-12 text-muted-foreground/30 mb-3 animate-float" />
+          <h3 className="text-lg font-bold text-foreground">No milestones yet</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-xs">
             Start documenting your story! Add details about your first meeting, dates, or anniversaries.
           </p>
@@ -133,7 +133,7 @@ export default function TimelinePage() {
       ) : (
         <div className="relative flex-1 max-w-3xl mx-auto w-full px-4">
           {/* Vertical Connecting Track */}
-          <div className="absolute left-[39px] sm:left-1/2 top-4 bottom-4 w-0.5 bg-zinc-200 dark:bg-zinc-800 -translate-x-1/2" />
+          <div className="absolute left-[39px] sm:left-1/2 top-4 bottom-4 w-0.5 bg-border -translate-x-1/2" />
 
           {/* Milestones list */}
           <div className="space-y-12">
@@ -157,7 +157,7 @@ export default function TimelinePage() {
                   <div className="w-14 sm:w-1/2" />
 
                   {/* Icon Node */}
-                  <div className="absolute left-6 sm:left-1/2 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border-2 border-primary flex items-center justify-center -translate-x-1/2 z-10 shadow-md">
+                  <div className="absolute left-6 sm:left-1/2 w-12 h-12 rounded-full bg-background border-2 border-primary flex items-center justify-center -translate-x-1/2 z-10 shadow-md">
                     <IconComponent className="w-5 h-5 text-primary fill-primary/10" />
                   </div>
 
@@ -213,7 +213,7 @@ export default function TimelinePage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -261,7 +261,7 @@ export default function TimelinePage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Choose Icon</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Choose Icon</label>
                   <div className="flex gap-4">
                     {Object.keys(iconsMap).map((key) => {
                       const IconNode = iconsMap[key];
@@ -274,7 +274,7 @@ export default function TimelinePage() {
                             "p-3 rounded-xl border transition-all cursor-pointer",
                             icon === key
                               ? "bg-primary border-primary text-white"
-                              : "bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-400 hover:text-zinc-600"
+                              : "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                           )}
                         >
                           <IconNode className="w-5 h-5" />

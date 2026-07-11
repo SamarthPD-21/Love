@@ -72,7 +72,7 @@ export default function ComfortPage() {
     <div className="min-h-[calc(100dvh-6rem)] flex flex-col pb-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
           <HandHeart className="w-8 h-8 text-primary" /> Comfort Corner
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -118,7 +118,7 @@ export default function ComfortPage() {
           </div>
 
           <div className="space-y-4 w-full max-w-sm">
-            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h3 className="text-xl font-bold text-foreground">
               Need a virtual hug?
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -134,11 +134,11 @@ export default function ComfortPage() {
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800/80">
                 <div className="p-3 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/15">
                   <p className="text-[10px] font-bold text-primary uppercase tracking-wider">My Hugs Sent</p>
-                  <p className="text-2xl font-black text-zinc-900 dark:text-zinc-50 mt-1">{myHugs}</p>
+                  <p className="text-2xl font-black text-foreground mt-1">{myHugs}</p>
                 </div>
                 <div className="p-3 bg-secondary/5 dark:bg-secondary/10 rounded-2xl border border-secondary/15">
                   <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Partner Hugs Sent</p>
-                  <p className="text-2xl font-black text-zinc-900 dark:text-zinc-50 mt-1">{partnerHugs}</p>
+                  <p className="text-2xl font-black text-foreground mt-1">{partnerHugs}</p>
                 </div>
               </div>
             )}
@@ -160,7 +160,7 @@ export default function ComfortPage() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2, ease: "easeInOut" }}
-                  className="handwritten text-3xl sm:text-4xl leading-normal text-zinc-900 dark:text-zinc-50"
+                  className="handwritten text-3xl sm:text-4xl leading-normal text-foreground"
                 >
                   &ldquo;{COMFORT_QUOTES[quoteIdx]}&rdquo;
                 </motion.p>
@@ -171,7 +171,7 @@ export default function ComfortPage() {
           <div className="border-t border-primary/10 pt-4 mt-6">
             <button
               onClick={handleNextQuote}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer shadow-sm active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-card border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition-all cursor-pointer shadow-sm active:scale-[0.98]"
             >
               <Smile className="w-4 h-4 text-primary" /> Draw Another Note
             </button>

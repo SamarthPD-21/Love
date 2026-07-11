@@ -170,7 +170,7 @@ export default function SongsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Music className="w-8 h-8 text-primary" /> Our Playlist
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -191,9 +191,9 @@ export default function SongsPage() {
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       ) : songs.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-zinc-800/50 rounded-3xl backdrop-blur-sm text-center">
-          <Music className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3 animate-float" />
-          <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">No songs yet</h3>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-card/50 border border-border/50 rounded-3xl backdrop-blur-sm text-center">
+          <Music className="w-12 h-12 text-muted-foreground/30 mb-3 animate-float" />
+          <h3 className="text-lg font-bold text-foreground">No songs yet</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
             Add your favorite song, a track you both danced to, or Spotify playlists!
           </p>
@@ -212,7 +212,7 @@ export default function SongsPage() {
                 <div>
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div>
-                      <h3 className="font-bold text-zinc-900 dark:text-zinc-50 text-base leading-tight">
+                      <h3 className="font-bold text-foreground text-base leading-tight">
                         {song.title}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-0.5">{song.artist}</p>
@@ -239,7 +239,7 @@ export default function SongsPage() {
                   </div>
 
                   {song.notes && (
-                    <p className="handwritten text-xl text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800 p-3 rounded-xl mb-4 leading-relaxed">
+                    <p className="handwritten text-xl text-foreground bg-background border border-border p-3 rounded-xl mb-4 leading-relaxed">
                       &ldquo;{song.notes}&rdquo;
                     </p>
                   )}
@@ -258,7 +258,7 @@ export default function SongsPage() {
                     />
                   </div>
                 ) : (
-                  <div className="mt-2 py-3 px-4 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800 flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="mt-2 py-3 px-4 rounded-xl bg-background border border-border flex items-center justify-between text-xs text-muted-foreground">
                     <span className="truncate max-w-[200px]">{song.url}</span>
                     <a
                       href={song.url}
@@ -292,7 +292,7 @@ export default function SongsPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -301,14 +301,14 @@ export default function SongsPage() {
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-6">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
                 <Music className="w-5 h-5 text-primary" /> Add Song to Playlist
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Spotify / Youtube URL</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Spotify / Youtube URL</label>
                     {fetchingInfo && (
                       <span className="text-[10px] text-primary font-bold animate-pulse-soft flex items-center gap-1">
                         <Loader2 className="w-3 h-3 animate-spin" /> Fetching info...
@@ -321,43 +321,43 @@ export default function SongsPage() {
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="Paste Spotify track link"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Song Title</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Song Title</label>
                     <input
                       type="text"
                       required
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="e.g. Lover"
-                      className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Artist</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Artist</label>
                     <input
                       type="text"
                       required
                       value={artist}
                       onChange={(e) => setArtist(e.target.value)}
                       placeholder="e.g. Taylor Swift"
-                      className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Cozy Notes (Optional)</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cozy Notes (Optional)</label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Why does this track remind you of us?"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 

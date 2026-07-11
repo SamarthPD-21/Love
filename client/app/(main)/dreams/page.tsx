@@ -119,7 +119,7 @@ export default function DreamsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Target className="w-8 h-8 text-primary" /> Our Dreams
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -135,15 +135,15 @@ export default function DreamsPage() {
       </div>
 
       {/* Progress Bar Header Card */}
-      <div className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 shadow-xl mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div className="bg-card/80 border border-border/50 backdrop-blur-md rounded-3xl p-6 shadow-xl mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div className="flex-1">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
               Bucket List Completed
             </span>
             <span className="text-sm font-bold text-primary">{progressPercent}% ({completedCount}/{totalCount})</span>
           </div>
-          <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-950 rounded-full overflow-hidden border border-zinc-200/50 dark:border-zinc-800">
+          <div className="w-full h-3 bg-muted border border-border/50 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-primary"
               initial={{ width: 0 }}
@@ -163,7 +163,7 @@ export default function DreamsPage() {
                 "px-3.5 py-1.5 rounded-xl text-xs font-semibold capitalize border transition-all cursor-pointer",
                 activeFilter === cat
                   ? "bg-primary border-primary text-white"
-                  : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  : "bg-card border-border text-muted-foreground hover:bg-muted"
               )}
             >
               {cat}
@@ -178,9 +178,9 @@ export default function DreamsPage() {
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       ) : filteredDreams.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-zinc-800/50 rounded-3xl backdrop-blur-sm text-center">
-          <Target className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3 animate-float" />
-          <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">No dreams found</h3>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-card/50 border border-border/50 rounded-3xl backdrop-blur-sm text-center">
+          <Target className="w-12 h-12 text-muted-foreground/30 mb-3 animate-float" />
+          <h3 className="text-lg font-bold text-foreground">No dreams found</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
             Try creating a dream under the &ldquo;{activeFilter}&rdquo; category!
           </p>
@@ -196,7 +196,7 @@ export default function DreamsPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className={cn(
                   "card-cozy p-6 flex flex-col justify-between cursor-pointer border transition-all",
-                  dream.isCompleted ? "bg-zinc-50/50 dark:bg-zinc-900/20 border-emerald-500/20" : ""
+                  dream.isCompleted ? "bg-muted/50 border-emerald-500/20" : ""
                 )}
                 onClick={() => handleToggleCompleted(dream._id, dream.isCompleted)}
                 key={dream._id}
@@ -221,7 +221,7 @@ export default function DreamsPage() {
                       <Square className="w-5 h-5 text-zinc-400 shrink-0" />
                     )}
                     <h3 className={cn(
-                      "font-bold text-zinc-950 dark:text-zinc-50 text-base leading-snug",
+                      "font-bold text-foreground text-base leading-snug",
                       dream.isCompleted ? "line-through text-muted-foreground" : ""
                     )}>
                       {dream.title}
@@ -266,7 +266,7 @@ export default function DreamsPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -275,40 +275,40 @@ export default function DreamsPage() {
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-6">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
                 <Target className="w-5 h-5 text-primary" /> Add Future Goal
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Goal Title</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Goal Title</label>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Travel to Switzerland, Buy an apartment"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Description (Optional)</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Description (Optional)</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="How are we going to make this dream happen?"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Category</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</label>
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value as any)}
-                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 cursor-pointer"
+                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 cursor-pointer"
                     >
                       <option value="general">General</option>
                       <option value="travel">Travel</option>
@@ -319,12 +319,12 @@ export default function DreamsPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Target Date</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Target Date</label>
                     <input
                       type="date"
                       value={targetDate}
                       onChange={(e) => setTargetDate(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                     />
                   </div>
                 </div>

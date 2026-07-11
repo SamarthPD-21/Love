@@ -113,7 +113,7 @@ export default function MemoryJarPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Archive className="w-8 h-8 text-primary animate-pulse-soft" /> Memory Jar
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -131,7 +131,7 @@ export default function MemoryJarPage() {
       {/* Main Area: Jar Visual & Drawn Note display */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch flex-1">
         {/* Left/Middle: The Glass Jar */}
-        <div className="lg:col-span-2 flex flex-col items-center justify-center p-8 bg-white/60 dark:bg-zinc-900/60 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl relative overflow-hidden min-h-[420px] shadow-xl">
+        <div className="lg:col-span-2 flex flex-col items-center justify-center p-8 bg-card/60 border border-border/50 backdrop-blur-md rounded-3xl relative overflow-hidden min-h-[420px] shadow-xl">
           {/* Ambient Glows */}
           <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-primary/10 blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-secondary/10 blur-3xl translate-y-1/2 -translate-x-1/2" />
@@ -208,7 +208,7 @@ export default function MemoryJarPage() {
               </motion.div>
 
               <div>
-                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+                <h3 className="text-xl font-bold text-foreground">
                   {notes.length} Scrolls of Love
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1.5 max-w-xs mx-auto leading-relaxed">
@@ -230,7 +230,7 @@ export default function MemoryJarPage() {
 
         {/* Right Panel: Drawn Note Display */}
         <div className="flex flex-col gap-4">
-          <h3 className="font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2 text-sm uppercase tracking-wider">
+          <h3 className="font-bold text-foreground flex items-center gap-2 text-sm uppercase tracking-wider">
             <Heart className="w-4 h-4 text-primary fill-primary" /> Unfolded Scroll
           </h3>
 
@@ -242,7 +242,7 @@ export default function MemoryJarPage() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -15 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="flex-1 flex flex-col justify-between p-6 bg-[#FCF8F2] dark:bg-zinc-950 border-2 border-amber-200/80 dark:border-zinc-800 rounded-3xl relative overflow-hidden text-center shadow-lg"
+                className="flex-1 flex flex-col justify-between p-6 bg-background border-2 border-border rounded-3xl relative overflow-hidden text-center shadow-lg"
               >
                 {/* Scroll border style decoration */}
                 <div className="absolute inset-y-0 left-2 w-[1px] border-l border-dashed border-amber-300" />
@@ -272,20 +272,20 @@ export default function MemoryJarPage() {
                   >
                     📜
                   </motion.span>
-                  <p className="handwritten text-2xl sm:text-3xl leading-relaxed text-zinc-900 dark:text-zinc-200 italic px-2">
+                  <p className="handwritten text-2xl sm:text-3xl leading-relaxed text-foreground italic px-2">
                     &ldquo;{drawnNote.content}&rdquo;
                   </p>
                 </div>
 
-                <div className="border-t border-amber-200/60 dark:border-zinc-800 pt-4 text-left flex items-center gap-3">
+                <div className="border-t border-border pt-4 text-left flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-xs uppercase">
                     {drawnNote.userId.name.slice(0, 1)}
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-zinc-700 dark:text-zinc-300">
+                    <p className="text-[10px] font-bold text-muted-foreground">
                       Dropped by {drawnNote.userId.name}
                     </p>
-                    <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">
+                    <p className="text-[9px] text-muted-foreground/70 font-semibold uppercase tracking-wider">
                       {format(new Date(drawnNote.createdAt), "PPP")}
                     </p>
                   </div>
@@ -294,9 +294,9 @@ export default function MemoryJarPage() {
             ) : (
               <motion.div
                 key="empty"
-                className="flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl bg-zinc-50/50 dark:bg-zinc-950/20 text-center"
+                className="flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-3xl bg-card/50 text-center"
               >
-                <Archive className="w-8 h-8 text-zinc-300 dark:text-zinc-700 mb-3 animate-float" />
+                <Archive className="w-8 h-8 text-muted-foreground/30 mb-3 animate-float" />
                 <p className="text-xs text-muted-foreground italic max-w-[200px] leading-relaxed">
                   Shake the jar or pick a scroll from history to read a cozy note from your partner.
                 </p>
@@ -308,8 +308,8 @@ export default function MemoryJarPage() {
 
       {/* Jar Scrolls History Chest */}
       {notes.length > 0 && (
-        <div className="mt-8 bg-white/40 dark:bg-zinc-900/40 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-xs p-6 rounded-3xl shadow-md">
-          <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-xs uppercase tracking-wider flex items-center gap-2 mb-4">
+        <div className="mt-8 bg-card/40 border border-border/50 backdrop-blur-xs p-6 rounded-3xl shadow-md">
+          <h3 className="font-bold text-foreground text-xs uppercase tracking-wider flex items-center gap-2 mb-4">
             <Heart className="w-4 h-4 text-primary" /> Jar Chest History ({notes.length})
           </h3>
 
@@ -322,7 +322,7 @@ export default function MemoryJarPage() {
                   "p-3 rounded-xl border flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 active:scale-95 group",
                   drawnNote?._id === note._id 
                     ? "bg-primary/10 border-primary text-primary" 
-                    : "bg-white/60 dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800 hover:border-primary/40 text-muted-foreground hover:text-foreground"
+                    : "bg-card/60 border-border hover:border-primary/40 text-muted-foreground hover:text-foreground"
                 )}
               >
                 <span className="text-xl mb-1 group-hover:scale-110 transition-transform">📜</span>
@@ -354,7 +354,7 @@ export default function MemoryJarPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -363,20 +363,20 @@ export default function MemoryJarPage() {
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-6">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
                 <Heart className="w-5 h-5 text-primary fill-primary animate-pulse" /> Drop a Note in the Jar
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Note Content</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Note Content</label>
                   <textarea
                     required
                     rows={4}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Write a sweet reminder, cute memory, or comforting message..."
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 

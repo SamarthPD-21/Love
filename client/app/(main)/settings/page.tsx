@@ -145,7 +145,7 @@ export default function SettingsPage() {
     <div className="min-h-[calc(100dvh-6rem)] flex flex-col pb-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
           <Settings className="w-8 h-8 text-primary" /> Settings
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -160,25 +160,25 @@ export default function SettingsPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start max-w-5xl w-full">
           {/* Column 1: Profile settings */}
-          <div className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 shadow-xl space-y-6">
-            <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider flex items-center gap-2">
+          <div className="bg-card/80 border border-border/50 backdrop-blur-md rounded-3xl p-6 shadow-xl space-y-6">
+            <h3 className="font-bold text-foreground text-sm uppercase tracking-wider flex items-center gap-2">
               <User className="w-4 h-4 text-primary" /> Profile Details
             </h3>
 
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Your Name</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Name</label>
                 <input
                   type="text"
                   required
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                 />
               </div>
 
               <div className="space-y-3">
-                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider block">Profile Photo</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Profile Photo</label>
                 
                 <div className="flex items-center gap-4">
                   {/* Photo Preview */}
@@ -192,7 +192,7 @@ export default function SettingsPage() {
 
                   {/* File input button */}
                   <div className="flex-1">
-                    <label className="inline-block px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                    <label className="inline-block px-4 py-2.5 rounded-xl border border-border bg-background text-xs font-bold text-foreground cursor-pointer hover:bg-muted transition-colors">
                       {uploadingAvatar ? (
                         <span className="flex items-center gap-1.5">
                           <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...
@@ -236,20 +236,20 @@ export default function SettingsPage() {
           </div>
 
           {/* Column 2: Anniversary settings */}
-          <div className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 shadow-xl space-y-6">
-            <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider flex items-center gap-2">
+          <div className="bg-card/80 border border-border/50 backdrop-blur-md rounded-3xl p-6 shadow-xl space-y-6">
+            <h3 className="font-bold text-foreground text-sm uppercase tracking-wider flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" /> Relationship Date
             </h3>
 
             <form onSubmit={handleUpdateAnniversary} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Anniversary Date</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Anniversary Date</label>
                 <input
                   type="date"
                   required
                   value={anniversary}
                   onChange={(e) => setAnniversary(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                 />
               </div>
 
@@ -278,8 +278,8 @@ export default function SettingsPage() {
           {/* Column 3: Partner Connection / Logout */}
           <div className="space-y-6">
             {/* Connection status */}
-            <div className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 shadow-xl space-y-4">
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider flex items-center gap-2">
+            <div className="bg-card/80 border border-border/50 backdrop-blur-md rounded-3xl p-6 shadow-xl space-y-4">
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider flex items-center gap-2">
                 <Link2 className="w-4 h-4 text-primary" /> Connection Status
               </h3>
 
@@ -300,14 +300,14 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Share this code</label>
-                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-mono">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Share this code</label>
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-background border border-border font-mono">
                       <span className="flex-1 text-sm font-bold text-primary tracking-wider text-center select-all">{inviteCode}</span>
                       <button
                         onClick={handleCopyCode}
                         className={cn(
                           "p-2 rounded-xl transition-all cursor-pointer",
-                          copied ? "bg-emerald-50 text-emerald-500" : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+                          copied ? "bg-emerald-50 text-emerald-500" : "bg-card border border-border"
                         )}
                       >
                         {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -319,7 +319,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Logout panel */}
-            <div className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 shadow-xl">
+            <div className="bg-card/80 border border-border/50 backdrop-blur-md rounded-3xl p-6 shadow-xl">
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-100/50 transition-all cursor-pointer active:scale-[0.98]"

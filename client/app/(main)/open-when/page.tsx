@@ -130,7 +130,7 @@ export default function OpenWhenPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-3xl">{cat.emoji}</span>
                       {count > 0 && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-zinc-800 shadow-xs border border-border/20">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-card shadow-xs border border-border/20">
                           {count} {count === 1 ? "Letter" : "Letters"}
                         </span>
                       )}
@@ -234,7 +234,7 @@ export default function OpenWhenPage() {
                     onChange={(e) => setContent(e.target.value)}
                     required
                     rows={6}
-                    className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm resize-none handwritten text-base"
+                    className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring resize-none handwritten text-lg"
                   />
                 </div>
 

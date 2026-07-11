@@ -89,7 +89,7 @@ export default function GratitudePage() {
     <div className="min-h-[calc(100dvh-6rem)] flex flex-col pb-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
           <Flower2 className="w-8 h-8 text-primary" /> Gratitude Board
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -99,8 +99,8 @@ export default function GratitudePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Composer (Left Panel) */}
-        <div className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 shadow-xl">
-          <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider mb-4">
+        <div className="bg-card/80 border border-border/50 backdrop-blur-md rounded-3xl p-6 shadow-xl">
+          <h3 className="font-bold text-foreground text-sm uppercase tracking-wider mb-4">
             Express Thanks
           </h3>
 
@@ -111,7 +111,7 @@ export default function GratitudePage() {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="What are you grateful for today? e.g. Grateful that you listend to me complain about work..."
-              className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
             />
             <button
               type="submit"
@@ -131,7 +131,7 @@ export default function GratitudePage() {
 
         {/* Board Display (Right/Middle Panel) */}
         <div className="lg:col-span-2 space-y-4">
-          <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider mb-2">
+          <h3 className="font-bold text-foreground text-sm uppercase tracking-wider mb-2">
             Shared board
           </h3>
 
@@ -140,8 +140,8 @@ export default function GratitudePage() {
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           ) : items.length === 0 ? (
-            <div className="p-8 rounded-3xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/50 text-center">
-              <Flower2 className="w-10 h-10 text-zinc-300 dark:text-zinc-700 mx-auto mb-2 animate-float" />
+            <div className="p-8 rounded-3xl border border-border/50 bg-card/50 text-center">
+              <Flower2 className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2 animate-float" />
               <p className="text-xs text-muted-foreground italic">No posts on the gratitude board yet.</p>
             </div>
           ) : (
@@ -164,7 +164,7 @@ export default function GratitudePage() {
                             <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center font-bold text-[10px] text-primary uppercase">
                               {item.userId.name.slice(0, 1)}
                             </div>
-                            <span className="text-[10px] font-bold text-zinc-700 dark:text-zinc-300">
+                            <span className="text-[10px] font-bold text-muted-foreground">
                               {item.userId.name}
                             </span>
                           </div>
@@ -174,12 +174,12 @@ export default function GratitudePage() {
                           </span>
                         </div>
 
-                        <p className="handwritten text-2xl text-zinc-800 dark:text-zinc-50 leading-relaxed mb-4">
+                        <p className="handwritten text-2xl text-foreground leading-relaxed mb-4">
                           &ldquo;{item.content}&rdquo;
                         </p>
                       </div>
 
-                      <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-3 flex items-center justify-between">
+                      <div className="border-t border-border/60 pt-3 flex items-center justify-between">
                         {/* Like Button */}
                         <button
                           onClick={() => handleLike(item._id)}

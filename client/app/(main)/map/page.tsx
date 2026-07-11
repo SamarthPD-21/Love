@@ -108,7 +108,7 @@ export default function MapPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Map className="w-8 h-8 text-primary" /> Travel Pinboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -126,7 +126,7 @@ export default function MapPage() {
       {/* Main Grid: Interactive Canvas Board & List */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch flex-1">
         {/* Left/Middle: The Pinboard Canvas */}
-        <div className="lg:col-span-2 flex flex-col items-stretch p-4 bg-[#F2EDE4] dark:bg-zinc-950 border-4 border-[#8B7D6B] dark:border-zinc-800 rounded-3xl relative min-h-[420px] shadow-inner select-none overflow-hidden">
+        <div className="lg:col-span-2 flex flex-col items-stretch p-4 bg-card border-4 border-border rounded-3xl relative min-h-[420px] shadow-inner select-none overflow-hidden">
           {/* Corkboard texture background */}
           <div className="absolute inset-0 bg-[radial-gradient(#C4B59D_1px,transparent_1px)] dark:bg-[radial-gradient(#27272A_1px,transparent_1px)] [background-size:16px_16px] opacity-40" />
 
@@ -138,7 +138,7 @@ export default function MapPage() {
           </div>
 
           {/* Canvas Wrapper */}
-          <div className="relative flex-1 rounded-2xl border-2 border-dashed border-[#D2C5B1] dark:border-zinc-850 m-2 flex items-center justify-center overflow-hidden">
+          <div className="relative flex-1 rounded-2xl border-2 border-dashed border-border/50 m-2 flex items-center justify-center overflow-hidden">
             {loading ? (
               <Loader2 className="w-8 h-8 text-[#8B7D6B] animate-spin" />
             ) : (
@@ -173,8 +173,8 @@ export default function MapPage() {
                       />
 
                       {/* Tooltip on hover */}
-                      <div className="absolute left-1/2 -top-12 -translate-x-1/2 scale-0 group-hover:scale-100 transition-all duration-200 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[10px] py-1.5 px-3 rounded-xl shadow-lg whitespace-nowrap z-20 pointer-events-none">
-                        <p className="font-bold text-zinc-900 dark:text-zinc-50">{pin.title}</p>
+                      <div className="absolute left-1/2 -top-12 -translate-x-1/2 scale-0 group-hover:scale-100 transition-all duration-200 bg-card border border-border text-[10px] py-1.5 px-3 rounded-xl shadow-lg whitespace-nowrap z-20 pointer-events-none">
+                        <p className="font-bold text-foreground">{pin.title}</p>
                         <p className="text-[8px] text-muted-foreground mt-0.5 capitalize">
                           {pin.category} {pin.date ? `• ${format(new Date(pin.date), "PP")}` : ""}
                         </p>
@@ -189,7 +189,7 @@ export default function MapPage() {
 
         {/* Right side: Pins list tracker */}
         <div className="flex flex-col gap-4">
-          <div className="flex gap-2 border-b border-zinc-200 dark:border-zinc-800/80 pb-2">
+          <div className="flex gap-2 border-b border-border/80 pb-2">
             {(["all", "visited", "planned"] as const).map((mode) => (
               <button
                 key={mode}
@@ -207,8 +207,8 @@ export default function MapPage() {
           </div>
 
           {filteredPins.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl bg-zinc-50/50 dark:bg-zinc-950/20 text-center">
-              <MapPin className="w-8 h-8 text-zinc-300 dark:text-zinc-700 mb-2" />
+            <div className="flex-1 flex flex-col items-center justify-center p-6 border border-dashed border-border rounded-3xl bg-card/50 text-center">
+              <MapPin className="w-8 h-8 text-muted-foreground/30 mb-2" />
               <p className="text-xs text-muted-foreground italic">No pins recorded yet.</p>
             </div>
           ) : (
@@ -220,7 +220,7 @@ export default function MapPage() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-50 leading-tight">
+                      <h4 className="text-xs font-bold text-foreground leading-tight">
                         {pin.title}
                       </h4>
                       <p className="text-[9px] text-muted-foreground mt-0.5 capitalize">
@@ -264,7 +264,7 @@ export default function MapPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -273,40 +273,40 @@ export default function MapPage() {
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-6">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
                 <MapPin className="w-5 h-5 text-primary" /> Drop a Pin
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Spot Name</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Spot Name</label>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Our First Date Cafe, Eiffel Tower"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Description (Optional)</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Description (Optional)</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="What did we do here?"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Category</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</label>
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value as any)}
-                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 cursor-pointer"
+                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 cursor-pointer"
                     >
                       <option value="visited">Visited Spot 🏖️</option>
                       <option value="planned">Planned Spot ✈️</option>
@@ -314,12 +314,12 @@ export default function MapPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Date (Optional)</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Date (Optional)</label>
                     <input
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                     />
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default function MapPage() {
                 {/* Coordinate pickers */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Coordinate X (%)</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Coordinate X (%)</label>
                     <input
                       type="number"
                       required
@@ -335,12 +335,12 @@ export default function MapPage() {
                       max={95}
                       value={lat}
                       onChange={(e) => setLat(Number(e.target.value))}
-                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Coordinate Y (%)</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Coordinate Y (%)</label>
                     <input
                       type="number"
                       required
@@ -348,7 +348,7 @@ export default function MapPage() {
                       max={95}
                       value={lng}
                       onChange={(e) => setLng(Number(e.target.value))}
-                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                      className="w-full px-3 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                     />
                   </div>
                 </div>

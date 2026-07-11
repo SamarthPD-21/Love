@@ -90,7 +90,7 @@ export default function CountdownsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Timer className="w-8 h-8 text-primary" /> Countdowns
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -111,9 +111,9 @@ export default function CountdownsPage() {
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       ) : countdowns.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-zinc-800/50 rounded-3xl backdrop-blur-sm text-center">
-          <Clock className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3 animate-float" />
-          <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">No active countdowns</h3>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-card/50 border border-border/50 rounded-3xl backdrop-blur-sm text-center">
+          <Clock className="w-12 h-12 text-muted-foreground/30 mb-3 animate-float" />
+          <h3 className="text-lg font-bold text-foreground">No active countdowns</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-xs">
             Start a countdown for your next trip, anniversary, or visit!
           </p>
@@ -142,7 +142,7 @@ export default function CountdownsPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -151,41 +151,41 @@ export default function CountdownsPage() {
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-6">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
                 <Heart className="w-5 h-5 text-primary fill-primary animate-pulse" /> New Countdown
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Title</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Title</label>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Next Hug, Trip to Beach"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Description (Optional)</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Description (Optional)</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe what we are waiting for!"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Target Date & Time</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Target Date & Time</label>
                   <input
                     type="datetime-local"
                     required
                     value={targetDate}
                     onChange={(e) => setTargetDate(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 
@@ -229,7 +229,7 @@ function CountdownCard({ countdown, onDelete }: { countdown: Countdown; onDelete
     >
       <div>
         <div className="flex items-start justify-between gap-4 mb-2">
-          <h3 className="font-bold text-zinc-950 dark:text-zinc-50 text-lg leading-tight line-clamp-1">
+          <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-1">
             {countdown.title}
           </h3>
           <button
@@ -259,27 +259,27 @@ function CountdownCard({ countdown, onDelete }: { countdown: Countdown; onDelete
             It&apos;s time! 🎉
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-2 text-center bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800/50 rounded-2xl p-3">
+          <div className="grid grid-cols-4 gap-2 text-center bg-background border border-border/50 rounded-2xl p-3">
             <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-bold text-zinc-950 dark:text-zinc-50 tabular-nums">
+              <span className="text-xl sm:text-2xl font-bold text-foreground tabular-nums">
                 {timer.days}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Days</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-bold text-zinc-950 dark:text-zinc-50 tabular-nums">
+              <span className="text-xl sm:text-2xl font-bold text-foreground tabular-nums">
                 {timer.hours}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Hours</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-bold text-zinc-950 dark:text-zinc-50 tabular-nums">
+              <span className="text-xl sm:text-2xl font-bold text-foreground tabular-nums">
                 {timer.minutes}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Min</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-bold text-zinc-950 dark:text-zinc-50 tabular-nums">
+              <span className="text-xl sm:text-2xl font-bold text-foreground tabular-nums">
                 {timer.seconds}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Sec</span>

@@ -149,7 +149,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   </span>
                 )}
                 {/* Online pulse bubble */}
-                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white dark:border-zinc-950 animate-pulse" />
+                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-background animate-pulse" />
               </div>
 
               {/* Partner Details */}
@@ -172,14 +172,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 playSound("tap");
                 onClose();
               }}
-              className="flex flex-col gap-2 p-3 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-primary/50 transition-all duration-200 cursor-pointer group bg-white/20 dark:bg-zinc-900/20"
+              className="flex flex-col gap-2 p-3 rounded-2xl border border-dashed border-border hover:border-primary/50 transition-all duration-200 cursor-pointer group bg-card/20"
             >
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-primary">
                   <User className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-zinc-950 dark:text-zinc-50 truncate">
+                  <h4 className="text-xs font-bold text-foreground truncate">
                     No partner connected
                   </h4>
                   <p className="text-[10px] text-muted-foreground">

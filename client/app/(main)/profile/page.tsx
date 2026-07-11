@@ -102,7 +102,7 @@ export default function PartnerProfilePage() {
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 animate-bounce">
             <Heart className="w-8 h-8 fill-primary" />
           </div>
-          <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-50">No partner connected</h2>
+          <h2 className="text-2xl font-black text-foreground">No partner connected</h2>
           <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
             Connect your space with your partner in settings using your unique invite code.
           </p>
@@ -165,7 +165,7 @@ export default function PartnerProfilePage() {
 
         {/* Header */}
         <div className="mb-8 relative z-10">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Sparkles className="w-8 h-8 text-primary animate-pulse-soft" /> Partner Profile
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -175,7 +175,7 @@ export default function PartnerProfilePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10 items-start">
           {/* Left Column: Avatar & Basic Details */}
-          <div className="bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-8 shadow-xl text-center flex flex-col items-center">
+          <div className="bg-card/70 border border-border/50 backdrop-blur-md rounded-3xl p-8 shadow-xl text-center flex flex-col items-center">
             {/* Romantic Rotating Avatar Ring */}
             <div className="relative group mb-6">
               <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-primary via-accent to-secondary blur-sm opacity-70 animate-pulse-soft group-hover:scale-105 transition-transform duration-300" />
@@ -191,12 +191,12 @@ export default function PartnerProfilePage() {
                 )}
               </div>
               
-              <div className="absolute -bottom-2 right-2 bg-primary text-white p-2 rounded-full shadow-lg border-2 border-white dark:border-zinc-900 animate-bounce">
+              <div className="absolute -bottom-2 right-2 bg-primary text-white p-2 rounded-full shadow-lg border-2 border-background animate-bounce">
                 <Heart className="w-4 h-4 fill-white" />
               </div>
             </div>
 
-            <h2 className="text-2xl font-black text-zinc-950 dark:text-zinc-50">{partner.name}</h2>
+            <h2 className="text-2xl font-black text-foreground">{partner.name}</h2>
             <p className="text-xs font-semibold text-primary uppercase tracking-widest mt-1">My Partner in Love</p>
             <p className="text-xs text-muted-foreground mt-1 select-all">{partner.email}</p>
 
@@ -230,10 +230,10 @@ export default function PartnerProfilePage() {
           {/* Middle & Right Column: Location & Interactions */}
           <div className="lg:col-span-2 space-y-8">
             {/* Live Distance Widget */}
-            <div className="bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 shadow-xl relative overflow-hidden">
+            <div className="bg-card/70 border border-border/50 backdrop-blur-md rounded-3xl p-6 shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-primary/5 blur-3xl -translate-y-1/2 translate-x-1/2" />
               
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider flex items-center gap-2 mb-6">
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider flex items-center gap-2 mb-6">
                 <MapPin className="w-4 h-4 text-primary" /> Live Distance Tracker
               </h3>
 
@@ -252,7 +252,7 @@ export default function PartnerProfilePage() {
               ) : (
                 <div className="space-y-6">
                   {/* Distance Visualizer */}
-                  <div className="relative py-8 bg-muted/30 dark:bg-zinc-950/30 rounded-2xl border border-border/30 overflow-hidden flex items-center justify-center">
+                  <div className="relative py-8 bg-background/30 rounded-2xl border border-border/30 overflow-hidden flex items-center justify-center">
                     {/* Pulsing hearts trace line */}
                     <div className="absolute w-[80%] h-[2px] bg-gradient-to-r from-primary/30 via-accent/30 to-secondary/30" />
                     
@@ -314,8 +314,8 @@ export default function PartnerProfilePage() {
             </div>
 
             {/* Virtual Hugs Section */}
-            <div className="bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 shadow-xl relative overflow-hidden">
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider flex items-center gap-2 mb-6">
+            <div className="bg-card/70 border border-border/50 backdrop-blur-md rounded-3xl p-6 shadow-xl relative overflow-hidden">
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider flex items-center gap-2 mb-6">
                 <Heart className="w-4 h-4 text-primary fill-primary animate-pulse-soft" /> Virtual Hug Jar
               </h3>
 
@@ -350,7 +350,7 @@ export default function PartnerProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Link 
                 href="/letters/new"
-                className="flex items-center justify-between p-5 rounded-2xl bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm hover:shadow-md transition-all group"
+                className="flex items-center justify-between p-5 rounded-2xl bg-card/70 border border-border/50 shadow-sm hover:shadow-md transition-all group"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -366,7 +366,7 @@ export default function PartnerProfilePage() {
 
               <Link 
                 href="/journal"
-                className="flex items-center justify-between p-5 rounded-2xl bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm hover:shadow-md transition-all group"
+                className="flex items-center justify-between p-5 rounded-2xl bg-card/70 border border-border/50 shadow-sm hover:shadow-md transition-all group"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
