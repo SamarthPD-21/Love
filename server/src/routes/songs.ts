@@ -14,6 +14,29 @@ const songSchema = z.object({
   notes: z.string().optional(),
 });
 
+// POST /api/songs/spotify-info
+router.post("/spotify-info", async (req: any, res: Response) => {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      res.status(400).json({ error: "URL is required" });
+      return;
+    }
+
+    const spotifyUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
+    const response = await fetch(spotifyUrl);
+    if (!response.ok) {
+      res.status(400).json({ error: "Failed to fetch Spotify metadata" });
+      return;
+    }
+
+    const data: any = await response.json();
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/songs
 router.get("/", async (req: any, res: Response) => {
   try {

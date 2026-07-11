@@ -92,7 +92,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           <div className="flex flex-col items-center justify-center py-20 text-center glass rounded-2xl border border-border/40 p-8 space-y-2">
             <span className="text-5xl">💊</span>
             <h3 className="text-lg font-bold text-foreground">Cabinet empty</h3>
-            <p className="text-xs text-muted-foreground max-w-sm handwritten text-base">
+            <p className="text-sm text-muted-foreground max-w-sm">
               No letters written for this feeling yet. Write one to add to this cabinet!
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                       Sealed {format(new Date(activeLetter.createdAt), "MMMM d, yyyy")}
                     </span>
                     <h2 className="text-xl font-bold tracking-tight">{activeLetter.title}</h2>
-                    <span className="text-xs italic handwritten text-base block mt-2">
+                    <span className="text-sm italic handwritten block mt-2">
                       Dear Partner,
                     </span>
                   </div>
@@ -209,7 +209,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                 <div className="glass border border-border/40 rounded-2xl flex flex-col items-center justify-center p-8 text-center min-h-[50vh] text-muted-foreground space-y-2">
                   <span className="text-4xl animate-pulse-soft">💌</span>
                   <h4 className="font-semibold text-foreground text-sm">No letter selected</h4>
-                  <p className="text-xs max-w-xs handwritten text-base">
+                  <p className="text-sm max-w-xs text-muted-foreground">
                     Select a letter from the cabinet on the left to read words of comfort.
                   </p>
                 </div>

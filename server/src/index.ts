@@ -23,6 +23,7 @@ import moviesRoutes from "./routes/movies";
 import mapRoutes from "./routes/map";
 import journalRoutes from "./routes/journal";
 import statsRoutes from "./routes/stats";
+import locationRoutes from "./routes/location";
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use("/api/movies", moviesRoutes);
 app.use("/api/map", mapRoutes);
 app.use("/api/journal", journalRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/location", locationRoutes);
 
 // ── Health check ────────────────────────────────────────────
 app.get("/api/health", (_req, res) => {

@@ -150,7 +150,7 @@ export default function MoviesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Film className="w-8 h-8 text-primary" /> Movie Watchlist
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -230,7 +230,7 @@ export default function MoviesPage() {
                     </button>
                   </div>
 
-                  <h3 className="font-bold text-zinc-950 dark:text-zinc-50 text-base leading-tight">
+                  <h3 className="font-bold text-foreground text-base leading-tight">
                     {movie.title}
                   </h3>
 
@@ -251,14 +251,14 @@ export default function MoviesPage() {
                   )}
 
                   {movie.status === "watched" && movie.review && (
-                    <p className="handwritten text-xl text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800 p-3 rounded-xl mb-4 leading-relaxed italic">
+                    <p className="handwritten text-base text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800 p-3 rounded-xl mb-4 leading-relaxed italic">
                       &ldquo;{movie.review}&rdquo;
                     </p>
                   )}
                 </div>
 
                 <div className="border-t border-zinc-100 dark:border-zinc-800/60 pt-4 flex items-center justify-between mt-4">
-                  <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
                     Added: {format(new Date(movie.createdAt), "MMM d, yyyy")}
                   </span>
 
@@ -306,20 +306,20 @@ export default function MoviesPage() {
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-6">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
                 <Film className="w-5 h-5 text-primary" /> Add Watchlist Item
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Title</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Title</label>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. La La Land, Succession"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200"
                   />
                 </div>
 

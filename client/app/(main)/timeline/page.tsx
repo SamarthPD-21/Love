@@ -102,8 +102,8 @@ export default function TimelinePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
-            <Globe className="w-8 h-8 text-primary" /> Our Timeline
+          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Globe className="w-8 h-8 text-primary animate-pulse-soft" /> Our Timeline
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             A vertical journal of our biggest moments, travels, and milestones 🌎
@@ -179,12 +179,12 @@ export default function TimelinePage() {
                         </button>
                       </div>
 
-                      <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50 leading-snug">
+                      <h3 className="text-lg font-bold text-foreground leading-snug">
                         {milestone.title}
                       </h3>
 
                       {milestone.description && (
-                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                           {milestone.description}
                         </p>
                       )}
@@ -222,41 +222,41 @@ export default function TimelinePage() {
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2 mb-6">
+               <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
                 <Sparkles className="w-5 h-5 text-primary" /> Add Milestone
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Title</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Title</label>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. The Day We Met, Our First Flight"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Description</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Description</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe this beautiful moment..."
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Date</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Date</label>
                   <input
                     type="date"
                     required
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200"
                   />
                 </div>
 

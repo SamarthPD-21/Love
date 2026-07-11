@@ -33,6 +33,50 @@ export default function SongsPage() {
   const [url, setUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [fetchingInfo, setFetchingInfo] = useState(false);
+
+  useEffect(() => {
+    if (!url) return;
+    if (!url.includes("spotify.com")) return;
+
+    try {
+      new URL(url);
+    } catch (_) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setFetchingInfo(true);
+      setError("");
+      try {
+        const res = await api.post("/songs/spotify-info", { url });
+        if (res.data.success && res.data.data) {
+          const rawTitle = res.data.data.title || "";
+          let parsedTitle = rawTitle;
+          let parsedArtist = "";
+
+          if (rawTitle.includes(" - song by ")) {
+            const parts = rawTitle.split(" - song by ");
+            parsedTitle = parts[0];
+            parsedArtist = parts[1].replace(" | Spotify", "").trim();
+          } else if (rawTitle.includes(" by ")) {
+            const parts = rawTitle.split(" by ");
+            parsedTitle = parts[0];
+            parsedArtist = parts[1].replace(" | Spotify", "").trim();
+          }
+
+          setTitle(parsedTitle);
+          setArtist(parsedArtist || "Spotify Track");
+        }
+      } catch (err) {
+        console.error("Failed to auto-fetch Spotify track details:", err);
+      } finally {
+        setFetchingInfo(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [url]);
 
   const fetchSongs = async () => {
     try {
@@ -262,6 +306,25 @@ export default function SongsPage() {
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Spotify / Youtube URL</label>
+                    {fetchingInfo && (
+                      <span className="text-[10px] text-primary font-bold animate-pulse-soft flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Fetching info...
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="url"
+                    required
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="Paste Spotify track link"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Song Title</label>
@@ -286,18 +349,6 @@ export default function SongsPage() {
                       className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Spotify / Youtube URL</label>
-                  <input
-                    type="url"
-                    required
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="Paste track share link"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                  />
                 </div>
 
                 <div className="space-y-1.5">

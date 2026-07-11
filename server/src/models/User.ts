@@ -9,6 +9,11 @@ export interface IUser extends Document {
   avatar: string;
   partnerId?: Types.ObjectId;
   relationshipId?: Types.ObjectId;
+  lastLocation?: {
+    lat: number;
+    lng: number;
+    updatedAt: Date;
+  };
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -43,6 +48,11 @@ const userSchema = new Schema<IUser>({
     type: Schema.Types.ObjectId,
     ref: "Relationship",
     default: undefined,
+  },
+  lastLocation: {
+    lat: { type: Number },
+    lng: { type: Number },
+    updatedAt: { type: Date }
   },
   createdAt: {
     type: Date,

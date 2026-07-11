@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Gift, Camera, CloudSun, MessageCircleHeart, Clock, Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { Heart, Gift, Camera, CloudSun, MessageCircleHeart, Clock, Sparkles, Loader2, ArrowRight, MapPin } from "lucide-react";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useCountdown } from "@/hooks/useCountdown";
 import { PageTransition } from "@/components/animations/PageTransition";
@@ -13,6 +13,7 @@ import { cn, daysBetween, formatNumber } from "@/lib/utils";
 import api from "@/lib/api";
 import { format } from "date-fns";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
+import { useDistance } from "@/hooks/useDistance";
 
 const RELATIONSHIP_FALLBACK_START = "2024-10-01";
 
@@ -33,6 +34,7 @@ export default function HomePage() {
   const { user } = useAuthStore();
   const { timeOfDay, greeting, subGreeting } = useTimeOfDay();
   const { playSound } = useSoundEffects();
+  const { distance, isLoading: distanceLoading } = useDistance();
 
   // Geolocation & Weather States
   const [weather, setWeather] = useState<{ temp: number; text: string; emoji: string } | null>(null);
@@ -190,7 +192,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              {greeting}, <span className="gradient-text">{user?.name || "Love"}</span> <span className="inline-block animate-pulse-soft">❤️</span>
+              Our Little Universe <span className="inline-block animate-pulse-soft">💫</span>
             </motion.h1>
             <motion.p
               className={cn(
@@ -360,6 +362,52 @@ export default function HomePage() {
                   className="text-xs text-primary font-bold hover:underline mt-1"
                 >
                   Create one now ⏰
+                </Link>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Live Distance Card */}
+          <motion.div variants={item} className="card-cozy p-6 flex flex-col justify-between group">
+            <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground mb-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary animate-bounce" />
+                <span className="font-bold uppercase tracking-wider text-xs">Our Distance</span>
+              </div>
+              <Link
+                href="/profile"
+                onClick={() => playSound("tap")}
+                className="text-[10px] text-primary hover:underline font-bold flex items-center shrink-0"
+              >
+                Profile <ArrowRight className="w-2.5 h-2.5 ml-0.5" />
+              </Link>
+            </div>
+            
+            {distanceLoading ? (
+              <div className="flex items-center justify-center h-14">
+                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              </div>
+            ) : distance !== null ? (
+              <div className="flex flex-col justify-center h-14">
+                <div className="flex items-baseline gap-1.5">
+                  <p className="text-3xl font-black text-foreground tabular-nums">
+                    {distance.toFixed(1)}
+                  </p>
+                  <span className="text-xs font-bold text-muted-foreground">km apart</span>
+                </div>
+                <p className="text-[10px] text-primary font-bold mt-1 animate-pulse-soft">
+                  Just a heartbeat away ❤️
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col justify-center h-14">
+                <p className="text-xs text-muted-foreground italic">Distance unavailable</p>
+                <Link
+                  href="/profile"
+                  onClick={() => playSound("tap")}
+                  className="text-[10px] text-primary font-bold hover:underline mt-1"
+                >
+                  Enable location sharing 📍
                 </Link>
               </div>
             )}

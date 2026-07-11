@@ -185,7 +185,7 @@ export default function OpenWhenPage() {
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-xs appearance-none"
+                      className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm appearance-none"
                     >
                       {categories.map((c) => (
                         <option key={c.name} value={c.name}>
@@ -201,7 +201,7 @@ export default function OpenWhenPage() {
                     <select
                       value={customBg}
                       onChange={(e) => setCustomBg(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-xs appearance-none"
+                      className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm appearance-none"
                     >
                       {bgOptions.map((b) => (
                         <option key={b.value} value={b.value}>
@@ -221,7 +221,7 @@ export default function OpenWhenPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-xs"
+                    className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   />
                 </div>
 
@@ -234,7 +234,7 @@ export default function OpenWhenPage() {
                     onChange={(e) => setContent(e.target.value)}
                     required
                     rows={6}
-                    className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-xs resize-none handwritten text-lg"
+                    className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm resize-none handwritten text-base"
                   />
                 </div>
 
@@ -252,7 +252,7 @@ export default function OpenWhenPage() {
                     placeholder="Spotify track url or YouTube video"
                     value={songLink}
                     onChange={(e) => setSongLink(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-xs"
+                    className="w-full px-4 py-2.5 bg-background rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   />
                 </div>
 

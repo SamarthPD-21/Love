@@ -49,6 +49,7 @@ const navItems = [
   { label: "Games", href: "/games", icon: Gamepad2, emoji: "🎮" },
   { label: "Comfort", href: "/comfort", icon: HandHeart, emoji: "🫂" },
   { label: "Stats", href: "/stats", icon: BarChart3, emoji: "📊" },
+  { label: "Partner Profile", href: "/profile", icon: User, emoji: "👤" },
   { label: "Settings", href: "/settings", icon: Settings, emoji: "⚙️" },
 ];
 
@@ -126,7 +127,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="px-4 py-4 border-b border-border bg-muted/20">
           {partner ? (
             <Link
-              href="/settings"
+              href="/profile"
               onClick={() => {
                 playSound("tap");
                 onClose();
