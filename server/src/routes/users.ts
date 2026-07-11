@@ -131,4 +131,71 @@ router.put("/relationship", async (req: Request, res: Response) => {
   }
 });
 
+// ── GET /hugs ──────────────────────────────────────────────────
+router.get("/hugs", async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || !user.relationshipId) {
+      res.status(404).json({ error: "Relationship not found" });
+      return;
+    }
+
+    const relationship = await Relationship.findById(user.relationshipId);
+    if (!relationship) {
+      res.status(404).json({ error: "Relationship not found" });
+      return;
+    }
+
+    const hugsMap = relationship.hugs || new Map();
+    const myId = user._id.toString();
+    const partnerId = user.partnerId ? user.partnerId.toString() : null;
+
+    const myHugs = hugsMap.get(myId) || 0;
+    const partnerHugs = partnerId ? (hugsMap.get(partnerId) || 0) : 0;
+
+    res.json({
+      success: true,
+      myHugs,
+      partnerHugs,
+    });
+  } catch (error) {
+    console.error("Get hugs error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ── POST /hugs ─────────────────────────────────────────────────
+router.post("/hugs", async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || !user.relationshipId) {
+      res.status(404).json({ error: "Relationship not found" });
+      return;
+    }
+
+    const relationship = await Relationship.findById(user.relationshipId);
+    if (!relationship) {
+      res.status(404).json({ error: "Relationship not found" });
+      return;
+    }
+
+    const myId = user._id.toString();
+    const currentHugs = relationship.hugs.get(myId) || 0;
+    relationship.hugs.set(myId, currentHugs + 1);
+    await relationship.save();
+
+    const partnerId = user.partnerId ? user.partnerId.toString() : null;
+    const partnerHugs = partnerId ? (relationship.hugs.get(partnerId) || 0) : 0;
+
+    res.json({
+      success: true,
+      myHugs: currentHugs + 1,
+      partnerHugs,
+    });
+  } catch (error) {
+    console.error("Increment hugs error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

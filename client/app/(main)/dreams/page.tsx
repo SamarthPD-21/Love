@@ -143,7 +143,7 @@ export default function DreamsPage() {
             </span>
             <span className="text-sm font-bold text-primary">{progressPercent}% ({completedCount}/{totalCount})</span>
           </div>
-          <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-950 rounded-full overflow-hidden border border-zinc-200/50 dark:border-zinc-850">
+          <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-950 rounded-full overflow-hidden border border-zinc-200/50 dark:border-zinc-800">
             <motion.div
               className="h-full bg-primary"
               initial={{ width: 0 }}
@@ -163,7 +163,7 @@ export default function DreamsPage() {
                 "px-3.5 py-1.5 rounded-xl text-xs font-semibold capitalize border transition-all cursor-pointer",
                 activeFilter === cat
                   ? "bg-primary border-primary text-white"
-                  : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-650 dark:text-zinc-350 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
               )}
             >
               {cat}
@@ -196,7 +196,7 @@ export default function DreamsPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className={cn(
                   "card-cozy p-6 flex flex-col justify-between cursor-pointer border transition-all",
-                  dream.isCompleted ? "bg-zinc-50/50 dark:bg-zinc-955/20 border-emerald-500/20" : ""
+                  dream.isCompleted ? "bg-zinc-50/50 dark:bg-zinc-900/20 border-emerald-500/20" : ""
                 )}
                 onClick={() => handleToggleCompleted(dream._id, dream.isCompleted)}
                 key={dream._id}

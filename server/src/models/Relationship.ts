@@ -7,6 +7,7 @@ export interface IRelationship extends Document {
   startDate: Date;
   inviteCode: string;
   status: "pending" | "active";
+  hugs: Map<string, number>;
   createdAt: Date;
 }
 
@@ -34,6 +35,11 @@ const relationshipSchema = new Schema<IRelationship>({
     type: String,
     enum: ["pending", "active"],
     default: "pending",
+  },
+  hugs: {
+    type: Map,
+    of: Number,
+    default: {},
   },
   createdAt: {
     type: Date,

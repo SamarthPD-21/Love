@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { HandHeart, Heart, Sparkles, Smile } from "lucide-react";
+import { HandHeart, Heart, Sparkles, Smile, Loader2 } from "lucide-react";
+import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const COMFORT_QUOTES = [
@@ -17,14 +18,46 @@ const COMFORT_QUOTES = [
 ];
 
 export default function ComfortPage() {
-  const [hugCount, setHugCount] = useState(0);
+  const [myHugs, setMyHugs] = useState(0);
+  const [partnerHugs, setPartnerHugs] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [quoteIdx, setQuoteIdx] = useState(0);
   const [showHeartBurst, setShowHeartBurst] = useState(false);
 
-  const handleHugClick = () => {
-    setHugCount((prev) => prev + 1);
+  const fetchHugs = async () => {
+    try {
+      const res = await api.get("/users/hugs");
+      if (res.data.success) {
+        setMyHugs(res.data.myHugs);
+        setPartnerHugs(res.data.partnerHugs);
+      }
+    } catch (e) {
+      console.error("Failed to load hugs count:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHugs();
+  }, []);
+
+  const handleHugClick = async () => {
     setShowHeartBurst(true);
     setTimeout(() => setShowHeartBurst(false), 800);
+
+    try {
+      // Optimistic update
+      setMyHugs((prev) => prev + 1);
+
+      const res = await api.post("/users/hugs");
+      if (res.data.success) {
+        setMyHugs(res.data.myHugs);
+        setPartnerHugs(res.data.partnerHugs);
+      }
+    } catch (e) {
+      console.error("Failed to increment hugs count:", e);
+    }
   };
 
   const handleNextQuote = () => {
@@ -45,7 +78,7 @@ export default function ComfortPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch flex-1">
         {/* Left/Middle Column: Reassurance card & Hug Button */}
-        <div className="lg:col-span-2 bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 sm:p-10 text-center relative overflow-hidden flex flex-col items-center justify-center space-y-8 min-h-[400px]">
+        <div className="lg:col-span-2 bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md rounded-3xl p-6 sm:p-10 text-center relative overflow-hidden flex flex-col items-center justify-center space-y-8 min-h-[400px] shadow-xl">
           {/* Ambient Glows */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 blur-3xl rounded-full translate-y-1/2 -translate-x-1/2" />
@@ -80,35 +113,55 @@ export default function ComfortPage() {
             </motion.button>
           </div>
 
-          <div className="space-y-2">
-            <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-50">
-              {hugCount === 0 ? "Need a hug?" : `Sent ${hugCount} Hugs 🫂`}
+          <div className="space-y-4 w-full max-w-sm">
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+              Need a virtual hug?
             </h3>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Whenever you feel lonely, tap the heart button above to send a virtual embrace. We are always connected.
             </p>
+
+            {/* Hug Counters Section */}
+            {loading ? (
+              <div className="flex justify-center pt-2">
+                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800/80">
+                <div className="p-3 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/15">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider">My Hugs Sent</p>
+                  <p className="text-2xl font-black text-zinc-900 dark:text-zinc-50 mt-1">{myHugs}</p>
+                </div>
+                <div className="p-3 bg-secondary/5 dark:bg-secondary/10 rounded-2xl border border-secondary/15">
+                  <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Partner Hugs Sent</p>
+                  <p className="text-2xl font-black text-zinc-900 dark:text-zinc-50 mt-1">{partnerHugs}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right Column: Cozy Reassurance Quote Drawer */}
-        <div className="card-cozy p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden bg-primary/5 dark:bg-primary/10 border-2 border-primary/10">
+        <div className="card-cozy p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden bg-primary/5 dark:bg-primary/10 border-2 border-primary/10 shadow-lg">
           <div className="space-y-4">
             <span className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5" /> Reassurance Notes
             </span>
 
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={quoteIdx}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                transition={{ duration: 0.3 }}
-                className="handwritten text-xl sm:text-2xl leading-relaxed text-zinc-800 dark:text-zinc-100 italic"
-              >
-                &ldquo;{COMFORT_QUOTES[quoteIdx]}&rdquo;
-              </motion.p>
-            </AnimatePresence>
+            <div className="min-h-[160px] flex items-center justify-center">
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={quoteIdx}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="handwritten text-3xl sm:text-4xl leading-normal text-zinc-900 dark:text-zinc-50"
+                >
+                  &ldquo;{COMFORT_QUOTES[quoteIdx]}&rdquo;
+                </motion.p>
+              </AnimatePresence>
+            </div>
           </div>
 
           <div className="border-t border-primary/10 pt-4 mt-6">

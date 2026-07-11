@@ -168,7 +168,7 @@ export default function SongsPage() {
                 <div>
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div>
-                      <h3 className="font-bold text-zinc-955 dark:text-zinc-50 text-base leading-tight">
+                      <h3 className="font-bold text-zinc-900 dark:text-zinc-50 text-base leading-tight">
                         {song.title}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-0.5">{song.artist}</p>
@@ -195,7 +195,7 @@ export default function SongsPage() {
                   </div>
 
                   {song.notes && (
-                    <p className="handwritten text-sm text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-850 p-3 rounded-xl mb-4 leading-relaxed">
+                    <p className="handwritten text-xl text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800 p-3 rounded-xl mb-4 leading-relaxed">
                       &ldquo;{song.notes}&rdquo;
                     </p>
                   )}
@@ -214,7 +214,7 @@ export default function SongsPage() {
                     />
                   </div>
                 ) : (
-                  <div className="mt-2 py-3 px-4 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-850 flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="mt-2 py-3 px-4 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800 flex items-center justify-between text-xs text-muted-foreground">
                     <span className="truncate max-w-[200px]">{song.url}</span>
                     <a
                       href={song.url}

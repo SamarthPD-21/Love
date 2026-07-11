@@ -174,7 +174,7 @@ export default function GratitudePage() {
                           </span>
                         </div>
 
-                        <p className="handwritten text-lg text-zinc-850 dark:text-zinc-100 leading-relaxed mb-4">
+                        <p className="handwritten text-2xl text-zinc-800 dark:text-zinc-50 leading-relaxed mb-4">
                           &ldquo;{item.content}&rdquo;
                         </p>
                       </div>

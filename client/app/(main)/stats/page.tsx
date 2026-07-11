@@ -83,7 +83,7 @@ export default function StatsPage() {
               <Camera className="w-5 h-5 text-primary" />
               <span className="font-semibold">Memories Captured</span>
             </div>
-            <p className="text-4xl font-extrabold text-zinc-955 dark:text-zinc-50 tracking-tight">
+            <p className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
               {stats.memoriesCount}
             </p>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
@@ -97,7 +97,7 @@ export default function StatsPage() {
               <ScrollText className="w-5 h-5 text-primary" />
               <span className="font-semibold">Letters Written</span>
             </div>
-            <p className="text-4xl font-extrabold text-zinc-955 dark:text-zinc-50 tracking-tight">
+            <p className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
               {stats.lettersCount}
             </p>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
@@ -111,7 +111,7 @@ export default function StatsPage() {
               <Mic className="w-5 h-5 text-primary" />
               <span className="font-semibold">Voice Notes Left</span>
             </div>
-            <p className="text-4xl font-extrabold text-zinc-955 dark:text-zinc-50 tracking-tight">
+            <p className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
               {stats.voiceNotesCount}
             </p>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
@@ -125,7 +125,7 @@ export default function StatsPage() {
               <Target className="w-5 h-5 text-primary" />
               <span className="font-semibold">Dreams & Bucket List</span>
             </div>
-            <p className="text-4xl font-extrabold text-zinc-955 dark:text-zinc-50 tracking-tight">
+            <p className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
               {stats.dreamsCount.completed} / {stats.dreamsCount.total}
             </p>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
@@ -139,7 +139,7 @@ export default function StatsPage() {
               <Music className="w-5 h-5 text-primary" />
               <span className="font-semibold">Songs in Playlist</span>
             </div>
-            <p className="text-4xl font-extrabold text-zinc-955 dark:text-zinc-50 tracking-tight">
+            <p className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
               {stats.songsCount}
             </p>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
@@ -153,7 +153,7 @@ export default function StatsPage() {
               <Flower2 className="w-5 h-5 text-primary" />
               <span className="font-semibold">Gratitudes Logged</span>
             </div>
-            <p className="text-4xl font-extrabold text-zinc-955 dark:text-zinc-50 tracking-tight">
+            <p className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
               {stats.gratitudesCount}
             </p>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">

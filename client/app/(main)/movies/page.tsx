@@ -243,7 +243,7 @@ export default function MoviesPage() {
                             "w-3.5 h-3.5",
                             idx < (movie.rating || 0)
                               ? "text-amber-400 fill-amber-400"
-                              : "text-zinc-250 dark:text-zinc-700"
+                              : "text-zinc-200 dark:text-zinc-700"
                           )}
                         />
                       ))}
@@ -251,7 +251,7 @@ export default function MoviesPage() {
                   )}
 
                   {movie.status === "watched" && movie.review && (
-                    <p className="handwritten text-xs text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-850 p-3 rounded-xl mb-4 leading-relaxed italic">
+                    <p className="handwritten text-xl text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800 p-3 rounded-xl mb-4 leading-relaxed italic">
                       &ldquo;{movie.review}&rdquo;
                     </p>
                   )}
@@ -333,7 +333,7 @@ export default function MoviesPage() {
                         "py-3 rounded-xl border text-sm font-semibold cursor-pointer transition-all",
                         type === "movie"
                           ? "bg-primary border-primary text-white"
-                          : "bg-zinc-50 dark:bg-zinc-955 border-zinc-200 dark:border-zinc-800 text-zinc-400"
+                          : "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400"
                       )}
                     >
                       🎬 Movie
@@ -345,7 +345,7 @@ export default function MoviesPage() {
                         "py-3 rounded-xl border text-sm font-semibold cursor-pointer transition-all",
                         type === "show"
                           ? "bg-primary border-primary text-white"
-                          : "bg-zinc-50 dark:bg-zinc-955 border-zinc-200 dark:border-zinc-800 text-zinc-400"
+                          : "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400"
                       )}
                     >
                       📺 TV Show

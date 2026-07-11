@@ -59,6 +59,32 @@ export default function SettingsPage() {
     fetchDetails();
   }, []);
 
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    setErrorProfile("");
+    const formData = new FormData();
+    formData.append("files", file);
+
+    try {
+      const response = await api.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (response.data?.urls?.[0]) {
+        setProfileAvatar(response.data.urls[0]);
+      }
+    } catch (err: any) {
+      setErrorProfile("Failed to upload avatar image");
+      console.error(err);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profileName.trim()) return;
@@ -151,15 +177,40 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Avatar Image URL</label>
-                <input
-                  type="url"
-                  value={profileAvatar}
-                  onChange={(e) => setProfileAvatar(e.target.value)}
-                  placeholder="Paste URL for avatar photo"
-                  className="w-full px-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                />
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider block">Profile Photo</label>
+                
+                <div className="flex items-center gap-4">
+                  {/* Photo Preview */}
+                  <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden shrink-0">
+                    {profileAvatar ? (
+                      <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-8 h-8 text-primary" />
+                    )}
+                  </div>
+
+                  {/* File input button */}
+                  <div className="flex-1">
+                    <label className="inline-block px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                      {uploadingAvatar ? (
+                        <span className="flex items-center gap-1.5">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...
+                        </span>
+                      ) : (
+                        "Upload Photo 📸"
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingAvatar}
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">JPG, PNG, or GIF up to 5MB</p>
+                  </div>
+                </div>
               </div>
 
               {errorProfile && (

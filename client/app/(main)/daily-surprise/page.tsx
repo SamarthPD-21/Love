@@ -24,6 +24,18 @@ export default function DailySurprisePage() {
   const [history, setHistory] = useState<{ day: string; title: string; detail: string }[]>([]);
 
   useEffect(() => {
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    const isOpened = localStorage.getItem(`surprise-opened-${todayStr}`) === "true";
+    setOpened(isOpened);
+  }, []);
+
+  const handleOpen = () => {
+    setOpened(true);
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    localStorage.setItem(`surprise-opened-${todayStr}`, "true");
+  };
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const [dailyRes, historyRes] = await Promise.all([
@@ -89,7 +101,7 @@ export default function DailySurprisePage() {
                       repeatDelay: 0.5,
                       ease: "easeInOut",
                     }}
-                    onClick={() => setOpened(true)}
+                    onClick={handleOpen}
                   >
                     🎁
                   </motion.div>
@@ -100,7 +112,7 @@ export default function DailySurprisePage() {
                     </p>
                   </div>
                   <button
-                    onClick={() => setOpened(true)}
+                    onClick={handleOpen}
                     className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-semibold cursor-pointer shadow-md hover:shadow-lg transition-all duration-200"
                   >
                     Open Gift

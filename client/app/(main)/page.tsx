@@ -39,6 +39,18 @@ export default function HomePage() {
   // Today's surprise reveal state
   const [revealSurprise, setRevealSurprise] = useState(false);
 
+  useEffect(() => {
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    const isOpened = localStorage.getItem(`surprise-opened-${todayStr}`) === "true";
+    setRevealSurprise(isOpened);
+  }, []);
+
+  const handleOpenSurprise = () => {
+    setRevealSurprise(true);
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    localStorage.setItem(`surprise-opened-${todayStr}`, "true");
+  };
+
   // 1. Dynamic Relationship Start Date (fetched from populated profile)
   const { data: profile } = useQuery({
     queryKey: ["user-me"],
@@ -262,7 +274,7 @@ export default function HomePage() {
           <motion.div
             variants={item}
             className="card-cozy p-6 cursor-pointer group"
-            onClick={() => setRevealSurprise(true)}
+            onClick={handleOpenSurprise}
             whileHover={!revealSurprise ? { scale: 1.02 } : {}}
             whileTap={!revealSurprise ? { scale: 0.98 } : {}}
           >

@@ -96,6 +96,122 @@ router.post("/message", async (req: any, res: Response) => {
   }
 });
 
+// Shared Helper to calculate stable daily surprise based on day of year
+async function getSurpriseForDay(relationshipId: any, dayOffset: number) {
+  const memories = await Memory.find({ relationshipId }).select("title photos story date");
+  const letters = await Letter.find({ relationshipId, isUnlocked: true }).select("title content");
+  const voiceNotes = await VoiceNote.find({ relationshipId }).select("title category audioUrl duration");
+
+  const surprisePool: any[] = [];
+
+  memories.forEach((m) => {
+    surprisePool.push({
+      type: "memory",
+      title: `Memory of the Day: ${m.title}`,
+      detail: m.story || "A beautiful memory you shared.",
+      media: m.photos?.[0] || "",
+      link: `/memories/${m._id}`,
+    });
+  });
+
+  letters.forEach((l) => {
+    surprisePool.push({
+      type: "letter",
+      title: `A Hidden Letter: ${l.title}`,
+      detail: l.content.slice(0, 100) + "...",
+      link: `/letters/${l._id}`,
+    });
+  });
+
+  voiceNotes.forEach((vn) => {
+    surprisePool.push({
+      type: "voice",
+      title: `Voice Whisper: ${vn.title || vn.category}`,
+      detail: `A voice note recorded for you (${Math.round(vn.duration)}s).`,
+      media: vn.audioUrl,
+      link: `/voice-notes`,
+    });
+  });
+
+  if (surprisePool.length === 0) {
+    return {
+      type: "quote",
+      title: "Today's Quote",
+      detail: "Home is wherever I am with you.",
+      link: "/",
+    };
+  }
+
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const diff = now.getTime() - start.getTime();
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay) + dayOffset;
+
+  const idx = ((dayOfYear % surprisePool.length) + surprisePool.length) % surprisePool.length;
+  return surprisePool[idx];
+}
+
+/**
+ * GET /api/daily
+ * Get today's summary (both message and surprise).
+ */
+router.get("/", async (req: any, res: Response) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || !user.relationshipId) {
+      res.status(404).json({ error: "Relationship not found" });
+      return;
+    }
+
+    // Get today's message
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const messageDoc = await DailyMessage.findOne({
+      relationshipId: user.relationshipId,
+      scheduledDate: today,
+    });
+    const message = messageDoc?.message || "You're the best part of every single day. Never forget that. ❤️";
+
+    // Get surprise
+    const surprise = await getSurpriseForDay(user.relationshipId, 0);
+
+    res.json({ success: true, message, surprise });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/daily/history
+ * Get past surprises history list.
+ */
+router.get("/history", async (req: any, res: Response) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || !user.relationshipId) {
+      res.status(404).json({ error: "Relationship not found" });
+      return;
+    }
+
+    const historyList: any[] = [];
+    for (let i = 1; i <= 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const surprise = await getSurpriseForDay(user.relationshipId, -i);
+      historyList.push({
+        day: date.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }),
+        title: surprise.title,
+        detail: surprise.detail,
+      });
+    }
+
+    res.json({ success: true, data: historyList });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 /**
  * GET /api/daily/surprise
  * Get today's daily surprise. Rotates daily based on day of year.
@@ -108,68 +224,7 @@ router.get("/surprise", async (req: any, res: Response) => {
       return;
     }
 
-    // Fetch pool of surprise elements:
-    // 1. Memories
-    const memories = await Memory.find({ relationshipId: user.relationshipId }).select("title photos story date");
-    // 2. Unlocked Letters
-    const letters = await Letter.find({ relationshipId: user.relationshipId, isUnlocked: true }).select("title content");
-    // 3. Voice Notes
-    const voiceNotes = await VoiceNote.find({ relationshipId: user.relationshipId }).select("title category audioUrl duration");
-
-    // Map them to unified surprise items
-    const surprisePool: any[] = [];
-
-    memories.forEach((m) => {
-      surprisePool.push({
-        type: "memory",
-        title: `Memory of the Day: ${m.title}`,
-        detail: m.story || "A beautiful memory you shared.",
-        media: m.photos?.[0] || "",
-        link: `/memories/${m._id}`,
-      });
-    });
-
-    letters.forEach((l) => {
-      surprisePool.push({
-        type: "letter",
-        title: `A Hidden Letter: ${l.title}`,
-        detail: l.content.slice(0, 100) + "...",
-        link: `/letters/${l._id}`,
-      });
-    });
-
-    voiceNotes.forEach((vn) => {
-      surprisePool.push({
-        type: "voice",
-        title: `Voice Whisper: ${vn.title || vn.category}`,
-        detail: `A voice note recorded for you (${Math.round(vn.duration)}s).`,
-        media: vn.audioUrl,
-        link: `/voice-notes`,
-      });
-    });
-
-    if (surprisePool.length === 0) {
-      res.json({
-        success: true,
-        data: {
-          type: "quote",
-          title: "Today's Quote",
-          detail: "Home is wherever I am with you.",
-          link: "/",
-        },
-      });
-      return;
-    }
-
-    // Get stable index based on day of year
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 0);
-    const diff = now.getTime() - start.getTime();
-    const oneDay = 1000 * 60 * 60 * 24;
-    const dayOfYear = Math.floor(diff / oneDay);
-
-    const surprise = surprisePool[dayOfYear % surprisePool.length];
-
+    const surprise = await getSurpriseForDay(user.relationshipId, 0);
     res.json({ success: true, data: surprise });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

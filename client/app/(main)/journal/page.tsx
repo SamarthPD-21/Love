@@ -153,7 +153,7 @@ export default function JournalPage() {
                   {entry.title}
                 </h3>
 
-                <p className="handwritten text-base text-zinc-800 dark:text-zinc-150 leading-relaxed whitespace-pre-wrap">
+                <p className="handwritten text-2xl text-zinc-800 dark:text-zinc-200 leading-relaxed whitespace-pre-wrap">
                   {entry.content}
                 </p>
               </div>
@@ -163,7 +163,7 @@ export default function JournalPage() {
                   <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center font-bold text-[10px] text-primary uppercase">
                     {entry.userId.name.slice(0, 1)}
                   </div>
-                  <span className="text-[10px] font-bold text-zinc-650 dark:text-zinc-350">
+                  <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300">
                     Written by {entry.userId.name}
                   </span>
                 </div>
@@ -234,7 +234,7 @@ export default function JournalPage() {
                           "px-3 py-2 rounded-xl border text-xs font-semibold capitalize flex items-center gap-1.5 cursor-pointer transition-all",
                           mood === m
                             ? "bg-primary border-primary text-white"
-                            : "bg-zinc-50 dark:bg-zinc-955 border-zinc-200 dark:border-zinc-800 text-zinc-400 hover:text-zinc-600"
+                            : "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400 hover:text-zinc-600"
                         )}
                       >
                         <span>{moodEmojis[m]}</span>
