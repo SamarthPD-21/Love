@@ -82,7 +82,6 @@ export default function InvitePage() {
                   "w-full pl-10 pr-4 py-3 rounded-xl text-sm",
                   "bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800",
                   "text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600",
-                  "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
                   "transition-all duration-200"
                 )}
               />
@@ -107,7 +106,6 @@ export default function InvitePage() {
                   "w-full pl-10 pr-4 py-3 rounded-xl text-sm",
                   "bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800",
                   "text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600",
-                  "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
                   "transition-all duration-200"
                 )}
               />
@@ -132,7 +130,6 @@ export default function InvitePage() {
                   "w-full pl-10 pr-4 py-3 rounded-xl text-sm",
                   "bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800",
                   "text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600",
-                  "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
                   "transition-all duration-200"
                 )}
               />
@@ -158,7 +155,6 @@ export default function InvitePage() {
                   "w-full pl-10 pr-12 py-3 rounded-xl text-sm",
                   "bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800",
                   "text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600",
-                  "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
                   "transition-all duration-200"
                 )}
               />

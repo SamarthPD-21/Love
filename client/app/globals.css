@@ -139,59 +139,61 @@
   border-color: var(--border);
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="datetime-local"],
-input[type="date"],
-textarea,
-select {
-  background-color: rgba(255, 255, 255, 0.7) !important;
-  border: 1.5px solid rgba(220, 215, 205, 0.8) !important;
-  border-radius: 16px !important;
-  padding: 12px 16px !important;
-  color: var(--foreground) !important;
-  font-size: 0.875rem !important;
-  font-family: 'Inter', system-ui, sans-serif !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01) !important;
-  outline: none !important;
-}
+@layer base {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="datetime-local"],
+  input[type="date"],
+  textarea,
+  select {
+    background-color: rgba(255, 255, 255, 0.7);
+    border: 1.5px solid rgba(220, 215, 205, 0.8);
+    border-radius: 16px;
+    padding: 12px 16px;
+    color: var(--foreground);
+    font-size: 0.875rem;
+    font-family: 'Inter', system-ui, sans-serif;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+    outline: none;
+  }
 
-.dark input[type="text"],
-.dark input[type="email"],
-.dark input[type="password"],
-.dark input[type="datetime-local"],
-.dark input[type="date"],
-.dark textarea,
-.dark select {
-  background-color: rgba(28, 22, 37, 0.6) !important;
-  border: 1.5px solid rgba(63, 63, 70, 0.7) !important;
-}
+  .dark input[type="text"],
+  .dark input[type="email"],
+  .dark input[type="password"],
+  .dark input[type="datetime-local"],
+  .dark input[type="date"],
+  .dark textarea,
+  .dark select {
+    background-color: rgba(28, 22, 37, 0.6);
+    border: 1.5px solid rgba(63, 63, 70, 0.7);
+  }
 
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-input[type="datetime-local"]:focus,
-input[type="date"]:focus,
-textarea:focus,
-select:focus {
-  background-color: #ffffff !important;
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 4px rgba(232, 160, 191, 0.18), 0 4px 10px rgba(232, 160, 191, 0.06) !important;
-  transform: translateY(-1.5px) !important;
-}
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="datetime-local"]:focus,
+  input[type="date"]:focus,
+  textarea:focus,
+  select:focus {
+    background-color: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(232, 160, 191, 0.18), 0 4px 10px rgba(232, 160, 191, 0.06);
+    transform: translateY(-1.5px);
+  }
 
-.dark input[type="text"]:focus,
-.dark input[type="email"]:focus,
-.dark input[type="password"]:focus,
-.dark input[type="datetime-local"]:focus,
-.dark input[type="date"]:focus,
-.dark textarea:focus,
-.dark select:focus {
-  background-color: rgba(28, 22, 37, 0.85) !important;
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 4px rgba(232, 160, 191, 0.22), 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  .dark input[type="text"]:focus,
+  .dark input[type="email"]:focus,
+  .dark input[type="password"]:focus,
+  .dark input[type="datetime-local"]:focus,
+  .dark input[type="date"]:focus,
+  .dark textarea:focus,
+  .dark select:focus {
+    background-color: rgba(28, 22, 37, 0.85);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(232, 160, 191, 0.22), 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
 }
 
 html {
