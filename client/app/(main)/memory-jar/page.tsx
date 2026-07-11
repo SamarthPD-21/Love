@@ -250,7 +250,7 @@ export default function MemoryJarPage() {
 
                 <div className="absolute top-0 right-0 p-3 flex gap-1 z-10">
                   <button
-                    onClick={() => handleDelete(drawnNote._id, e as any)}
+                    onClick={(e) => handleDelete(drawnNote._id, e)}
                     className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 text-zinc-400 hover:text-rose-500 cursor-pointer transition-colors"
                     title="Delete Note"
                   >
