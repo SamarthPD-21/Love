@@ -20,7 +20,7 @@ interface FloatingHeartsProps {
 export function FloatingHearts({ count = 24, className = "" }: FloatingHeartsProps) {
   const [hearts, setHearts] = useState<(Heart & { color: string })[]>([]);
 
-  const colors = ["#E8A0BF", "#C4B2D8", "#B5D6B3", "#FFD2B8"]; // Blush, Lavender, Sage, Peach
+  const colors = ["#BE3A6E", "#B8A9C9", "#D4A574", "#E8587A"]; // Rose, Mauve, Gold, Light Rose
 
   useEffect(() => {
     const generated = Array.from({ length: count }, (_, i) => ({

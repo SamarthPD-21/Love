@@ -1,18 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Caveat } from "next/font/google";
+import { DM_Sans, Playfair_Display } from "next/font/google";
 import { Providers } from "@/providers/Providers";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
   display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const caveat = Caveat({
-  variable: "--font-caveat",
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair-display",
   subsets: ["latin"],
   display: "swap",
+  style: ["normal", "italic"],
   weight: ["400", "500", "600", "700"],
 });
 
@@ -29,8 +31,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FFF8F0" },
-    { media: "(prefers-color-scheme: dark)", color: "#1A1625" },
+    { media: "(prefers-color-scheme: light)", color: "#FDF6F0" },
+    { media: "(prefers-color-scheme: dark)", color: "#0F0A1A" },
   ],
 };
 
@@ -43,13 +45,8 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${caveat.variable}`}
+      className={`${dmSans.variable} ${playfairDisplay.variable}`}
     >
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-      </head>
       <body className="min-h-dvh antialiased">
         <Providers>{children}</Providers>
       </body>

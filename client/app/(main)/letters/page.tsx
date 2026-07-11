@@ -54,7 +54,7 @@ export default function LettersPage() {
 
           <Link
             href="/letters/new"
-            className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary-hover shadow-sm hover:shadow-md transition-all text-sm w-full sm:w-auto"
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 btn-primary text-sm w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Write Letter</span>
@@ -96,7 +96,7 @@ export default function LettersPage() {
             {filter === "all" && (
               <Link
                 href="/letters/new"
-                className="inline-flex px-4 py-2 bg-primary text-primary-foreground font-semibold text-xs rounded-xl hover:bg-primary-hover shadow-sm"
+                className="inline-flex px-4 py-2 btn-primary text-xs"
               >
                 Write Your First Letter
               </Link>

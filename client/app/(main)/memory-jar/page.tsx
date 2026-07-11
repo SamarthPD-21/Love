@@ -6,6 +6,7 @@ import { Archive, Plus, Trash2, Loader2, X, Heart, RefreshCw } from "lucide-reac
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 interface JarNote {
   _id: string;
@@ -24,6 +25,7 @@ export default function MemoryJarPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [content, setContent] = useState("");
   const [creating, setCreating] = useState(false);
+  const { playSound } = useSoundEffects();
 
   // Drawing states
   const [isDrawing, setIsDrawing] = useState(false);
@@ -54,6 +56,7 @@ export default function MemoryJarPage() {
     try {
       const response = await api.post("/memory-jar", { content });
       if (response.data.success) {
+        playSound("success");
         setNotes((prev) => [response.data.data, ...prev]);
         setContent("");
         setIsModalOpen(false);
@@ -67,6 +70,7 @@ export default function MemoryJarPage() {
 
   const handleDraw = async () => {
     if (notes.length === 0) return;
+    playSound("whoosh");
     setIsDrawing(true);
     setDrawnNote(null);
 
@@ -75,6 +79,7 @@ export default function MemoryJarPage() {
       try {
         const response = await api.get("/memory-jar/draw");
         if (response.data.success) {
+          playSound("chime");
           setDrawnNote(response.data.data);
         }
       } catch (err) {
@@ -89,6 +94,7 @@ export default function MemoryJarPage() {
     e.stopPropagation();
     if (!confirm("Remove this note from the jar?")) return;
     try {
+      playSound("tap");
       await api.delete(`/memory-jar/${id}`);
       setNotes((prev) => prev.filter((n) => n._id !== id));
       if (drawnNote?._id === id) setDrawnNote(null);

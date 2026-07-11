@@ -12,6 +12,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { cn, daysBetween, formatNumber } from "@/lib/utils";
 import api from "@/lib/api";
 import { format } from "date-fns";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 const RELATIONSHIP_FALLBACK_START = "2024-10-01";
 
@@ -31,6 +32,7 @@ const item = {
 export default function HomePage() {
   const { user } = useAuthStore();
   const { timeOfDay, greeting, subGreeting } = useTimeOfDay();
+  const { playSound } = useSoundEffects();
 
   // Geolocation & Weather States
   const [weather, setWeather] = useState<{ temp: number; text: string; emoji: string } | null>(null);
@@ -46,6 +48,7 @@ export default function HomePage() {
   }, []);
 
   const handleOpenSurprise = () => {
+    playSound("chime");
     setRevealSurprise(true);
     const todayStr = format(new Date(), "yyyy-MM-dd");
     localStorage.setItem(`surprise-opened-${todayStr}`, "true");
@@ -60,6 +63,7 @@ export default function HomePage() {
     },
   });
 
+  const partner = profile?.partnerId;
   const rel = profile?.relationshipId;
   const relationshipStart = (rel && typeof rel === "object" && "startDate" in rel)
     ? rel.startDate
@@ -169,14 +173,14 @@ export default function HomePage() {
         {/* ── Hero Greeting ── */}
         <motion.div
           className={cn(
-            "rounded-2xl p-8 sm:p-10 mb-6 relative overflow-hidden",
+            "rounded-2xl p-8 sm:p-10 mb-6 relative overflow-hidden shadow-lg border border-white/10",
             bgClass,
           )}
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/10 blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/10 blur-3xl -translate-y-1/2 translate-x-1/2 animate-pulse-soft" />
           <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/10 blur-2xl translate-y-1/2 -translate-x-1/2" />
 
           <div className="relative z-10">
@@ -186,7 +190,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              {greeting}, {user?.name || "Love"} <span className="inline-block animate-pulse-soft">❤️</span>
+              {greeting}, <span className="gradient-text">{user?.name || "Love"}</span> <span className="inline-block animate-pulse-soft">❤️</span>
             </motion.h1>
             <motion.p
               className={cn(
@@ -202,6 +206,38 @@ export default function HomePage() {
           </div>
         </motion.div>
 
+        {/* ── Quick Shortcuts ── */}
+        <motion.div
+          className="grid grid-cols-4 gap-3 mb-6"
+          variants={container}
+          initial="hidden"
+          animate="show"
+        >
+          {[
+            { label: "Compose", href: "/letters/new", emoji: "📜", color: "from-[#F2D4D8] to-[#E8B8C4] dark:from-[#3D1520] dark:to-[#4D1A2A]" },
+            { label: "Voice", href: "/voice-notes", emoji: "🎤", color: "from-[#E8D4EC] to-[#D4B8E0] dark:from-[#2A1840] dark:to-[#361E52]" },
+            { label: "Draw note", href: "/memory-jar", emoji: "🫙", color: "from-[#F0DCC8] to-[#E8C8A0] dark:from-[#3A2010] dark:to-[#4A2A18]" },
+            { label: "Gratitude", href: "/gratitude", emoji: "🌼", color: "from-[#D8E8D0] to-[#C0D8B8] dark:from-[#1A2E1A] dark:to-[#244024]" },
+          ].map((action, idx) => (
+            <Link
+              key={idx}
+              href={action.href}
+              onClick={() => playSound("tap")}
+              className="flex flex-col items-center justify-center p-3 rounded-2xl bg-card/40 dark:bg-card/40 border border-border/40 hover:bg-card/70 dark:hover:bg-card/70 hover:shadow-md transition-all text-center group cursor-pointer active:scale-95 shadow-sm"
+            >
+              <div className={cn(
+                "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-lg mb-2 shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3",
+                action.color
+              )}>
+                {action.emoji}
+              </div>
+              <span className="text-[10px] font-bold text-foreground/70 dark:text-foreground/70 leading-none group-hover:text-primary transition-colors">
+                {action.label}
+              </span>
+            </Link>
+          ))}
+        </motion.div>
+
         {/* ── Cards Grid ── */}
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -210,41 +246,96 @@ export default function HomePage() {
           animate="show"
         >
           {/* Together Counter */}
-          <motion.div variants={item} className="card-cozy p-6 md:col-span-2">
+          <motion.div variants={item} className="card-cozy p-6 md:col-span-2 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                  <Heart className="w-4 h-4 text-primary fill-primary" />
-                  <span className="font-medium">Together</span>
+                  <Heart className="w-4 h-4 text-primary fill-primary animate-pulse-soft" />
+                  <span className="font-bold uppercase tracking-wider text-xs">Our Journey</span>
                 </div>
-                <p className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
+                <p className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground mt-2">
                   {formatNumber(togetherDays)}
-                  <span className="text-lg sm:text-xl font-medium text-muted-foreground ml-2">
-                    Days
+                  <span className="text-lg sm:text-xl font-bold text-muted-foreground ml-2">
+                    Days Together
                   </span>
                 </p>
               </div>
               <motion.div
-                className="text-5xl"
+                className="text-5xl cursor-pointer select-none"
                 animate={{ scale: [1, 1.15, 1, 1.1, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                onClick={() => playSound("heartbeat")}
               >
                 ❤️
               </motion.div>
             </div>
+
+            {/* Side-by-Side Avatars */}
+            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-border/60">
+              {/* My Avatar */}
+              <div className="relative group">
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary bg-primary/10 shadow-md">
+                  {profile?.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={profile.avatar} alt={profile?.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-black text-primary text-xs">
+                      {profile?.name?.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <span className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[8px] font-black px-1 py-0.5 rounded-full border border-white dark:border-zinc-950 uppercase tracking-widest leading-none scale-90">Me</span>
+              </div>
+
+              {/* Connector */}
+              <div className="flex items-center gap-1">
+                <div className="w-6 h-[2px] bg-gradient-to-r from-primary/30 to-secondary/30" />
+                <Heart className="w-4 h-4 text-primary fill-primary animate-pulse-soft shrink-0" />
+                <div className="w-6 h-[2px] bg-gradient-to-r from-secondary/30 to-primary/30" />
+              </div>
+
+              {/* Partner Avatar */}
+              {partner ? (
+                <div className="relative group">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-secondary bg-secondary/10 shadow-md">
+                    {partner.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={partner.avatar} alt={partner.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center font-black text-secondary text-xs">
+                        {partner.name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <span className="absolute -bottom-1 -right-1 bg-secondary text-secondary-foreground text-[8px] font-black px-1 py-0.5 rounded-full border border-white dark:border-zinc-950 uppercase tracking-widest leading-none scale-90">Love</span>
+                </div>
+              ) : (
+                <Link
+                  href="/settings"
+                  onClick={() => playSound("tap")}
+                  className="w-12 h-12 rounded-full border-2 border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-xs text-muted-foreground hover:border-primary transition-colors cursor-pointer"
+                >
+                  +
+                </Link>
+              )}
+            </div>
           </motion.div>
 
           {/* Dynamic Next Countdown Card */}
-          <motion.div variants={item} className="card-cozy p-6">
+          <motion.div variants={item} className="card-cozy p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground mb-3">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                <span className="font-medium truncate max-w-[140px]">
+                <Clock className="w-4 h-4 text-primary animate-pulse-soft" />
+                <span className="font-bold uppercase tracking-wider text-xs truncate max-w-[140px]">
                   {nearestCountdown ? nearestCountdown.title : "Next Hug"}
                 </span>
               </div>
               {nearestCountdown && (
-                <Link href="/countdowns" className="text-[10px] text-primary hover:underline font-semibold flex items-center">
+                <Link
+                  href="/countdowns"
+                  onClick={() => playSound("tap")}
+                  className="text-[10px] text-primary hover:underline font-bold flex items-center shrink-0"
+                >
                   All <ArrowRight className="w-2.5 h-2.5 ml-0.5" />
                 </Link>
               )}
@@ -252,18 +343,22 @@ export default function HomePage() {
             
             {nearestCountdown ? (
               countdownTimer.isExpired ? (
-                <p className="text-xl font-bold text-success">It&apos;s time! 🎉</p>
+                <p className="text-xl font-bold text-success animate-bounce">It&apos;s time! 🎉</p>
               ) : (
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <TimeBlock value={countdownTimer.days} label="days" />
-                  <TimeBlock value={countdownTimer.hours} label="hrs" />
+                  <TimeBlock value={countdownTimer.hours} label="hours" />
                   <TimeBlock value={countdownTimer.minutes} label="min" />
                 </div>
               )
             ) : (
               <div className="flex flex-col justify-center h-14">
                 <p className="text-xs text-muted-foreground italic">No countdowns set.</p>
-                <Link href="/countdowns" className="text-xs text-primary font-semibold hover:underline mt-1">
+                <Link
+                  href="/countdowns"
+                  onClick={() => playSound("tap")}
+                  className="text-xs text-primary font-bold hover:underline mt-1"
+                >
                   Create one now ⏰
                 </Link>
               </div>
@@ -273,14 +368,14 @@ export default function HomePage() {
           {/* Today's Surprise (Collapsible Reveal Animation) */}
           <motion.div
             variants={item}
-            className="card-cozy p-6 cursor-pointer group"
+            className="card-cozy p-6 cursor-pointer group flex flex-col justify-between"
             onClick={handleOpenSurprise}
             whileHover={!revealSurprise ? { scale: 1.02 } : {}}
             whileTap={!revealSurprise ? { scale: 0.98 } : {}}
           >
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-              <Gift className="w-4 h-4 text-primary" />
-              <span className="font-medium">Today&apos;s Surprise</span>
+              <Gift className="w-4 h-4 text-primary animate-bounce" />
+              <span className="font-bold uppercase tracking-wider text-xs">Today&apos;s Surprise</span>
             </div>
             
             <AnimatePresence mode="wait">
@@ -293,13 +388,13 @@ export default function HomePage() {
                   className="flex flex-col items-center justify-center py-4"
                 >
                   <motion.div
-                    className="text-4xl"
-                    animate={{ rotate: [0, -5, 5, -3, 3, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                    className="text-4xl filter drop-shadow-md"
+                    animate={{ rotate: [0, -8, 8, -5, 5, 0], scale: [1, 1.08, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 2 }}
                   >
                     🎁
                   </motion.div>
-                  <p className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors mt-3">
+                  <p className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors mt-3 font-bold">
                     Tap to open
                   </p>
                 </motion.div>
@@ -311,7 +406,7 @@ export default function HomePage() {
                   className="space-y-2 py-1 text-center"
                 >
                   <span className="text-xl">✨</span>
-                  <h4 className="text-xs font-bold text-foreground truncate">
+                  <h4 className="text-xs font-black text-foreground truncate">
                     {surpriseResponse?.title || "Daily Surprise"}
                   </h4>
                   <p className="text-[10px] text-muted-foreground line-clamp-2 italic">
@@ -319,8 +414,11 @@ export default function HomePage() {
                   </p>
                   <Link
                     href={surpriseResponse?.link || "/"}
-                    className="inline-block mt-2 text-[10px] font-semibold text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
+                    className="inline-block mt-2 text-[10px] font-bold text-primary hover:underline bg-primary/10 px-2 py-1 rounded-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      playSound("tap");
+                    }}
                   >
                     View details →
                   </Link>
@@ -330,17 +428,21 @@ export default function HomePage() {
           </motion.div>
 
           {/* Memory of the Day */}
-          <motion.div variants={item} className="card-cozy p-6 cursor-pointer group">
-            <Link href={memoryOfTheDay._id ? `/memories/${memoryOfTheDay._id}` : "/memories"}>
+          <motion.div variants={item} className="card-cozy p-6 cursor-pointer group flex flex-col justify-between">
+            <Link
+              href={memoryOfTheDay._id ? `/memories/${memoryOfTheDay._id}` : "/memories"}
+              onClick={() => playSound("tap")}
+              className="flex flex-col h-full justify-between"
+            >
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                <Camera className="w-4 h-4 text-primary" />
-                <span className="font-medium">Memory of the Day</span>
+                <Camera className="w-4 h-4 text-primary animate-pulse-soft" />
+                <span className="font-bold uppercase tracking-wider text-xs">Memory of the Day</span>
               </div>
-              <div className="relative rounded-xl bg-muted/50 p-6 text-center overflow-hidden border border-border/20">
+              <div className="relative rounded-xl bg-muted/50 p-6 text-center overflow-hidden border border-border/20 group-hover:border-primary/20 transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/10" />
                 <div className="relative">
-                  <Sparkles className="w-8 h-8 text-primary/40 mx-auto mb-2" />
-                  <p className="font-semibold text-foreground text-sm truncate">{memoryOfTheDay.title}</p>
+                  <Sparkles className="w-8 h-8 text-primary/40 mx-auto mb-2 group-hover:rotate-12 transition-transform" />
+                  <p className="font-extrabold text-foreground text-sm truncate">{memoryOfTheDay.title}</p>
                   <p className="text-[10px] text-muted-foreground mt-1">
                     {memoryOfTheDay.date ? (typeof memoryOfTheDay.date === "string" ? memoryOfTheDay.date : format(new Date(memoryOfTheDay.date), "MMM yyyy")) : "Dec 2025"}
                   </p>
@@ -350,10 +452,10 @@ export default function HomePage() {
           </motion.div>
 
           {/* Dynamic Weather Widget */}
-          <motion.div variants={item} className="card-cozy p-6">
+          <motion.div variants={item} className="card-cozy p-6 flex flex-col justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-              <CloudSun className="w-4 h-4 text-primary" />
-              <span className="font-medium">Weather</span>
+              <CloudSun className="w-4 h-4 text-primary animate-pulse-soft" />
+              <span className="font-bold uppercase tracking-wider text-xs">Weather</span>
             </div>
             
             {weatherLoading ? (
@@ -363,10 +465,10 @@ export default function HomePage() {
             ) : (
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-3xl font-bold">{weather ? `${weather.temp}°C` : "28°C"}</p>
+                  <p className="text-3xl font-black text-foreground">{weather ? `${weather.temp}°C` : "28°C"}</p>
                   <p className="text-xs text-muted-foreground">{weather ? weather.text : "Clear sky"}</p>
                 </div>
-                <span className="text-4xl">{weather ? weather.emoji : "☀️"}</span>
+                <span className="text-4xl filter drop-shadow-sm animate-float">{weather ? weather.emoji : "☀️"}</span>
               </div>
             )}
             <p className="text-[10px] text-muted-foreground mt-3 handwritten text-sm">
@@ -377,10 +479,10 @@ export default function HomePage() {
           {/* Today's Message */}
           <motion.div variants={item} className="card-cozy p-6 md:col-span-2 lg:col-span-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-              <MessageCircleHeart className="w-4 h-4 text-primary fill-primary" />
-              <span className="font-medium">Today&apos;s Message</span>
+              <MessageCircleHeart className="w-4 h-4 text-primary fill-primary animate-pulse-soft" />
+              <span className="font-bold uppercase tracking-wider text-xs">Today&apos;s Message</span>
             </div>
-            <p className="handwritten text-xl sm:text-2xl leading-relaxed text-foreground/90">
+            <p className="handwritten text-xl sm:text-2xl leading-relaxed text-foreground italic">
               &ldquo;{dailyMessageResponse?.message || "You're the best part of every single day. Never forget that. ❤️"}&rdquo;
             </p>
           </motion.div>
@@ -393,11 +495,11 @@ export default function HomePage() {
 /* ── Helper Components ── */
 function TimeBlock({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-col items-center">
-      <span className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">
+    <div className="flex flex-col items-center flex-1 p-2 rounded-xl bg-muted/50 border border-border/30 min-w-[64px]">
+      <span className="text-2xl sm:text-3xl font-black text-foreground tabular-nums">
         {String(value).padStart(2, "0")}
       </span>
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+      <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-extrabold mt-0.5">
         {label}
       </span>
     </div>

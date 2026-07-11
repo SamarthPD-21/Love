@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Home, Camera, Mail, Heart, Menu } from "lucide-react";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 const bottomNavItems = [
   { label: "Home", href: "/", icon: Home, emoji: "🏠" },
@@ -19,6 +20,7 @@ interface BottomNavProps {
 
 export function BottomNav({ onMenuOpen }: BottomNavProps) {
   const pathname = usePathname();
+  const { playSound } = useSoundEffects();
 
   return (
     <nav
@@ -31,13 +33,16 @@ export function BottomNav({ onMenuOpen }: BottomNavProps) {
       <div className="flex items-center justify-around h-16 px-2">
         {/* Menu button */}
         <button
-          onClick={onMenuOpen}
+          onClick={() => {
+            playSound("tap");
+            onMenuOpen();
+          }}
           className={cn(
-            "flex flex-col items-center justify-center gap-0.5 w-14 py-1.5",
+            "flex flex-col items-center justify-center gap-0.5 w-14 py-1.5 active:scale-95 transition-all cursor-pointer",
             "text-muted-foreground transition-colors",
           )}
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-5 h-5 animate-pulse-soft" />
           <span className="text-[10px] font-medium">More</span>
         </button>
 
@@ -49,16 +54,19 @@ export function BottomNav({ onMenuOpen }: BottomNavProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => {
+                playSound("tap");
+              }}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-0.5 w-14 py-1.5",
+                "relative flex flex-col items-center justify-center gap-0.5 w-14 py-1.5 active:scale-95 transition-all",
                 "transition-colors duration-200",
-                isActive ? "text-primary" : "text-muted-foreground",
+                isActive ? "text-primary font-semibold" : "text-muted-foreground",
               )}
             >
               {isActive && (
                 <motion.div
                   layoutId="bottom-nav-indicator"
-                  className="absolute -top-0.5 w-8 h-0.5 rounded-full bg-primary"
+                  className="absolute -top-1 w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(190,58,110,0.4)]"
                   transition={{ type: "spring", damping: 20, stiffness: 200 }}
                 />
               )}

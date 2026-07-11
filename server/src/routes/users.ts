@@ -130,19 +130,28 @@ router.put("/relationship", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 // ── GET /hugs ──────────────────────────────────────────────────
 router.get("/hugs", async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.userId);
     if (!user || !user.relationshipId) {
-      res.status(404).json({ error: "Relationship not found" });
+      res.json({
+        success: true,
+        myHugs: 0,
+        partnerHugs: 0,
+        noRelationship: true,
+      });
       return;
     }
 
     const relationship = await Relationship.findById(user.relationshipId);
     if (!relationship) {
-      res.status(404).json({ error: "Relationship not found" });
+      res.json({
+        success: true,
+        myHugs: 0,
+        partnerHugs: 0,
+        noRelationship: true,
+      });
       return;
     }
 
@@ -169,13 +178,23 @@ router.post("/hugs", async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.userId);
     if (!user || !user.relationshipId) {
-      res.status(404).json({ error: "Relationship not found" });
+      res.json({
+        success: true,
+        myHugs: 0,
+        partnerHugs: 0,
+        noRelationship: true,
+      });
       return;
     }
 
     const relationship = await Relationship.findById(user.relationshipId);
     if (!relationship) {
-      res.status(404).json({ error: "Relationship not found" });
+      res.json({
+        success: true,
+        myHugs: 0,
+        partnerHugs: 0,
+        noRelationship: true,
+      });
       return;
     }
 

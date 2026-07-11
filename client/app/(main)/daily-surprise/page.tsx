@@ -6,6 +6,7 @@ import { Sparkles, Gift, Heart, Calendar, Lock, CheckCircle2, ChevronRight, Mess
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 interface Surprise {
   title: string;
@@ -19,6 +20,7 @@ export default function DailySurprisePage() {
   const [dailyMessage, setDailyMessage] = useState("");
   const [opened, setOpened] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { playSound } = useSoundEffects();
 
   // History list of past days
   const [history, setHistory] = useState<{ day: string; title: string; detail: string }[]>([]);
@@ -30,6 +32,7 @@ export default function DailySurprisePage() {
   }, []);
 
   const handleOpen = () => {
+    playSound("chime");
     setOpened(true);
     const todayStr = format(new Date(), "yyyy-MM-dd");
     localStorage.setItem(`surprise-opened-${todayStr}`, "true");

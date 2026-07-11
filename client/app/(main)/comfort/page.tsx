@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { HandHeart, Heart, Sparkles, Smile, Loader2 } from "lucide-react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 const COMFORT_QUOTES = [
   "No matter how far we are, we are under the same sky and sharing the same moon. 🌙",
@@ -23,6 +24,7 @@ export default function ComfortPage() {
   const [loading, setLoading] = useState(true);
   const [quoteIdx, setQuoteIdx] = useState(0);
   const [showHeartBurst, setShowHeartBurst] = useState(false);
+  const { playSound } = useSoundEffects();
 
   const fetchHugs = async () => {
     try {
@@ -43,6 +45,7 @@ export default function ComfortPage() {
   }, []);
 
   const handleHugClick = async () => {
+    playSound("heartbeat");
     setShowHeartBurst(true);
     setTimeout(() => setShowHeartBurst(false), 800);
 
@@ -61,6 +64,7 @@ export default function ComfortPage() {
   };
 
   const handleNextQuote = () => {
+    playSound("pop");
     setQuoteIdx((prev) => (prev + 1) % COMFORT_QUOTES.length);
   };
 

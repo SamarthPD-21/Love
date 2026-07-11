@@ -45,30 +45,30 @@ export default function LoginPage() {
       {/* Logo */}
       <div className="text-center mb-8">
         <motion.div
-          className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4 border border-primary/20"
+          className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/8 mb-4 border border-primary/20"
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
           <Heart className="w-8 h-8 text-primary fill-primary" />
         </motion.div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Welcome Home
         </h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-sm text-muted-foreground">
           Your private space is waiting ❤️
         </p>
       </div>
 
       {/* Login Card */}
-      <div className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md shadow-xl rounded-3xl p-6 sm:p-8">
+      <div className="bg-card/80 dark:bg-card/80 border border-border/50 backdrop-blur-md shadow-xl rounded-3xl p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Email */}
           <div className="space-y-1.5">
-            <label htmlFor="login-email" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+            <label htmlFor="login-email" className="text-xs font-bold text-foreground/70 uppercase tracking-wider">
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
               <input
                 id="login-email"
                 type="email"
@@ -78,8 +78,8 @@ export default function LoginPage() {
                 required
                 className={cn(
                   "w-full pl-10 pr-4 py-3 rounded-xl text-sm",
-                  "bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800",
-                  "text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600",
+                  "bg-muted/50 dark:bg-muted/40 border border-border dark:border-border",
+                  "text-foreground placeholder:text-muted-foreground/50",
                   "transition-all duration-200"
                 )}
               />
@@ -88,11 +88,11 @@ export default function LoginPage() {
 
           {/* Password */}
           <div className="space-y-1.5">
-            <label htmlFor="login-password" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+            <label htmlFor="login-password" className="text-xs font-bold text-foreground/70 uppercase tracking-wider">
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
               <input
                 id="login-password"
                 type={showPassword ? "text" : "password"}
@@ -102,15 +102,15 @@ export default function LoginPage() {
                 required
                 className={cn(
                   "w-full pl-10 pr-12 py-3 rounded-xl text-sm",
-                  "bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800",
-                  "text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600",
+                  "bg-muted/50 dark:bg-muted/40 border border-border dark:border-border",
+                  "text-foreground placeholder:text-muted-foreground/50",
                   "transition-all duration-200"
                 )}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground dark:text-muted-foreground/50 dark:hover:text-foreground transition-colors"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -153,9 +153,9 @@ export default function LoginPage() {
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">or</span>
-          <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-[10px] text-muted-foreground/50 font-bold uppercase tracking-wider">or</span>
+          <div className="flex-1 h-px bg-border" />
         </div>
 
         {/* Action Options */}
@@ -165,8 +165,8 @@ export default function LoginPage() {
             href="/invite"
             className={cn(
               "w-full flex items-center justify-center py-2.5 rounded-xl text-xs font-semibold border",
-              "bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800",
-              "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+              "bg-muted/40 dark:bg-muted/30 border-border",
+              "text-foreground/70 hover:bg-muted/60 dark:hover:bg-muted/50",
               "transition-all duration-200"
             )}
           >
@@ -188,7 +188,7 @@ export default function LoginPage() {
       </div>
 
       {/* Footer */}
-      <p className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="mt-6 text-center text-xs text-muted-foreground/60">
         This space is only for the two of you 🤍
       </p>
     </motion.div>

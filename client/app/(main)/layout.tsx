@@ -24,7 +24,7 @@ export default function MainLayout({
   // Show a beautiful, cozy loading screen while checking auth status
   if (isLoading) {
     return (
-      <div className="min-h-dvh w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#FFF8F0] via-[#FFE4E6] to-[#E8E0F0] dark:from-[#1A1625] dark:via-[#2D1F3D] dark:to-[#1F2937]">
+      <div className="min-h-dvh w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#FDF6F0] via-[#F2D4D8] to-[#E8D4EC] dark:from-[#0F0A1A] dark:via-[#1A1030] dark:to-[#12101E]">
         <div className="relative flex flex-col items-center gap-4">
           <div className="relative">
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />

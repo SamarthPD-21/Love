@@ -33,7 +33,7 @@ router.post("/", upload.array("files", 10), async (req: any, res: Response) => {
         resourceType = "video";
       } else if (file.mimetype.startsWith("audio/")) {
         folder = "memories/voice";
-        resourceType = "video"; // Cloudinary treats audio as video resource type
+        resourceType = "auto"; // Use auto to let Cloudinary detect webm audio codec correctly
       }
 
       const result = await uploadToCloudinary(file.buffer, {
@@ -53,7 +53,10 @@ router.post("/", upload.array("files", 10), async (req: any, res: Response) => {
     res.json({ success: true, urls: results.map((r) => r.url), details: results });
   } catch (error: any) {
     console.error("Cloudinary upload error:", error);
-    res.status(500).json({ error: error.message || "Failed to upload files" });
+    res.status(500).json({
+      error: error.message || "Failed to upload files",
+      details: error
+    });
   }
 });
 
