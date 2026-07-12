@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { UploadCloud, X, Film, Image as ImageIcon, Loader2 } from "lucide-react";
+import { UploadCloud, X, Film, Loader2 } from "lucide-react";
 import api from "@/lib/api";
 import { useToastStore } from "@/stores/useToastStore";
 import { cn } from "@/lib/utils";

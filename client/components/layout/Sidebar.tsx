@@ -12,7 +12,6 @@ import { useTheme } from "next-themes";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useEffect, useState } from "react";
 import {
-  Home,
   Heart,
   X,
   User,
@@ -264,11 +263,11 @@ function GlobalRefreshButton() {
 }
 
 function ThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    Promise.resolve().then(() => setMounted(true));
   }, []);
 
   if (!mounted) {

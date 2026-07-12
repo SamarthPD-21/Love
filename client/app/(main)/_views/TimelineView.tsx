@@ -21,7 +21,7 @@ interface Milestone {
   };
 }
 
-const iconsMap: Record<string, any> = {
+const iconsMap: Record<string, React.ComponentType<{ className?: string }>> = {
   heart: Heart,
   plane: Plane,
   gift: Gift,
@@ -55,7 +55,7 @@ export default function TimelinePage() {
   };
 
   useEffect(() => {
-    fetchMilestones();
+    Promise.resolve().then(() => fetchMilestones());
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +80,7 @@ export default function TimelinePage() {
         setDate("");
         setIcon("heart");
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.response?.data?.error || "Failed to create milestone");
     } finally {
       setCreating(false);

@@ -4,17 +4,26 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Mail, Loader2, ArrowRight } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { Envelope } from "@/components/letters/Envelope";
 import { format } from "date-fns";
 import api from "@/lib/api";
+import type { Letter } from "@/types";
+
+interface PopulatedLetter extends Omit<Letter, "userId"> {
+  userId: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+}
 
 export default function LettersPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<"all" | "unlocked" | "locked">("all");
 
-  const { data: letters = [], isLoading } = useQuery({
+  const { data: letters = [], isLoading } = useQuery<PopulatedLetter[]>({
     queryKey: ["letters"],
     queryFn: async () => {
       const res = await api.get("/letters");
@@ -22,7 +31,7 @@ export default function LettersPage() {
     },
   });
 
-  const getUnlockInfo = (letter: any) => {
+  const getUnlockInfo = (letter: PopulatedLetter) => {
     if (letter.unlockType === "date" && letter.unlockDate) {
       return `Unlocks on ${format(new Date(letter.unlockDate), "MMM d, yyyy")}`;
     }
@@ -32,7 +41,7 @@ export default function LettersPage() {
     return "Locked until opened";
   };
 
-  const filteredLetters = letters.filter((l: any) => {
+  const filteredLetters = letters.filter((l: PopulatedLetter) => {
     if (filter === "unlocked") return l.isUnlocked;
     if (filter === "locked") return !l.isUnlocked;
     return true;
@@ -73,7 +82,7 @@ export default function LettersPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t} ({letters.filter((l: any) => t === "all" ? true : t === "unlocked" ? l.isUnlocked : !l.isUnlocked).length})
+              {t} ({letters.filter((l: PopulatedLetter) => t === "all" ? true : t === "unlocked" ? l.isUnlocked : !l.isUnlocked).length})
             </button>
           ))}
         </div>
@@ -104,7 +113,7 @@ export default function LettersPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-12 pt-4 pb-8 justify-items-center">
-            {filteredLetters.map((letter: any) => (
+            {filteredLetters.map((letter: PopulatedLetter) => (
               <Envelope
                 key={letter._id}
                 title={letter.title}

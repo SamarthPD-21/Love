@@ -10,7 +10,6 @@ interface Location {
 }
 
 export function useDistance() {
-  const [distance, setDistance] = useState<number | null>(null);
   const [myLocation, setMyLocation] = useState<Location | null>(null);
   const [partnerLocation, setPartnerLocation] = useState<Location | null>(null);
   const [partnerName, setPartnerName] = useState<string>("Love");
@@ -35,13 +34,12 @@ export function useDistance() {
 
   useEffect(() => {
     if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser");
-      setIsLoading(false);
+      Promise.resolve().then(() => {
+        setError("Geolocation is not supported by your browser");
+        setIsLoading(false);
+      });
       return;
     }
-
-    let watchId: number;
-    let fetchInterval: NodeJS.Timeout;
 
     const updateMyLocationOnServer = async (lat: number, lng: number) => {
       try {
@@ -73,7 +71,7 @@ export function useDistance() {
     };
 
     // Watch current location
-    watchId = navigator.geolocation.watchPosition(
+    const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         const newLoc = { lat: latitude, lng: longitude, updatedAt: new Date() };
@@ -92,7 +90,7 @@ export function useDistance() {
     fetchPartnerLocation();
 
     // Poll partner location every 30s
-    fetchInterval = setInterval(fetchPartnerLocation, 30000);
+    const fetchInterval = setInterval(fetchPartnerLocation, 30000);
 
     return () => {
       if (watchId) navigator.geolocation.clearWatch(watchId);
@@ -100,20 +98,15 @@ export function useDistance() {
     };
   }, []);
 
-  // Recalculate distance when locations change
-  useEffect(() => {
-    if (myLocation && partnerLocation) {
-      const dist = getHaversineDistance(
+  // Derive distance from locations
+  const distance = (myLocation && partnerLocation)
+    ? getHaversineDistance(
         myLocation.lat,
         myLocation.lng,
         partnerLocation.lat,
         partnerLocation.lng
-      );
-      setDistance(dist);
-    } else {
-      setDistance(null);
-    }
-  }, [myLocation, partnerLocation]);
+      )
+    : null;
 
   return {
     distance,

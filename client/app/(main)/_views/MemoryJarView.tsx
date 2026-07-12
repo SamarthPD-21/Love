@@ -50,7 +50,7 @@ export default function MemoryJarPage() {
   };
 
   useEffect(() => {
-    fetchNotes();
+    Promise.resolve().then(() => fetchNotes());
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

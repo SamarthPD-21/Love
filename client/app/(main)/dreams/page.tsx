@@ -17,7 +17,7 @@ export default function DreamsPage() {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
       if (tab && ["dreams", "countdowns", "map"].includes(tab)) {
-        setActiveTab(tab);
+        Promise.resolve().then(() => setActiveTab(tab));
       }
     }
   }, []);

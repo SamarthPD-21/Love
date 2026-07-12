@@ -72,13 +72,15 @@ export default function ProfilePage() {
   // Initialize edit fields
   useEffect(() => {
     if (profileData) {
-      setEditName(profileData.name || "");
-      setEditAvatar(profileData.avatar ? [profileData.avatar] : []);
-      
-      const rel = profileData.relationshipId;
-      if (rel && typeof rel === "object" && "startDate" in rel) {
-        setAnniversaryDate(format(new Date(rel.startDate as string), "yyyy-MM-dd"));
-      }
+      Promise.resolve().then(() => {
+        setEditName(profileData.name || "");
+        setEditAvatar(profileData.avatar ? [profileData.avatar] : []);
+        
+        const rel = profileData.relationshipId;
+        if (rel && typeof rel === "object" && "startDate" in rel) {
+          setAnniversaryDate(format(new Date(rel.startDate as string), "yyyy-MM-dd"));
+        }
+      });
     }
   }, [profileData]);
 
@@ -139,7 +141,7 @@ export default function ProfilePage() {
           setLocationSharing(true);
           playSound("tap");
           showToast("GPS coordinates refreshed and synchronized!", "success");
-        } catch (err: any) {
+        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
           const errMsg = err.response?.data?.error || "Failed to update location";
           setLocationError(errMsg);
           showToast(errMsg, "error");

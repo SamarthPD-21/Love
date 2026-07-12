@@ -41,7 +41,7 @@ export default function GratitudePage() {
   };
 
   useEffect(() => {
-    fetchItems();
+    Promise.resolve().then(() => fetchItems());
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

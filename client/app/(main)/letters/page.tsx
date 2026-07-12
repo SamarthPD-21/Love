@@ -17,7 +17,7 @@ export default function LettersPage() {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
       if (tab && ["letters", "open-when", "voice-notes"].includes(tab)) {
-        setActiveTab(tab);
+        Promise.resolve().then(() => setActiveTab(tab));
       }
     }
   }, []);

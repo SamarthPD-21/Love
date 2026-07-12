@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Gamepad2, Heart, Award, Trophy, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Gamepad2, Award, Trophy, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function GamesPage() {
@@ -13,6 +13,7 @@ export default function GamesPage() {
   const playSound = (type: "click" | "match" | "fail" | "win" | "draw") => {
     if (!soundEnabled) return;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -314,7 +315,7 @@ function MemoryMatch({ onBack, playSound }: MemoryMatchProps) {
   };
 
   useEffect(() => {
-    initGame();
+    Promise.resolve().then(() => initGame());
   }, []);
 
   const handleFlip = (idx: number) => {

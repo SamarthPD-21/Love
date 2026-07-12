@@ -7,14 +7,25 @@ export interface SongData {
   youtubeVideoId: string;
 }
 
+export interface YTPlayer {
+  loadVideoById: (id: string) => void;
+  playVideo: () => void;
+  pauseVideo: () => void;
+  stopVideo: () => void;
+  setVolume: (vol: number) => void;
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+  getCurrentTime: () => number;
+  getDuration: () => number;
+}
+
 interface AudioPlayerStore {
   currentSong: SongData | null;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
   volume: number;
-  playerInstance: any;
-  setPlayerInstance: (instance: any) => void;
+  playerInstance: YTPlayer | null;
+  setPlayerInstance: (instance: YTPlayer | null) => void;
   playSong: (song: SongData) => void;
   pauseSong: () => void;
   resumeSong: () => void;

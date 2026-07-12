@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,7 +16,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { useDistance } from "@/hooks/useDistance";
 import { useNotifications } from "@/hooks/useNotifications";
-import type { AppNotification } from "@/types";
+import type { AppNotification, Countdown } from "@/types";
 
 const RELATIONSHIP_FALLBACK_START = "2024-10-01";
 
@@ -35,7 +35,7 @@ const item = {
 
 export default function HomePage() {
   const { user } = useAuthStore();
-  const { timeOfDay, greeting, subGreeting } = useTimeOfDay();
+  const { timeOfDay, subGreeting } = useTimeOfDay();
   const { playSound } = useSoundEffects();
   const { distance, isLoading: distanceLoading } = useDistance();
   const celebrate = useCelebration();
@@ -53,7 +53,9 @@ export default function HomePage() {
   useEffect(() => {
     const todayStr = format(new Date(), "yyyy-MM-dd");
     const isOpened = localStorage.getItem(`surprise-opened-${todayStr}`) === "true";
-    setRevealSurprise(isOpened);
+    if (isOpened) {
+      Promise.resolve().then(() => setRevealSurprise(true));
+    }
   }, []);
 
   const handleOpenSurprise = () => {
@@ -89,8 +91,16 @@ export default function HomePage() {
     },
   });
 
+  const [nowTimestamp, setNowTimestamp] = useState(() => Date.now());
+
+  useEffect(() => {
+    Promise.resolve().then(() => setNowTimestamp(Date.now()));
+  }, [countdowns]);
+
   // Find nearest countdown in the future
-  const upcomingCountdowns = countdowns.filter((c: any) => new Date(c.targetDate).getTime() > Date.now());
+  const upcomingCountdowns = useMemo(() => {
+    return countdowns.filter((c: Countdown) => new Date(c.targetDate).getTime() > nowTimestamp);
+  }, [countdowns, nowTimestamp]);
   const nearestCountdown = upcomingCountdowns[0]; // sorted by date in API
   const countdownTimer = useCountdown(nearestCountdown?.targetDate || new Date());
 
@@ -131,7 +141,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!navigator.geolocation) return;
 
-    setWeatherLoading(true);
+    Promise.resolve().then(() => setWeatherLoading(true));
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;

@@ -23,6 +23,7 @@ import { useToastStore } from "@/stores/useToastStore";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { AudioPlayer } from "@/components/voice/AudioPlayer";
 import { cn } from "@/lib/utils";
+import type { OpenWhenLetter } from "@/types";
 
 // Re-map categories to get their emoji/details
 const categories = [
@@ -48,6 +49,14 @@ const paperStyles: Record<string, string> = {
   sage: "bg-emerald-50/90 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-100 border-emerald-200/50 dark:border-emerald-900/30",
 };
 
+interface PopulatedOpenWhenLetter extends Omit<OpenWhenLetter, "userId"> {
+  userId: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+}
+
 export default function CategoryCabinetPage() {
   const params = useParams();
   const router = useRouter();
@@ -66,10 +75,10 @@ export default function CategoryCabinetPage() {
     color: "bg-muted border-border text-muted-foreground",
   };
 
-  const [selectedLetter, setSelectedLetter] = useState<any>(null);
+  const [selectedLetter, setSelectedLetter] = useState<PopulatedOpenWhenLetter | null>(null);
 
   // Fetch letters for this specific category
-  const { data: letters = [], isLoading } = useQuery({
+  const { data: letters = [], isLoading } = useQuery<PopulatedOpenWhenLetter[]>({
     queryKey: ["open-when-category", categoryName],
     queryFn: async () => {
       const res = await api.get(`/open-when/category/${encodeURIComponent(categoryName)}`);
@@ -134,7 +143,7 @@ export default function CategoryCabinetPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {letters.map((letter: any) => {
+            {letters.map((letter: PopulatedOpenWhenLetter) => {
               const paperColor = paperStyles[letter.customBackground || "peach"];
               return (
                 <motion.div
@@ -250,12 +259,6 @@ export default function CategoryCabinetPage() {
                       <div className="grid grid-cols-2 gap-4">
                         {selectedLetter.photos.map((url: string, index: number) => (
                           <div key={index} className="relative rounded-xl overflow-hidden border border-black/5 shadow-xs aspect-video group">
-                            {/* eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={url}
-                              alt={`Attachment ${index + 1}`}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
-                            /> */}
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={url} alt="Letter attachment" className="w-full h-full object-cover" />
                           </div>

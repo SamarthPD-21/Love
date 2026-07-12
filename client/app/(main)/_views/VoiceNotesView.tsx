@@ -11,6 +11,23 @@ import { AudioPlayer } from "@/components/voice/AudioPlayer";
 import { useToastStore } from "@/stores/useToastStore";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
+import type { VoiceNote } from "@/types";
+
+interface PopulatedVoiceNote extends Omit<VoiceNote, "userId" | "letterId" | "openWhenLetterId"> {
+  userId: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+  letterId?: {
+    _id: string;
+    title: string;
+  };
+  openWhenLetterId?: {
+    _id: string;
+    title: string;
+  };
+}
 
 const voiceCategories = [
   { name: "Love 💖", value: "Love" },
@@ -31,10 +48,10 @@ export default function VoiceNotesPage() {
   const showToast = useToastStore((s) => s.showToast);
 
   // Fetch voice notes
-  const { data: voiceNotes = [], isLoading } = useQuery({
+  const { data: voiceNotes = [], isLoading } = useQuery<PopulatedVoiceNote[]>({
     queryKey: ["voice-notes", selectedCategory],
     queryFn: async () => {
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (selectedCategory) params.category = selectedCategory;
       const res = await api.get("/voice-notes", { params });
       return res.data.data;
@@ -192,7 +209,7 @@ export default function VoiceNotesPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {voiceNotes.map((note: any) => {
+            {voiceNotes.map((note: PopulatedVoiceNote) => {
               const formattedDate = format(new Date(note.createdAt), "MMMM d, yyyy");
               return (
                 <div key={note._id} className="flex flex-col gap-1.5 w-full group">

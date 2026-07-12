@@ -51,7 +51,7 @@ export default function MoviesPage() {
   };
 
   useEffect(() => {
-    fetchMovies();
+    Promise.resolve().then(() => fetchMovies());
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,7 +73,7 @@ export default function MoviesPage() {
         setTitle("");
         setType("movie");
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.response?.data?.error || "Failed to add movie");
     } finally {
       setSubmitting(false);

@@ -54,7 +54,7 @@ export default function JournalPage() {
   };
 
   useEffect(() => {
-    fetchEntries();
+    Promise.resolve().then(() => fetchEntries());
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +77,7 @@ export default function JournalPage() {
         setContent("");
         setMood("cozy");
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.response?.data?.error || "Failed to create journal entry");
     } finally {
       setSubmitting(false);

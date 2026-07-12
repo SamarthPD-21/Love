@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Loader2, Heart, Calendar, MapPin, Tag } from "lucide-r
 import Link from "next/link";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import api from "@/lib/api";
+import type { Album } from "@/types";
 
 export default function NewMemoryPage() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function NewMemoryPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch albums for dropdown
-  const { data: albums } = useQuery({
+  const { data: albums } = useQuery<Album[]>({
     queryKey: ["albums"],
     queryFn: async () => {
       const res = await api.get("/albums");
@@ -32,7 +33,16 @@ export default function NewMemoryPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: {
+      title: string;
+      story?: string;
+      date: string;
+      location?: string;
+      mood?: string;
+      albumId?: string;
+      tags: string[];
+      photos: string[];
+    }) => {
       const res = await api.post("/memories", data);
       return res.data;
     },
@@ -183,9 +193,9 @@ export default function NewMemoryPage() {
               className="w-full px-4 py-3 bg-background/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">No Album (All Memories)</option>
-              {albums?.map((album: any) => (
+              {albums?.map((album: Album) => (
                 <option key={album._id} value={album._id}>
-                  {album.title}
+                  {album.name}
                 </option>
               ))}
             </select>

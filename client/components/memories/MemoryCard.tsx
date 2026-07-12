@@ -26,7 +26,7 @@ export function MemoryCard({ memory, onFavoriteToggle }: MemoryCardProps) {
   useEffect(() => {
     // Generate a random slight rotation between -2 and +2 degrees
     const rot = Math.random() * 4 - 2;
-    setRandomRotation(rot);
+    Promise.resolve().then(() => setRandomRotation(rot));
   }, []);
 
   const formattedDate = format(new Date(memory.date), "MMMM d, yyyy");

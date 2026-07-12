@@ -9,6 +9,7 @@ import { AlbumTabs } from "@/components/memories/AlbumTabs";
 import { MemoryCard } from "@/components/memories/MemoryCard";
 import { MasonryGrid } from "@/components/ui/MasonryGrid";
 import api from "@/lib/api";
+import type { Memory } from "@/types";
 
 export default function MemoriesPage() {
   const queryClient = useQueryClient();
@@ -29,7 +30,7 @@ export default function MemoriesPage() {
   const { data: memoriesResponse, isLoading } = useQuery({
     queryKey: ["memories", selectedAlbumId, searchQuery, showOnlyFavorites],
     queryFn: async () => {
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (selectedAlbumId) params.albumId = selectedAlbumId;
       if (searchQuery) params.query = searchQuery;
       if (showOnlyFavorites) params.favorite = "true";
@@ -144,7 +145,7 @@ export default function MemoriesPage() {
           </div>
         ) : (
           <MasonryGrid>
-            {memories.map((memory: any) => (
+            {memories.map((memory: Memory) => (
               <MemoryCard
                 key={memory._id}
                 memory={memory}

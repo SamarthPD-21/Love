@@ -29,7 +29,7 @@ export function Fireflies({ count = 35, className = "" }: FirefliesProps) {
       duration: 5 + Math.random() * 8,
       delay: Math.random() * 6,
     }));
-    setFireflies(generated);
+    Promise.resolve().then(() => setFireflies(generated));
   }, [count]);
 
   return (

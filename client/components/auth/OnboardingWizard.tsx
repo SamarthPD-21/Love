@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Mail, Lock, Eye, EyeOff, User, KeyRound, Loader2, Copy, Check } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { login, register, registerCreator } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 
@@ -56,7 +55,7 @@ export function OnboardingWizard({ defaultStep = "login" }: { defaultStep?: Wiza
       const data = await login({ email, password });
       setAuth(data.user, data.token);
       router.push("/");
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.response?.data?.error || err.message || "Invalid email or password");
     } finally {
       setIsLoading(false);
@@ -73,7 +72,7 @@ export function OnboardingWizard({ defaultStep = "login" }: { defaultStep?: Wiza
       setAuth(data.user, data.token);
       setGeneratedCode(data.inviteCode || "");
       navigateTo("code_display");
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.response?.data?.error || err.message || "Registration failed");
     } finally {
       setIsLoading(false);
@@ -89,7 +88,7 @@ export function OnboardingWizard({ defaultStep = "login" }: { defaultStep?: Wiza
       const data = await register({ name, email, password, inviteCode });
       setAuth(data.user, data.token);
       router.push("/");
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.response?.data?.error || err.message || "Invalid invite code or registration failed");
     } finally {
       setIsLoading(false);

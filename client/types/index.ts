@@ -93,6 +93,8 @@ export interface VoiceNote {
   duration: number;
   category: string;
   userId: string;
+  letterId?: string;
+  openWhenLetterId?: string;
   createdAt: string;
 }
 

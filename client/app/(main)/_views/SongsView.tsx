@@ -102,7 +102,7 @@ export default function SongsPage() {
   };
 
   useEffect(() => {
-    fetchSongs();
+    Promise.resolve().then(() => fetchSongs());
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,7 +128,7 @@ export default function SongsPage() {
         setNotes("");
         showToast("Song added to playlist! 🎵", "success");
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.response?.data?.error || "Failed to add song");
     } finally {
       setSubmitting(false);

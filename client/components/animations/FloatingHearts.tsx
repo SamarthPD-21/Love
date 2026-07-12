@@ -17,10 +17,10 @@ interface FloatingHeartsProps {
   className?: string;
 }
 
+const colors = ["#BE3A6E", "#B8A9C9", "#D4A574", "#E8587A"]; // Rose, Mauve, Gold, Light Rose
+
 export function FloatingHearts({ count = 24, className = "" }: FloatingHeartsProps) {
   const [hearts, setHearts] = useState<(Heart & { color: string })[]>([]);
-
-  const colors = ["#BE3A6E", "#B8A9C9", "#D4A574", "#E8587A"]; // Rose, Mauve, Gold, Light Rose
 
   useEffect(() => {
     const generated = Array.from({ length: count }, (_, i) => ({
@@ -32,7 +32,7 @@ export function FloatingHearts({ count = 24, className = "" }: FloatingHeartsPro
       opacity: 0.12 + Math.random() * 0.18,
       color: colors[i % colors.length],
     }));
-    setHearts(generated);
+    Promise.resolve().then(() => setHearts(generated));
   }, [count]);
 
   return (

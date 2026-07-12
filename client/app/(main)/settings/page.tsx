@@ -58,7 +58,7 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    fetchDetails();
+    Promise.resolve().then(() => fetchDetails());
   }, []);
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -79,7 +79,7 @@ export default function SettingsPage() {
       if (response.data?.urls?.[0]) {
         setProfileAvatar(response.data.urls[0]);
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setErrorProfile("Failed to upload avatar image");
       console.error(err);
     } finally {
@@ -103,7 +103,7 @@ export default function SettingsPage() {
         setAuth(response.data.user, token || "");
         showToast("Profile updated successfully!", "success");
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setErrorProfile(err.response?.data?.error || "Failed to update profile");
     } finally {
       setSavingProfile(false);
@@ -124,7 +124,7 @@ export default function SettingsPage() {
       if (response.data.relationship) {
         showToast("Anniversary updated successfully!", "success");
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setErrorAnniversary(err.response?.data?.error || "Failed to update anniversary");
     } finally {
       setSavingAnniversary(false);

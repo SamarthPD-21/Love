@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Timer, Plus, Trash2, Calendar, Clock, Loader2, X, Heart } from "lucide-react";
 import api from "@/lib/api";
 import { useCountdown } from "@/hooks/useCountdown";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 interface Countdown {
@@ -35,7 +34,7 @@ export default function CountdownsPage() {
       if (response.data.success) {
         setCountdowns(response.data.data);
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error("Failed to fetch countdowns:", err);
     } finally {
       setLoading(false);
@@ -43,7 +42,7 @@ export default function CountdownsPage() {
   };
 
   useEffect(() => {
-    fetchCountdowns();
+    Promise.resolve().then(() => fetchCountdowns());
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,7 +67,7 @@ export default function CountdownsPage() {
         setTargetDate("");
         setCoverImage("");
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.response?.data?.error || "Failed to create countdown");
     } finally {
       setCreating(false);

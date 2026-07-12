@@ -37,7 +37,7 @@ export default function MemoryDetailPage() {
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
         <span className="text-5xl">💔</span>
         <h2 className="text-xl font-bold">Memory Not Found</h2>
-        <p className="text-muted-foreground">The memory you are looking for might have been removed or doesn't exist.</p>
+        <p className="text-muted-foreground">{"The memory you are looking for might have been removed or doesn't exist."}</p>
         <button
           onClick={() => router.push("/scrapbook")}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-xl shadow-md hover:bg-primary/90 transition-all font-semibold"

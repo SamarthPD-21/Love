@@ -27,11 +27,11 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    Promise.resolve().then(() => setMounted(true));
   }, []);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);

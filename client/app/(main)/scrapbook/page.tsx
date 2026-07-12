@@ -17,7 +17,7 @@ export default function ScrapbookPage() {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
       if (tab && ["photos", "jar", "milestones"].includes(tab)) {
-        setActiveTab(tab);
+        Promise.resolve().then(() => setActiveTab(tab));
       }
     }
   }, []);

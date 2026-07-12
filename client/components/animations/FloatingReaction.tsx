@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface FloatingReactionProps {
@@ -44,23 +45,32 @@ export function FloatingReaction({
   count = 6,
   className = "",
 }: FloatingReactionProps) {
-  const emojis = Array.isArray(emoji) ? emoji : [emoji];
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const emojiKey = Array.isArray(emoji) ? emoji.join(",") : emoji;
 
-  const particles: Particle[] = [];
-  for (let i = 0; i < count; i++) {
-    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.8;
-    const speed = 1.5 + Math.random() * 3;
-    particles.push({
-      id: pid++,
-      emoji: emojis[Math.floor(Math.random() * emojis.length)],
-      x: 0,
-      y: 0,
-      vx: Math.cos(angle) * speed,
-      vy: -2 - Math.random() * 3,
-      rotation: (Math.random() - 0.5) * 30,
-      scale: 0.7 + Math.random() * 0.6,
-    });
-  }
+  useEffect(() => {
+    if (!active) {
+      Promise.resolve().then(() => setParticles([]));
+      return;
+    }
+    const emojis = emojiKey.split(",");
+    const arr: Particle[] = [];
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.8;
+      const speed = 1.5 + Math.random() * 3;
+      arr.push({
+        id: pid++,
+        emoji: emojis[Math.floor(Math.random() * emojis.length)],
+        x: 0,
+        y: 0,
+        vx: Math.cos(angle) * speed,
+        vy: -2 - Math.random() * 3,
+        rotation: (Math.random() - 0.5) * 30,
+        scale: 0.7 + Math.random() * 0.6,
+      });
+    }
+    Promise.resolve().then(() => setParticles(arr));
+  }, [active, count, emojiKey]);
 
   return (
     <div

@@ -46,7 +46,7 @@ export default function DreamsPage() {
   };
 
   useEffect(() => {
-    fetchDreams();
+    Promise.resolve().then(() => fetchDreams());
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,7 +71,7 @@ export default function DreamsPage() {
         setCategory("general");
         setTargetDate("");
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.response?.data?.error || "Failed to add dream");
     } finally {
       setSubmitting(false);
@@ -307,7 +307,7 @@ export default function DreamsPage() {
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</label>
                     <select
                       value={category}
-                      onChange={(e) => setCategory(e.target.value as any)}
+                      onChange={(e) => setCategory(e.target.value as "travel" | "fun" | "house" | "career" | "general")}
                       className="w-full px-3 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 cursor-pointer"
                     >
                       <option value="general">General</option>

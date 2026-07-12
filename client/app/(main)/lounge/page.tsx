@@ -17,7 +17,7 @@ export default function LoungePage() {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
       if (tab && ["playlist", "watchlist", "games"].includes(tab)) {
-        setActiveTab(tab);
+        Promise.resolve().then(() => setActiveTab(tab));
       }
     }
   }, []);

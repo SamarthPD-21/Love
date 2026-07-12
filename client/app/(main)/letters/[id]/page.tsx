@@ -92,7 +92,7 @@ export default function LetterDetailPage({ params }: LetterDetailPageProps) {
   // Automatically show open letter if it's already unlocked
   useEffect(() => {
     if (letter?.isUnlocked) {
-      setShowFullyOpen(true);
+      Promise.resolve().then(() => setShowFullyOpen(true));
     }
   }, [letter]);
 

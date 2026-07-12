@@ -36,7 +36,7 @@ export function SparkleTrail({ count = 18, className = "" }: SparkleTrailProps) 
       delay: Math.random() * 10,
       opacity: 0.15 + Math.random() * 0.25,
     }));
-    setSparkles(generated);
+    Promise.resolve().then(() => setSparkles(generated));
   }, [count]);
 
   return (

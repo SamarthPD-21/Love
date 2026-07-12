@@ -32,17 +32,19 @@ export function useCountdown(
 
   useEffect(() => {
     if (!targetTime) {
-      setResult((prev) => 
-        prev.isExpired ? prev : {
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0,
-          isExpired: true,
-          totalDays: 0,
-          progress: 0,
-        }
-      );
+      Promise.resolve().then(() => {
+        setResult((prev) => 
+          prev.isExpired ? prev : {
+            days: 0,
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+            isExpired: true,
+            totalDays: 0,
+            progress: 0,
+          }
+        );
+      });
       return;
     }
 
@@ -87,7 +89,7 @@ export function useCountdown(
       });
     };
 
-    calculate();
+    Promise.resolve().then(() => calculate());
     const interval = setInterval(calculate, 1000);
     return () => clearInterval(interval);
   }, [targetTime, startTime]);

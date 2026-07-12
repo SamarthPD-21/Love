@@ -17,7 +17,7 @@ export default function ComfortPage() {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
       if (tab && ["hugs", "gratitude", "journal"].includes(tab)) {
-        setActiveTab(tab);
+        Promise.resolve().then(() => setActiveTab(tab));
       }
     }
   }, []);

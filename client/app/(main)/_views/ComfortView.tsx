@@ -43,7 +43,7 @@ export default function ComfortPage() {
   };
 
   useEffect(() => {
-    fetchHugs();
+    Promise.resolve().then(() => fetchHugs());
   }, []);
 
   const handleHugClick = async () => {

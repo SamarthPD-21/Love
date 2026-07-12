@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { Plus, Loader2, PenLine, Sparkles, X, Mail } from "lucide-react";
+import { Plus, Loader2, PenLine, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { useToastStore } from "@/stores/useToastStore";
 import api from "@/lib/api";
+import type { OpenWhenLetter } from "@/types";
 
 const categories = [
   { name: "Miss Me", emoji: "❤️", desc: "Open when you want to feel close.", color: "bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-950/20 dark:border-rose-900" },
@@ -48,7 +49,7 @@ export default function OpenWhenPage() {
   const [customBg, setCustomBg] = useState("peach");
 
   // Fetch letters to aggregate counts
-  const { data: letters = [], isLoading } = useQuery({
+  const { data: letters = [], isLoading } = useQuery<OpenWhenLetter[]>({
     queryKey: ["open-when"],
     queryFn: async () => {
       const res = await api.get("/open-when");
@@ -57,7 +58,7 @@ export default function OpenWhenPage() {
   });
 
   const getLetterCountForCategory = (catName: string) => {
-    return letters.filter((l: any) => l.category === catName).length;
+    return letters.filter((l: OpenWhenLetter) => l.category === catName).length;
   };
 
   const handleComposeSubmit = async (e: React.FormEvent) => {
