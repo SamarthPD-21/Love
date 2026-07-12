@@ -6,6 +6,8 @@ import { Music, Plus, Trash2, ExternalLink, Loader2, X, Play, Heart } from "luci
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useToastStore } from "@/stores/useToastStore";
+import { useAudioPlayerStore } from "@/stores/useAudioPlayerStore";
 
 interface Song {
   _id: string;
@@ -13,6 +15,7 @@ interface Song {
   artist: string;
   url: string;
   notes?: string;
+  youtubeVideoId?: string;
   createdAt: string;
   userId: {
     _id: string;
@@ -26,6 +29,10 @@ export default function SongsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState("");
+  const showToast = useToastStore((s) => s.showToast);
+
+  // Global Audio Player
+  const { playSong, currentSong, isPlaying } = useAudioPlayerStore();
 
   // Form State
   const [title, setTitle] = useState("");
@@ -34,6 +41,9 @@ export default function SongsPage() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [fetchingInfo, setFetchingInfo] = useState(false);
+
+  // Player preferences (toggling between spotify preview and full youtube playback)
+  const [playerPreferences, setPlayerPreferences] = useState<Record<string, "youtube" | "spotify">>({});
 
   useEffect(() => {
     if (!url) return;
@@ -116,6 +126,7 @@ export default function SongsPage() {
         setArtist("");
         setUrl("");
         setNotes("");
+        showToast("Song added to playlist! 🎵", "success");
       }
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to add song");
@@ -129,6 +140,7 @@ export default function SongsPage() {
     try {
       await api.delete(`/songs/${id}`);
       setSongs((prev) => prev.filter((s) => s._id !== id));
+      showToast("Song deleted.", "success");
     } catch (err) {
       console.error("Failed to delete song:", err);
     }
@@ -139,7 +151,6 @@ export default function SongsPage() {
     try {
       const urlObj = new URL(rawUrl);
       if (urlObj.hostname.includes("spotify.com")) {
-        // e.g. /track/12345 -> /embed/track/12345
         const trackId = urlObj.pathname.split("/").pop();
         if (urlObj.pathname.includes("/track/")) {
           return `https://open.spotify.com/embed/track/${trackId}`;
@@ -170,11 +181,11 @@ export default function SongsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Music className="w-8 h-8 text-primary" /> Our Playlist
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2 font-display">
+            <Music className="w-8 h-8 text-primary animate-pulse-soft" /> Our Playlist
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Songs that remind us of each other, our road trips, and cozy nights 🎵
+            Songs that remind us of each other, our road trips, and cozy nights. Click the play button on any card to stream globally! 🎧
           </p>
         </div>
         <button
@@ -193,7 +204,7 @@ export default function SongsPage() {
       ) : songs.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center p-8 bg-card/50 border border-border/50 rounded-3xl backdrop-blur-sm text-center">
           <Music className="w-12 h-12 text-muted-foreground/30 mb-3 animate-float" />
-          <h3 className="text-lg font-bold text-foreground">No songs yet</h3>
+          <h3 className="text-lg font-bold text-foreground font-display">No songs yet</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
             Add your favorite song, a track you both danced to, or Spotify playlists!
           </p>
@@ -201,7 +212,25 @@ export default function SongsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {songs.map((song) => {
-            const embed = getEmbedUrl(song.url);
+            const isSpotifyLink = song.url.includes("spotify.com");
+            const hasYoutubeId = !!song.youtubeVideoId;
+            const currentPref = playerPreferences[song._id] || (hasYoutubeId ? "youtube" : "spotify");
+            const isCurrentPlaying = currentSong?._id === song._id && isPlaying;
+
+            let embedSrc = "";
+            let playerHeight = 80;
+
+            if (currentPref === "youtube" && hasYoutubeId) {
+              embedSrc = `https://www.youtube.com/embed/${song.youtubeVideoId}`;
+              playerHeight = 160;
+            } else {
+              const defaultEmbed = getEmbedUrl(song.url);
+              if (defaultEmbed) {
+                embedSrc = defaultEmbed;
+                playerHeight = defaultEmbed.includes("spotify.com") ? 80 : 160;
+              }
+            }
+
             return (
               <motion.div
                 layout
@@ -210,21 +239,42 @@ export default function SongsPage() {
                 whileHover={{ y: -4, scale: 1.005 }}
               >
                 <div>
-                  <div className="flex items-start justify-between gap-4 mb-2">
+                  <div className="flex items-start justify-between gap-4 mb-3">
                     <div>
-                      <h3 className="font-bold text-foreground text-base leading-tight">
+                      <h3 className="font-extrabold text-foreground text-base leading-tight">
                         {song.title}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-0.5">{song.artist}</p>
                     </div>
 
-                    <div className="flex gap-1 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
+                      {hasYoutubeId && (
+                        <button
+                          onClick={() => {
+                            playSong({
+                              _id: song._id,
+                              title: song.title,
+                              artist: song.artist,
+                              youtubeVideoId: song.youtubeVideoId!,
+                            });
+                          }}
+                          className={cn(
+                            "p-1.5 rounded-lg transition-all cursor-pointer active:scale-95 border",
+                            isCurrentPlaying
+                              ? "bg-primary/20 text-primary border-primary/30"
+                              : "bg-muted/80 hover:bg-primary/10 text-muted-foreground hover:text-primary border-border/30"
+                          )}
+                          title={isCurrentPlaying ? "Playing full audio globally" : "Play full audio globally"}
+                        >
+                          <Play className={cn("w-3.5 h-3.5", isCurrentPlaying ? "fill-primary" : "")} />
+                        </button>
+                      )}
                       <a
                         href={song.url}
                         target="_blank"
                         rel="noreferrer"
                         className="p-1.5 rounded-lg text-zinc-400 hover:text-primary hover:bg-primary/5 transition-all"
-                        title="Open external link"
+                        title="Open original link"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
@@ -239,19 +289,49 @@ export default function SongsPage() {
                   </div>
 
                   {song.notes && (
-                    <p className="handwritten text-xl text-foreground bg-background border border-border p-3 rounded-xl mb-4 leading-relaxed">
+                    <p className="handwritten text-lg text-foreground bg-background border border-border p-3 rounded-xl mb-4 leading-relaxed italic">
                       &ldquo;{song.notes}&rdquo;
                     </p>
                   )}
                 </div>
 
+                {/* Player Mode Selector (Toggling Spotify and YouTube Full Audio) */}
+                {isSpotifyLink && hasYoutubeId && (
+                  <div className="flex items-center justify-between gap-2 mt-1 mb-3">
+                    <div className="flex items-center gap-1 bg-muted/60 dark:bg-muted/40 p-0.5 rounded-lg border border-border/30">
+                      <button
+                        onClick={() => setPlayerPreferences((prev) => ({ ...prev, [song._id]: "youtube" }))}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md text-[9px] font-bold transition-all cursor-pointer",
+                          currentPref === "youtube"
+                            ? "bg-primary text-white shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        Full Audio (YouTube) 📺
+                      </button>
+                      <button
+                        onClick={() => setPlayerPreferences((prev) => ({ ...prev, [song._id]: "spotify" }))}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md text-[9px] font-bold transition-all cursor-pointer",
+                          currentPref === "spotify"
+                            ? "bg-primary text-white shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        Spotify Card 🎵
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Embed player if valid */}
-                {embed ? (
+                {embedSrc ? (
                   <div className="mt-2 rounded-xl overflow-hidden bg-black/5 dark:bg-black/25">
                     <iframe
-                      src={embed}
+                      src={embedSrc}
                       width="100%"
-                      height={embed.includes("spotify.com") ? "80" : "180"}
+                      height={playerHeight}
                       allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                       loading="lazy"
                       className="border-0 rounded-xl"
@@ -270,6 +350,11 @@ export default function SongsPage() {
                     </a>
                   </div>
                 )}
+                
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/20 text-[9px] text-muted-foreground/60 font-medium">
+                  <span>Pinned by {song.userId.name}</span>
+                  <span>{format(new Date(song.createdAt), "MMM d, yyyy")}</span>
+                </div>
               </motion.div>
             );
           })}
@@ -308,7 +393,7 @@ export default function SongsPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Spotify / Youtube URL</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Spotify / YouTube URL</label>
                     {fetchingInfo && (
                       <span className="text-[10px] text-primary font-bold animate-pulse-soft flex items-center gap-1">
                         <Loader2 className="w-3 h-3 animate-spin" /> Fetching info...
@@ -320,7 +405,7 @@ export default function SongsPage() {
                     required
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    placeholder="Paste Spotify track link"
+                    placeholder="Paste Spotify track or YouTube video link"
                     className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>

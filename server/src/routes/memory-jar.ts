@@ -20,11 +20,19 @@ router.get("/", async (req: any, res: Response) => {
       return;
     }
 
-    const notes = await MemoryJarNote.find({ relationshipId: user.relationshipId })
+    const notes = await MemoryJarNote.find({ 
+      relationshipId: user.relationshipId,
+      isDrawn: true
+    })
       .populate("userId", "name avatar")
-      .sort({ createdAt: -1 });
+      .sort({ drawnAt: -1, createdAt: -1 });
 
-    res.json({ success: true, data: notes });
+    const undrawnCount = await MemoryJarNote.countDocuments({
+      relationshipId: user.relationshipId,
+      isDrawn: false
+    });
+
+    res.json({ success: true, data: notes, undrawnCount });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -39,16 +47,29 @@ router.get("/draw", async (req: any, res: Response) => {
       return;
     }
 
-    const count = await MemoryJarNote.countDocuments({ relationshipId: user.relationshipId });
+    const count = await MemoryJarNote.countDocuments({ 
+      relationshipId: user.relationshipId,
+      isDrawn: false 
+    });
+    
     if (count === 0) {
       res.json({ success: true, data: null });
       return;
     }
 
     const randomIndex = Math.floor(Math.random() * count);
-    const randomNote = await MemoryJarNote.findOne({ relationshipId: user.relationshipId })
+    const randomNote = await MemoryJarNote.findOne({ 
+      relationshipId: user.relationshipId,
+      isDrawn: false 
+    })
       .skip(randomIndex)
       .populate("userId", "name avatar");
+
+    if (randomNote) {
+      randomNote.isDrawn = true;
+      randomNote.drawnAt = new Date();
+      await randomNote.save();
+    }
 
     res.json({ success: true, data: randomNote });
   } catch (error: any) {
@@ -75,6 +96,7 @@ router.post("/", async (req: any, res: Response) => {
       content: validation.data.content,
       relationshipId: user.relationshipId,
       userId: user._id,
+      isDrawn: false,
     });
 
     await note.save();

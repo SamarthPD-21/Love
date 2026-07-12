@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Folder, FolderPlus, Plus, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useToastStore } from "@/stores/useToastStore";
 import api from "@/lib/api";
 
 interface Album {
@@ -29,6 +30,7 @@ export function AlbumTabs({
   const [newAlbumName, setNewAlbumName] = useState("");
   const [newAlbumDesc, setNewAlbumDesc] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const showToast = useToastStore((s) => s.showToast);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,9 +46,10 @@ export function AlbumTabs({
       setNewAlbumDesc("");
       setShowModal(false);
       if (onAlbumCreated) onAlbumCreated();
+      showToast("Album created successfully! 📁", "success");
     } catch (error) {
       console.error("Create album error:", error);
-      alert("Failed to create album. Please try again.");
+      showToast("Failed to create album. Please try again.", "error");
     } finally {
       setIsSubmitting(false);
     }

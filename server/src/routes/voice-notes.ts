@@ -14,6 +14,8 @@ const voiceNoteSchema = z.object({
   audioUrl: z.string().min(1, "Audio URL is required"),
   duration: z.number().min(1, "Duration must be positive"),
   category: z.string().min(1, "Category is required"),
+  letterId: z.string().optional().nullable(),
+  openWhenLetterId: z.string().optional().nullable(),
 });
 
 /**
@@ -36,6 +38,8 @@ router.get("/", async (req: any, res: Response) => {
 
     const voiceNotes = await VoiceNote.find(filter)
       .populate("userId", "name avatar")
+      .populate("letterId", "title")
+      .populate("openWhenLetterId", "title")
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data: voiceNotes });

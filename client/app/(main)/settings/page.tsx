@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { Settings, Calendar, User, Link2, LogOut, Loader2, Copy, Check, Heart } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useToastStore } from "@/stores/useToastStore";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { user, token, setAuth, clearAuth } = useAuthStore();
+  const showToast = useToastStore((s) => s.showToast);
 
   const [loading, setLoading] = useState(true);
   const [profileName, setProfileName] = useState("");
@@ -99,7 +101,7 @@ export default function SettingsPage() {
 
       if (response.data.user) {
         setAuth(response.data.user, token || "");
-        alert("Profile updated successfully!");
+        showToast("Profile updated successfully!", "success");
       }
     } catch (err: any) {
       setErrorProfile(err.response?.data?.error || "Failed to update profile");
@@ -120,7 +122,7 @@ export default function SettingsPage() {
       });
 
       if (response.data.relationship) {
-        alert("Anniversary updated successfully!");
+        showToast("Anniversary updated successfully!", "success");
       }
     } catch (err: any) {
       setErrorAnniversary(err.response?.data?.error || "Failed to update anniversary");

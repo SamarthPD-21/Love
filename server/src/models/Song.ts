@@ -6,6 +6,7 @@ export interface ISong extends Document {
   artist: string;
   url: string; // youtube/spotify link
   notes?: string;
+  youtubeVideoId?: string;
   relationshipId: Types.ObjectId;
   userId: Types.ObjectId;
   createdAt: Date;
@@ -28,6 +29,10 @@ const songSchema = new Schema<ISong>({
     trim: true,
   },
   notes: {
+    type: String,
+    default: "",
+  },
+  youtubeVideoId: {
     type: String,
     default: "",
   },

@@ -6,6 +6,8 @@ import { useEffect } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/useAuthStore";
 
+import { ToastContainer } from "@/components/ui/ToastContainer";
+
 if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   const originalError = console.error;
   console.error = (...args: any[]) => {
@@ -28,13 +30,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider
       attribute="data-theme"
-      defaultTheme="light"
-      enableSystem={false}
-      disableTransitionOnChange={false}
+      defaultTheme="system"
+      enableSystem={true}
+      disableTransitionOnChange={true}
     >
       <QueryClientProvider client={queryClient}>
         <AuthInitializer>
           {children}
+          <ToastContainer />
         </AuthInitializer>
       </QueryClientProvider>
     </ThemeProvider>

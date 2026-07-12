@@ -169,71 +169,102 @@ export default function HomePage() {
     "bg-time-night": timeOfDay === "night",
   });
 
+  // Dynamic text color classes for the hero banner to keep text highly visible in both light/dark modes
+  const isNight = timeOfDay === "night";
+  const titleColor = isNight ? "text-slate-100" : "text-slate-900 dark:text-slate-100";
+  const subGreetingColor = isNight ? "text-slate-300/90" : "text-slate-700/90 dark:text-slate-300/90";
+  const messageLabelColor = isNight ? "text-slate-400" : "text-slate-500 dark:text-slate-400";
+  const messageColor = isNight ? "text-slate-200" : "text-slate-800 dark:text-slate-200";
+  const borderDividerColor = isNight ? "border-slate-200/15" : "border-foreground/10";
+
   return (
     <PageTransition>
       <div className="min-h-[calc(100dvh-6rem)] flex flex-col pb-8">
         {/* ── Hero Greeting ── */}
         <motion.div
           className={cn(
-            "rounded-2xl p-8 sm:p-10 mb-6 relative overflow-hidden shadow-lg border border-white/10",
+            "rounded-3xl p-8 sm:p-10 mb-8 relative overflow-hidden shadow-xl border border-white/10 glass",
             bgClass,
           )}
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/10 blur-3xl -translate-y-1/2 translate-x-1/2 animate-pulse-soft" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/10 blur-2xl translate-y-1/2 -translate-x-1/2" />
+          {/* Animated glow effects */}
+          <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-primary/20 blur-3xl -translate-y-1/2 translate-x-1/2 animate-pulse-soft" />
+          <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full bg-secondary/15 blur-2xl translate-y-1/2 -translate-x-1/2" />
+          <div className="absolute inset-0 opacity-40 bg-gradient-to-tr from-primary/10 via-accent/5 to-transparent mix-blend-plus-lighter" />
 
-          <div className="relative z-10">
-            <motion.h1
-              className="text-3xl sm:text-4xl font-bold tracking-tight"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+          <div className="relative z-10 space-y-4">
+            <div className="space-y-1">
+              <motion.h1
+                className={cn("text-3.5xl sm:text-4xl font-bold tracking-tight font-display", titleColor)}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                Our Little Universe <span className="inline-block animate-float">💫</span>
+              </motion.h1>
+              <motion.p
+                className={cn(
+                  "text-base sm:text-lg font-medium handwritten text-xl italic leading-relaxed",
+                  subGreetingColor,
+                )}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+              >
+                {subGreeting}
+              </motion.p>
+            </div>
+
+            {/* Daily Message integrated inside the banner */}
+            <motion.div
+              className={cn("pt-4 border-t flex flex-col gap-1.5", borderDividerColor)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
             >
-              Our Little Universe <span className="inline-block animate-pulse-soft">💫</span>
-            </motion.h1>
-            <motion.p
-              className={cn(
-                "mt-2 text-base sm:text-lg font-medium handwritten text-xl",
-                timeOfDay === "night" ? "text-white/70" : "text-foreground/60",
-              )}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-            >
-              {subGreeting}
-            </motion.p>
+              <div className={cn("flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest", messageLabelColor)}>
+                <MessageCircleHeart className="w-3.5 h-3.5 text-primary fill-primary animate-pulse-soft" />
+                <span>Today&apos;s Message</span>
+              </div>
+              <p className={cn("font-display text-lg sm:text-xl leading-relaxed italic pl-3 border-l border-primary/30", messageColor)}>
+                &ldquo;{dailyMessageResponse?.message || "You're the best part of every single day. Never forget that. ❤️"}&rdquo;
+              </p>
+            </motion.div>
           </div>
         </motion.div>
 
         {/* ── Quick Shortcuts ── */}
         <motion.div
-          className="grid grid-cols-4 gap-3 mb-6"
+          className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8"
           variants={container}
           initial="hidden"
           animate="show"
         >
           {[
-            { label: "Compose", href: "/letters/new", emoji: "📜", color: "from-[#F2D4D8] to-[#E8B8C4] dark:from-[#3D1520] dark:to-[#4D1A2A]" },
-            { label: "Voice", href: "/voice-notes", emoji: "🎤", color: "from-[#E8D4EC] to-[#D4B8E0] dark:from-[#2A1840] dark:to-[#361E52]" },
-            { label: "Draw note", href: "/memory-jar", emoji: "🫙", color: "from-[#F0DCC8] to-[#E8C8A0] dark:from-[#3A2010] dark:to-[#4A2A18]" },
-            { label: "Gratitude", href: "/gratitude", emoji: "🌼", color: "from-[#D8E8D0] to-[#C0D8B8] dark:from-[#1A2E1A] dark:to-[#244024]" },
+            { label: "Scrapbook", href: "/scrapbook", emoji: "📸", colorClass: "hover:border-primary/50 hover:shadow-[0_0_15px_rgba(232,88,122,0.15)]", color: "from-[#F2D4D8] to-[#E8B8C4] dark:from-[#3D1520] dark:to-[#4D1A2A]" },
+            { label: "Letters", href: "/letters", emoji: "💌", colorClass: "hover:border-secondary/50 hover:shadow-[0_0_15px_rgba(184,169,201,0.15)]", color: "from-[#E8D4EC] to-[#D4B8E0] dark:from-[#2A1840] dark:to-[#361E52]" },
+            { label: "Comfort", href: "/comfort", emoji: "🫂", colorClass: "hover:border-accent/50 hover:shadow-[0_0_15px_rgba(212,165,116,0.15)]", color: "from-[#F0DCC8] to-[#E8C8A0] dark:from-[#3A2010] dark:to-[#4A2A18]" },
+            { label: "Lounge", href: "/lounge", emoji: "🎵", colorClass: "hover:border-success/50 hover:shadow-[0_0_15px_rgba(88,168,112,0.15)]", color: "from-[#D8E8D0] to-[#C0D8B8] dark:from-[#1A2E1A] dark:to-[#244024]" },
           ].map((action, idx) => (
             <Link
               key={idx}
               href={action.href}
               onClick={() => playSound("tap")}
-              className="flex flex-col items-center justify-center p-3 rounded-2xl bg-card/40 dark:bg-card/40 border border-border/40 hover:bg-card/70 dark:hover:bg-card/70 hover:shadow-md transition-all text-center group cursor-pointer active:scale-95 shadow-sm"
+              className={cn(
+                "flex flex-col items-center justify-center p-4 rounded-2xl bg-card/60 dark:bg-card/60 border border-border/50 hover:bg-card hover:scale-[1.03] hover:shadow-md transition-all duration-300 text-center group cursor-pointer active:scale-95 shadow-sm",
+                action.colorClass
+              )}
             >
               <div className={cn(
-                "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-lg mb-2 shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3",
+                "w-12 h-12 rounded-2xl bg-gradient-to-br flex items-center justify-center text-xl mb-3 shadow-inner transition-all duration-300 group-hover:scale-110 group-hover:rotate-3",
                 action.color
               )}>
                 {action.emoji}
               </div>
-              <span className="text-[10px] font-bold text-foreground/70 dark:text-foreground/70 leading-none group-hover:text-primary transition-colors">
+              <span className="text-xs font-extrabold text-foreground/80 leading-none group-hover:text-primary transition-colors">
                 {action.label}
               </span>
             </Link>
@@ -248,22 +279,22 @@ export default function HomePage() {
           animate="show"
         >
           {/* Together Counter */}
-          <motion.div variants={item} className="card-cozy p-6 md:col-span-2 flex flex-col justify-between">
+          <motion.div variants={item} className="card-cozy p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <Heart className="w-4 h-4 text-primary fill-primary animate-pulse-soft" />
                   <span className="font-bold uppercase tracking-wider text-xs">Our Journey</span>
                 </div>
-                <p className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground mt-2">
+                <p className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mt-2">
                   {formatNumber(togetherDays)}
-                  <span className="text-lg sm:text-xl font-bold text-muted-foreground ml-2">
+                  <span className="text-sm font-bold text-muted-foreground ml-2 block sm:inline">
                     Days Together
                   </span>
                 </p>
               </div>
               <motion.div
-                className="text-5xl cursor-pointer select-none"
+                className="text-4xl cursor-pointer select-none"
                 animate={{ scale: [1, 1.15, 1, 1.1, 1] }}
                 transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
                 onClick={() => playSound("heartbeat")}
@@ -273,10 +304,10 @@ export default function HomePage() {
             </div>
 
             {/* Side-by-Side Avatars */}
-            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-border/60">
+            <div className="flex items-center justify-center gap-2.5 mt-6 pt-4 border-t border-border/40">
               {/* My Avatar */}
               <div className="relative group">
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary bg-primary/10 shadow-md">
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary bg-primary/10 shadow-md transition-transform duration-350 group-hover:scale-105">
                   {profile?.avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={profile.avatar} alt={profile?.name} className="w-full h-full object-cover" />
@@ -286,20 +317,23 @@ export default function HomePage() {
                     </div>
                   )}
                 </div>
-                <span className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[8px] font-black px-1 py-0.5 rounded-full border border-background uppercase tracking-widest leading-none scale-90">Me</span>
+                <span className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[8px] font-black px-1.5 py-0.5 rounded-full border border-background uppercase tracking-widest leading-none scale-90 shadow-sm">Me</span>
               </div>
 
               {/* Connector */}
-              <div className="flex items-center gap-1">
-                <div className="w-6 h-[2px] bg-gradient-to-r from-primary/30 to-secondary/30" />
-                <Heart className="w-4 h-4 text-primary fill-primary animate-pulse-soft shrink-0" />
-                <div className="w-6 h-[2px] bg-gradient-to-r from-secondary/30 to-primary/30" />
+              <div className="flex items-center gap-1.5 relative px-2">
+                <div className="w-8 h-[2px] bg-gradient-to-r from-primary/30 via-primary/50 to-secondary/30" />
+                <div className="relative shrink-0 flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-primary fill-primary animate-pulse-soft" />
+                  <span className="absolute w-6 h-6 rounded-full bg-primary/20 animate-ping opacity-60" />
+                </div>
+                <div className="w-8 h-[2px] bg-gradient-to-r from-secondary/30 via-secondary/50 to-primary/30" />
               </div>
 
               {/* Partner Avatar */}
               {partner ? (
                 <div className="relative group">
-                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-secondary bg-secondary/10 shadow-md">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-secondary bg-secondary/10 shadow-md transition-transform duration-350 group-hover:scale-105">
                     {partner.avatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={partner.avatar} alt={partner.name} className="w-full h-full object-cover" />
@@ -309,7 +343,7 @@ export default function HomePage() {
                       </div>
                     )}
                   </div>
-                  <span className="absolute -bottom-1 -right-1 bg-secondary text-secondary-foreground text-[8px] font-black px-1 py-0.5 rounded-full border border-background uppercase tracking-widest leading-none scale-90">Love</span>
+                  <span className="absolute -bottom-1 -right-1 bg-secondary text-secondary-foreground text-[8px] font-black px-1.5 py-0.5 rounded-full border border-background uppercase tracking-widest leading-none scale-90 shadow-sm">Love</span>
                 </div>
               ) : (
                 <Link
@@ -334,7 +368,7 @@ export default function HomePage() {
               </div>
               {nearestCountdown && (
                 <Link
-                  href="/countdowns"
+                  href="/dreams"
                   onClick={() => playSound("tap")}
                   className="text-[10px] text-primary hover:underline font-bold flex items-center shrink-0"
                 >
@@ -357,7 +391,7 @@ export default function HomePage() {
               <div className="flex flex-col justify-center h-14">
                 <p className="text-xs text-muted-foreground italic">No countdowns set.</p>
                 <Link
-                  href="/countdowns"
+                  href="/dreams"
                   onClick={() => playSound("tap")}
                   className="text-xs text-primary font-bold hover:underline mt-1"
                 >
@@ -478,7 +512,7 @@ export default function HomePage() {
           {/* Memory of the Day */}
           <motion.div variants={item} className="card-cozy p-6 cursor-pointer group flex flex-col justify-between">
             <Link
-              href={memoryOfTheDay._id ? `/memories/${memoryOfTheDay._id}` : "/memories"}
+              href={memoryOfTheDay._id ? `/scrapbook?id=${memoryOfTheDay._id}` : "/scrapbook"}
               onClick={() => playSound("tap")}
               className="flex flex-col h-full justify-between"
             >
@@ -524,16 +558,7 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          {/* Today's Message */}
-          <motion.div variants={item} className="card-cozy p-6 md:col-span-2 lg:col-span-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-              <MessageCircleHeart className="w-4 h-4 text-primary fill-primary animate-pulse-soft" />
-              <span className="font-bold uppercase tracking-wider text-xs">Today&apos;s Message</span>
-            </div>
-            <p className="handwritten text-xl sm:text-2xl leading-relaxed text-foreground italic">
-              &ldquo;{dailyMessageResponse?.message || "You're the best part of every single day. Never forget that. ❤️"}&rdquo;
-            </p>
-          </motion.div>
+
         </motion.div>
       </div>
     </PageTransition>
@@ -543,11 +568,11 @@ export default function HomePage() {
 /* ── Helper Components ── */
 function TimeBlock({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-col items-center flex-1 p-2 rounded-xl bg-muted/50 border border-border/30 min-w-[64px]">
-      <span className="text-2xl sm:text-3xl font-black text-foreground tabular-nums">
+    <div className="flex flex-col items-center flex-1 p-2 rounded-2xl bg-muted/60 dark:bg-muted/40 border border-border/50 shadow-inner min-w-[64px]">
+      <span className="text-2xl sm:text-3xl font-black text-primary tabular-nums tracking-tight">
         {String(value).padStart(2, "0")}
       </span>
-      <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-extrabold mt-0.5">
+      <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-black mt-1 leading-none">
         {label}
       </span>
     </div>

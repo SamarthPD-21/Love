@@ -24,6 +24,15 @@ export async function generateInvite(): Promise<{ inviteCode: string }> {
   return data;
 }
 
+export async function registerCreator(payload: Omit<RegisterPayload, "inviteCode">): Promise<AuthResponse & { inviteCode: string }> {
+  const { data } = await api.post<AuthResponse & { inviteCode: string }>("/auth/invite", payload);
+  if (typeof window !== "undefined") {
+    localStorage.setItem("home-token", data.token);
+    localStorage.setItem("home-user", JSON.stringify(data.user));
+  }
+  return data;
+}
+
 export async function getCurrentUser(): Promise<User> {
   const { data } = await api.get<User>("/auth/me");
   return data;

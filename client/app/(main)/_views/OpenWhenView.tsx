@@ -7,6 +7,7 @@ import { Plus, Loader2, PenLine, Sparkles, X, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { ImageUpload } from "@/components/ui/ImageUpload";
+import { useToastStore } from "@/stores/useToastStore";
 import api from "@/lib/api";
 
 const categories = [
@@ -37,6 +38,7 @@ export default function OpenWhenPage() {
   const [showModal, setShowModal] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const showToast = useToastStore((s) => s.showToast);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -79,9 +81,10 @@ export default function OpenWhenPage() {
       setPhotos([]);
       setShowModal(false);
       queryClient.invalidateQueries({ queryKey: ["open-when"] });
+      showToast("Letter sealed and saved successfully! 💌", "success");
     } catch (error) {
       console.error("Compose open when letter error:", error);
-      alert("Failed to write letter. Please check inputs.");
+      showToast("Failed to write letter. Please check inputs.", "error");
     } finally {
       setIsSubmitting(false);
     }

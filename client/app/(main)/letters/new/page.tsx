@@ -10,6 +10,7 @@ import { PageTransition } from "@/components/animations/PageTransition";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { AudioRecorder } from "@/components/voice/AudioRecorder";
 import { AudioPlayer } from "@/components/voice/AudioPlayer";
+import { useToastStore } from "@/stores/useToastStore";
 import api from "@/lib/api";
 
 const letterSchema = z.object({
@@ -46,6 +47,7 @@ export default function NewLetterPage() {
   const [voiceDuration, setVoiceDuration] = useState<number>(0);
   const [showRecorder, setShowRecorder] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const showToast = useToastStore((s) => s.showToast);
 
   const {
     register,
@@ -76,12 +78,14 @@ export default function NewLetterPage() {
         songLink: values.songLink || undefined,
         photos,
         voiceNote: voiceUrl || undefined,
+        voiceDuration: voiceUrl ? voiceDuration : undefined,
       });
 
+      showToast("Future letter sealed successfully! ✉️", "success");
       router.push("/letters");
     } catch (error) {
       console.error("Create letter error:", error);
-      alert("Failed to write letter. Please check your inputs.");
+      showToast("Failed to write letter. Please check your inputs.", "error");
     } finally {
       setIsSubmitting(false);
     }

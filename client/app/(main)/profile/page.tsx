@@ -3,31 +3,56 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MapPin, Sparkles, Navigation, Calendar, Mail, MessageCircle, AlertCircle, Loader2 } from "lucide-react";
-import { PageTransition } from "@/components/animations/PageTransition";
-import { useDistance } from "@/hooks/useDistance";
-import { useSoundEffects } from "@/hooks/useSoundEffects";
-import { daysBetween, formatNumber } from "@/lib/utils";
-import api from "@/lib/api";
+import {
+  Heart,
+  User,
+  Mail,
+  Calendar,
+  MapPin,
+  Sparkles,
+  Loader2,
+  Edit3,
+  Save,
+  X,
+  Compass,
+  CloudSun,
+  Check,
+} from "lucide-react";
 import { format } from "date-fns";
-import Link from "next/link";
+import api from "@/lib/api";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useToastStore } from "@/stores/useToastStore";
+import { ImageUpload } from "@/components/ui/ImageUpload";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
+import { PageTransition } from "@/components/animations/PageTransition";
+import { cn, daysBetween } from "@/lib/utils";
 
-interface HugsResponse {
-  success: boolean;
-  myHugs: number;
-  partnerHugs: number;
+interface HeartParticle {
+  id: number;
+  x: number;
+  y: number;
+  scale: number;
+  emoji: string;
 }
 
-export default function PartnerProfilePage() {
+export default function ProfilePage() {
   const queryClient = useQueryClient();
   const { playSound } = useSoundEffects();
-  const { distance, myLocation, partnerLocation, partnerName, error: distanceError, isLoading: distanceLoading } = useDistance();
+  const showToast = useToastStore((s) => s.showToast);
   
-  const [showHearts, setShowHearts] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [heartCount, setHeartCount] = useState(0);
+  // States
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editAvatar, setEditAvatar] = useState<string[]>([]);
+  const [hearts, setHearts] = useState<HeartParticle[]>([]);
+  const [locationSharing, setLocationSharing] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [updatingLocation, setUpdatingLocation] = useState(false);
+  const [anniversaryDate, setAnniversaryDate] = useState("");
+  const [isSavingAnniversary, setIsSavingAnniversary] = useState(false);
 
-  // Fetch current user & partner info
-  const { data: userProfile, isLoading: profileLoading } = useQuery({
+  // Fetch current user (me) populated with partner and relationship info
+  const { data: profileData, isLoading: profileLoading } = useQuery({
     queryKey: ["user-me"],
     queryFn: async () => {
       const res = await api.get("/users/me");
@@ -36,7 +61,7 @@ export default function PartnerProfilePage() {
   });
 
   // Fetch hugs count
-  const { data: hugs, isLoading: hugsLoading } = useQuery<HugsResponse>({
+  const { data: hugsData, isLoading: hugsLoading } = useQuery({
     queryKey: ["hugs"],
     queryFn: async () => {
       const res = await api.get("/users/hugs");
@@ -44,344 +69,536 @@ export default function PartnerProfilePage() {
     },
   });
 
-  // Send hug mutation
+  // Initialize edit fields
+  useEffect(() => {
+    if (profileData) {
+      setEditName(profileData.name || "");
+      setEditAvatar(profileData.avatar ? [profileData.avatar] : []);
+      
+      const rel = profileData.relationshipId;
+      if (rel && typeof rel === "object" && "startDate" in rel) {
+        setAnniversaryDate(format(new Date(rel.startDate as string), "yyyy-MM-dd"));
+      }
+    }
+  }, [profileData]);
+
+  // Mutations
+  const updateProfileMutation = useMutation({
+    mutationFn: async (payload: { name: string; avatar?: string }) => {
+      const res = await api.put("/users/me", payload);
+      return res.data.user;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["user-me"] });
+      setIsEditing(false);
+      playSound("chime");
+      showToast("Profile details updated successfully!", "success");
+    },
+  });
+
   const sendHugMutation = useMutation({
     mutationFn: async () => {
       const res = await api.post("/users/hugs");
       return res.data;
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["hugs"], data);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hugs"] });
+      showToast("Sent a warm hug to your partner! 🫂", "success");
     },
   });
 
-  const partner = userProfile?.partnerId;
-  const relationship = userProfile?.relationshipId;
-  const togetherDays = relationship?.startDate 
-    ? daysBetween(new Date(relationship.startDate), new Date()) 
-    : 0;
+  const updateRelationshipMutation = useMutation({
+    mutationFn: async (startDate: string) => {
+      const res = await api.put("/relationship", { startDate });
+      return res.data.relationship;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-me"] });
+      playSound("chime");
+      showToast("Anniversary date synchronized successfully!", "success");
+    },
+  });
 
-  const handleSendHug = (e: React.MouseEvent) => {
+  // Location Refresh Trigger
+  const handleRefreshLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser");
+      showToast("Geolocation is not supported by your browser", "error");
+      return;
+    }
+
+    setUpdatingLocation(true);
+    setLocationError("");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          await api.put("/location", { lat: latitude, lng: longitude });
+          queryClient.invalidateQueries({ queryKey: ["user-me"] });
+          setLocationSharing(true);
+          playSound("tap");
+          showToast("GPS coordinates refreshed and synchronized!", "success");
+        } catch (err: any) {
+          const errMsg = err.response?.data?.error || "Failed to update location";
+          setLocationError(errMsg);
+          showToast(errMsg, "error");
+        } finally {
+          setUpdatingLocation(false);
+        }
+      },
+      (err) => {
+        const errMsg = "Permission denied or location unavailable";
+        setLocationError(errMsg);
+        showToast(errMsg, "error");
+        setUpdatingLocation(false);
+      }
+    );
+  };
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim()) return;
+
+    updateProfileMutation.mutate({
+      name: editName,
+      avatar: editAvatar[0] || "",
+    });
+  };
+
+  const handleSaveAnniversary = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!anniversaryDate) return;
+
+    setIsSavingAnniversary(true);
+    updateRelationshipMutation.mutate(anniversaryDate, {
+      onSettled: () => setIsSavingAnniversary(false),
+    });
+  };
+
+  const handleSendHug = () => {
     playSound("heartbeat");
     sendHugMutation.mutate();
 
-    // Spawn floating heart
-    const newHeart = {
-      id: Date.now(),
-      x: e.clientX || window.innerWidth / 2,
-      y: e.clientY || window.innerHeight / 2,
-    };
-    setShowHearts((prev) => [...prev, newHeart]);
-    setTimeout(() => {
-      setShowHearts((prev) => prev.filter((h) => h.id !== newHeart.id));
-    }, 2000);
+    // Trigger local floating particle explosions
+    const emojis = ["❤️", "💖", "🫂", "✨", "🌸", "💕"];
+    const newHearts = Array.from({ length: 8 }).map((_, i) => ({
+      id: Date.now() + i,
+      x: (Math.random() - 0.5) * 260,
+      y: -100 - Math.random() * 160,
+      scale: 0.6 + Math.random() * 0.9,
+      emoji: emojis[Math.floor(Math.random() * emojis.length)],
+    }));
+    
+    setHearts((prev) => [...prev, ...newHearts]);
   };
 
-  // Get distance description
-  const getDistanceText = () => {
-    if (distance === null) return "Connecting coordinates...";
-    if (distance < 0.1) return "Right next to each other! ❤️";
-    if (distance < 1) return "Less than a kilometer away! 🏃‍♂️";
-    if (distance < 5) return "Very close, just a short walk! 🌸";
-    if (distance < 50) return "A short drive away. 🚗";
-    return "Distance is just a test of how far love can travel. ✈️";
-  };
+  // Clean up heart particles after animation finishes
+  useEffect(() => {
+    if (hearts.length > 0) {
+      const timer = setTimeout(() => {
+        setHearts([]);
+      }, 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [hearts]);
 
   if (profileLoading) {
     return (
-      <div className="min-h-[calc(100dvh-6rem)] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="min-h-[calc(100vh-6rem)] flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
       </div>
     );
   }
 
-  if (!partner) {
-    return (
-      <PageTransition>
-        <div className="min-h-[calc(100dvh-6rem)] flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 animate-bounce">
-            <Heart className="w-8 h-8 fill-primary" />
-          </div>
-          <h2 className="text-2xl font-black text-foreground">No partner connected</h2>
-          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            Connect your space with your partner in settings using your unique invite code.
-          </p>
-          <Link
-            href="/settings"
-            className="btn-primary mt-6 text-sm flex items-center gap-2"
-          >
-            Go to Settings ⚙️
-          </Link>
-        </div>
-      </PageTransition>
-    );
-  }
+  const partner = profileData?.partnerId;
+  const relationship = profileData?.relationshipId;
+  const relationshipStart = relationship?.startDate || profileData?.createdAt;
+  const togetherDays = relationshipStart ? daysBetween(new Date(relationshipStart), new Date()) : 0;
 
   return (
     <PageTransition>
-      <div className="min-h-[calc(100dvh-6rem)] flex flex-col pb-8 relative overflow-hidden">
-        {/* Floating background particles */}
-        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-30 dark:opacity-20">
-          {Array.from({ length: 15 }).map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute text-primary text-xl"
-              initial={{
-                x: Math.random() * window.innerWidth,
-                y: window.innerHeight + 50,
-                scale: 0.5 + Math.random() * 0.8,
-                opacity: 0.2 + Math.random() * 0.6,
-              }}
-              animate={{
-                y: -100,
-                x: `calc(100vw * ${Math.random()} + ${Math.sin(i) * 50}px)`,
-              }}
-              transition={{
-                duration: 15 + Math.random() * 10,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            >
-              ❤️
-            </motion.div>
-          ))}
-        </div>
-
-        {/* ── Floating Hearts click effects ── */}
-        <AnimatePresence>
-          {showHearts.map((h) => (
-            <motion.div
-              key={h.id}
-              className="fixed text-primary text-3xl z-50 pointer-events-none"
-              initial={{ opacity: 1, scale: 0.5, x: h.x - 15, y: h.y - 15 }}
-              animate={{ opacity: 0, scale: 2.2, y: h.y - 120, x: h.x - 15 + (Math.random() - 0.5) * 60 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1.2, ease: "easeOut" }}
-            >
-              ❤️
-            </motion.div>
-          ))}
-        </AnimatePresence>
-
-        {/* Header */}
-        <div className="mb-8 relative z-10">
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-primary animate-pulse-soft" /> Partner Profile
+      <div className="min-h-[calc(100dvh-6rem)] pb-12 max-w-5xl mx-auto px-4 sm:px-6">
+        
+        {/* Title Banner */}
+        <div className="mb-10 text-center sm:text-left relative py-6">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-transparent blur-3xl rounded-3xl" />
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground font-display flex items-center justify-center sm:justify-start gap-2 relative">
+            Profile Space <Heart className="w-6 h-6 text-primary fill-primary animate-pulse-soft" />
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            A private space dedicated to your favorite person in the world 💫
+          <p className="mt-2 text-muted-foreground text-sm max-w-xl">
+            Customize how your partner sees you, exchange virtual hugs, and update your anniversary settings.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10 items-start">
-          {/* Left Column: Avatar & Basic Details */}
-          <div className="bg-card/70 border border-border/50 backdrop-blur-md rounded-3xl p-8 shadow-xl text-center flex flex-col items-center">
-            {/* Romantic Rotating Avatar Ring */}
-            <div className="relative group mb-6">
-              <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-primary via-accent to-secondary blur-sm opacity-70 animate-pulse-soft group-hover:scale-105 transition-transform duration-300" />
-              
-              <div className="relative w-36 h-36 rounded-full overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10 border-4 border-card shadow-2xl flex items-center justify-center">
-                {partner.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={partner.avatar} alt={partner.name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-4xl font-black text-primary uppercase">
-                    {partner.name.slice(0, 2)}
-                  </span>
+        {/* Twin Profile Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          
+          {/* Your Profile Card */}
+          <motion.div
+            className="card-cozy p-6 sm:p-8 flex flex-col justify-between"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div>
+              <div className="flex items-center justify-between border-b border-border/40 pb-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  <span className="font-extrabold uppercase tracking-widest text-xs">My Profile</span>
+                </div>
+                {!isEditing && (
+                  <button
+                    onClick={() => {
+                      playSound("tap");
+                      setIsEditing(true);
+                    }}
+                    className="flex items-center gap-1 text-xs text-primary hover:underline font-bold"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" /> Edit
+                  </button>
                 )}
               </div>
-              
-              <div className="absolute -bottom-2 right-2 bg-primary text-white p-2 rounded-full shadow-lg border-2 border-background animate-bounce">
-                <Heart className="w-4 h-4 fill-white" />
-              </div>
-            </div>
 
-            <h2 className="text-2xl font-black text-foreground">{partner.name}</h2>
-            <p className="text-xs font-semibold text-primary uppercase tracking-widest mt-1">My Partner in Love</p>
-            <p className="text-xs text-muted-foreground mt-1 select-all">{partner.email}</p>
+              {isEditing ? (
+                <form onSubmit={handleSaveProfile} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Profile Photo</label>
+                    <ImageUpload
+                      value={editAvatar}
+                      onChange={(urls) => setEditAvatar(urls)}
+                      maxFiles={1}
+                    />
+                  </div>
 
-            <div className="w-full border-t border-border/60 my-6" />
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Display Name</label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-4 py-2 rounded-xl bg-muted/50 border border-border/80 focus:border-primary focus:outline-none transition-all font-semibold"
+                      placeholder="Your name"
+                      required
+                    />
+                  </div>
 
-            <div className="space-y-4 w-full">
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-card/60 dark:bg-card/30 border border-border/40">
-                <Calendar className="w-5 h-5 text-primary shrink-0" />
-                <div className="text-left">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold leading-none">Anniversary</p>
-                  <p className="text-xs font-bold text-foreground mt-1">
-                    {relationship?.startDate 
-                      ? format(new Date(relationship.startDate), "MMMM d, yyyy")
-                      : "Not set yet"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-card/60 dark:bg-card/30 border border-border/40">
-                <Heart className="w-5 h-5 text-primary fill-primary shrink-0 animate-pulse-soft" />
-                <div className="text-left">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold leading-none">Days Together</p>
-                  <p className="text-xs font-extrabold text-foreground mt-1">
-                    {formatNumber(togetherDays)} Days of Happiness
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Middle & Right Column: Location & Interactions */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Live Distance Widget */}
-            <div className="bg-card/70 border border-border/50 backdrop-blur-md rounded-3xl p-6 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-primary/5 blur-3xl -translate-y-1/2 translate-x-1/2" />
-              
-              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider flex items-center gap-2 mb-6">
-                <MapPin className="w-4 h-4 text-primary" /> Live Distance Tracker
-              </h3>
-
-              {distanceLoading ? (
-                <div className="flex flex-col items-center justify-center py-8 gap-2">
-                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                  <p className="text-xs text-muted-foreground font-semibold">Tuning compasses...</p>
-                </div>
-              ) : distanceError ? (
-                <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-500 text-xs">
-                  <AlertCircle className="w-4.5 h-4.5 shrink-0" />
-                  <p className="font-semibold leading-relaxed">
-                    {distanceError}. Enable location permissions for both of you to compute real-time distance.
-                  </p>
-                </div>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={updateProfileMutation.isPending}
+                      className="flex-1 py-2 bg-primary text-primary-foreground font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-primary/95 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                    >
+                      {updateProfileMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playSound("tap");
+                        setIsEditing(false);
+                        setEditName(profileData.name || "");
+                        setEditAvatar(profileData.avatar ? [profileData.avatar] : []);
+                      }}
+                      className="px-4 py-2 border border-border hover:bg-muted/50 font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <X className="w-4 h-4" /> Cancel
+                    </button>
+                  </div>
+                </form>
               ) : (
-                <div className="space-y-6">
-                  {/* Distance Visualizer */}
-                  <div className="relative py-8 bg-background/30 rounded-2xl border border-border/30 overflow-hidden flex items-center justify-center">
-                    {/* Pulsing hearts trace line */}
-                    <div className="absolute w-[80%] h-[2px] bg-gradient-to-r from-primary/30 via-accent/30 to-secondary/30" />
-                    
-                    <div className="relative z-10 w-full max-w-sm px-6 flex items-center justify-between">
-                      {/* My Avatar dot */}
-                      <div className="flex flex-col items-center gap-1.5">
-                        <div className="w-12 h-12 rounded-full border-2 border-primary overflow-hidden shadow-md">
-                          {userProfile?.avatar ? (
-                            <img src={userProfile.avatar} alt="Me" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center font-bold text-xs bg-primary/10 text-primary">Me</div>
-                          )}
+                <div className="flex flex-col items-center sm:items-start sm:flex-row gap-5">
+                  {/* Avatar Frame */}
+                  <div className="relative group shrink-0">
+                    <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-primary bg-primary/10 shadow-md">
+                      {profileData.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={profileData.avatar} alt={profileData.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center font-black text-primary text-2xl">
+                          {profileData.name?.slice(0, 2).toUpperCase()}
                         </div>
-                        <span className="text-[10px] font-bold text-muted-foreground">Me</span>
-                      </div>
-
-                      {/* Connection Line */}
-                      <div className="flex-1 flex items-center justify-center relative">
-                        <motion.div 
-                          className="text-lg animate-pulse"
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 1.5, repeat: Infinity }}
-                        >
-                          ❤️
-                        </motion.div>
-                        <div className="absolute w-full h-full overflow-hidden top-0 left-0 pointer-events-none">
-                          <motion.div 
-                            className="w-2 h-2 rounded-full bg-primary absolute top-1/2 -translate-y-1/2"
-                            animate={{ left: ["5%", "95%"] }}
-                            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Partner Avatar dot */}
-                      <div className="flex flex-col items-center gap-1.5">
-                        <div className="w-12 h-12 rounded-full border-2 border-secondary overflow-hidden shadow-md">
-                          {partner.avatar ? (
-                            <img src={partner.avatar} alt={partner.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center font-bold text-xs bg-secondary/10 text-secondary">Us</div>
-                          )}
-                        </div>
-                        <span className="text-[10px] font-bold text-muted-foreground">{partner.name}</span>
-                      </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="text-center">
-                    <p className="text-4xl font-black tracking-tight text-foreground">
-                      {distance !== null ? `${distance.toFixed(2)} km` : "..."}
-                    </p>
-                    <p className="text-sm font-medium text-primary mt-1 handwritten text-lg">
-                      {getDistanceText()}
-                    </p>
+                  {/* Profile info details */}
+                  <div className="space-y-3 flex-1 text-center sm:text-left">
+                    <div>
+                      <h3 className="text-xl font-extrabold text-foreground">{profileData.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center justify-center sm:justify-start gap-1">
+                        <Mail className="w-3.5 h-3.5 shrink-0" /> {profileData.email}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-border/40 space-y-2">
+                      <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-muted-foreground">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Joined Space: {format(new Date(profileData.createdAt), "MMMM d, yyyy")}</span>
+                      </div>
+                      
+                      {profileData.lastLocation?.updatedAt && (
+                        <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-muted-foreground">
+                          <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <span className="truncate max-w-[220px]">
+                            Last active coords: {profileData.lastLocation.lat.toFixed(3)}, {profileData.lastLocation.lng.toFixed(3)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Virtual Hugs Section */}
-            <div className="bg-card/70 border border-border/50 backdrop-blur-md rounded-3xl p-6 shadow-xl relative overflow-hidden">
-              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider flex items-center gap-2 mb-6">
-                <Heart className="w-4 h-4 text-primary fill-primary animate-pulse-soft" /> Virtual Hug Jar
-              </h3>
-
-              {hugsLoading ? (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="p-4 rounded-2xl bg-card border border-border/50 text-center shadow-xs">
-                    <p className="text-3xl font-black text-primary">{hugs?.myHugs || 0}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold mt-1">Hugs I Sent</p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-card border border-border/50 text-center shadow-xs">
-                    <p className="text-3xl font-black text-secondary">{hugs?.partnerHugs || 0}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold mt-1">Hugs Received</p>
-                  </div>
-                </div>
-              )}
-
+            {/* Geolocation Refresh panel */}
+            <div className="mt-8 pt-4 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-center sm:text-left">
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">GPS Location Sharing</span>
+                <p className="text-xs text-muted-foreground mt-0.5">Let your partner see how far apart you are.</p>
+              </div>
               <button
-                onClick={handleSendHug}
-                disabled={sendHugMutation.isPending}
-                className="w-full py-4 rounded-2xl font-black text-sm bg-gradient-to-r from-primary to-accent hover:from-primary-hover hover:to-accent text-white flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg active:scale-95 transition-all duration-300 group"
+                onClick={handleRefreshLocation}
+                disabled={updatingLocation}
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-muted/60 dark:bg-muted/40 hover:bg-muted/80 border border-border/80 hover:border-primary/30 transition-all font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                <Heart className="w-4.5 h-4.5 fill-white group-hover:scale-125 transition-transform" />
-                <span>Send a Virtual Hug!</span>
+                {updatingLocation ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Compass className="w-3.5 h-3.5 text-primary" />
+                )}
+                Sync Coordinates
               </button>
             </div>
+            {locationError && (
+              <p className="text-xs text-destructive mt-2 text-center sm:text-left">{locationError}</p>
+            )}
+          </motion.div>
 
-            {/* Quick Interactions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link 
-                href="/letters/new"
-                className="flex items-center justify-between p-5 rounded-2xl bg-card/70 border border-border/50 shadow-sm hover:shadow-md transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                    <Mail className="w-5 h-5" />
+          {/* Partner Profile Card */}
+          <motion.div
+            className="card-cozy p-6 sm:p-8 flex flex-col justify-between"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <div>
+              <div className="flex items-center justify-between border-b border-border/40 pb-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-secondary fill-secondary animate-pulse-soft" />
+                  <span className="font-bold uppercase tracking-widest text-xs">My Partner</span>
+                </div>
+                {partner && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-extrabold rounded-full border border-emerald-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Connected
+                  </span>
+                )}
+              </div>
+
+              {partner ? (
+                <div className="flex flex-col items-center sm:items-start sm:flex-row gap-5">
+                  {/* Avatar Frame */}
+                  <div className="relative group shrink-0">
+                    <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-secondary bg-secondary/10 shadow-md">
+                      {partner.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={partner.avatar} alt={partner.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center font-black text-secondary text-2xl">
+                          {partner.name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-foreground">Write a Love Letter</h4>
-                    <p className="text-[10px] text-muted-foreground">Seal your thoughts forever</p>
+
+                  {/* Profile info details */}
+                  <div className="space-y-3 flex-1 text-center sm:text-left">
+                    <div>
+                      <h3 className="text-xl font-extrabold text-foreground">{partner.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center justify-center sm:justify-start gap-1">
+                        <Mail className="w-3.5 h-3.5 shrink-0" /> {partner.email}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-border/40 space-y-2">
+                      <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-muted-foreground">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Joined Space: {format(new Date(partner.createdAt), "MMMM d, yyyy")}</span>
+                      </div>
+                      
+                      {partner.lastLocation?.updatedAt ? (
+                        <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-muted-foreground">
+                          <MapPin className="w-3.5 h-3.5 text-secondary shrink-0" />
+                          <span className="truncate max-w-[220px]">
+                            Last sync: {format(new Date(partner.lastLocation.updatedAt), "MMM d, h:mm a")}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-muted-foreground italic">
+                          <Compass className="w-3.5 h-3.5 shrink-0" /> No location sharing active
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <span className="text-primary font-black group-hover:translate-x-1 transition-transform">→</span>
-              </Link>
-
-              <Link 
-                href="/journal"
-                className="flex items-center justify-between p-5 rounded-2xl bg-card/70 border border-border/50 shadow-sm hover:shadow-md transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
-                    <MessageCircle className="w-5 h-5" />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center py-8">
+                  <div className="w-14 h-14 bg-muted/60 dark:bg-muted/40 rounded-2xl flex items-center justify-center border border-border/50 text-muted-foreground mb-4">
+                    +
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-foreground">Couple Journal</h4>
-                    <p className="text-[10px] text-muted-foreground">Document daily sweet moments</p>
-                  </div>
+                  <h4 className="text-sm font-extrabold text-foreground">No partner connected yet</h4>
+                  <p className="text-xs text-muted-foreground max-w-[240px] mt-1.5">
+                    Share your invite code or register using your partner&apos;s code in settings.
+                  </p>
                 </div>
-                <span className="text-secondary font-black group-hover:translate-x-1 transition-transform">→</span>
-              </Link>
+              )}
             </div>
-          </div>
+
+            {/* Cozy footer row */}
+            {partner && (
+              <div className="mt-8 pt-4 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Space Status: Active</span>
+                <span className="font-extrabold text-primary animate-pulse-soft">💖 Connected Live</span>
+              </div>
+            )}
+          </motion.div>
+
         </div>
+
+        {/* Cozy Hugs Station Card */}
+        <motion.div
+          className="card-cozy p-8 text-center relative overflow-hidden mb-10 border border-primary/10 shadow-md"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          {/* Decorative gradients */}
+          <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 blur-2xl rounded-full" />
+          <div className="absolute bottom-0 right-0 w-32 h-32 bg-secondary/5 blur-2xl rounded-full" />
+
+          {/* Title row */}
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+              🫂
+            </div>
+            <span className="font-black uppercase tracking-widest text-xs text-muted-foreground">Virtual Hug Station</span>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground font-display">
+            Hugs Exchanged
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+            Send a silent warm hug to your partner. They will see the counter update live on their space!
+          </p>
+
+          {/* Exploding heart particle container */}
+          <div className="relative h-16 w-32 mx-auto flex items-center justify-center">
+            <AnimatePresence>
+              {hearts.map((h) => (
+                <motion.span
+                  key={h.id}
+                  className="absolute text-3xl select-none pointer-events-none filter drop-shadow-sm"
+                  initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+                  animate={{ opacity: 0, scale: h.scale, x: h.x, y: h.y }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                >
+                  {h.emoji}
+                </motion.span>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {/* Symmetrical split counter displays */}
+          {hugsLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 max-w-xs mx-auto gap-4 mb-6">
+              <div className="p-3 bg-muted/50 rounded-2xl border border-border/40 shadow-inner">
+                <span className="text-3xl font-black text-primary tabular-nums">
+                  {hugsData?.myHugs || 0}
+                </span>
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-black mt-1.5 block">
+                  Sent By Me
+                </span>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-2xl border border-border/40 shadow-inner">
+                <span className="text-3xl font-black text-secondary tabular-nums">
+                  {hugsData?.partnerHugs || 0}
+                </span>
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-black mt-1.5 block">
+                  Sent By Partner
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Pulse Launcher Button */}
+          <motion.button
+            onClick={handleSendHug}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            className="px-6 py-3 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-extrabold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 mx-auto cursor-pointer"
+          >
+            <span>🫂</span> Send a Hug!
+          </motion.button>
+        </motion.div>
+
+        {/* Anniversary Setting Manager */}
+        <motion.div
+          className="card-cozy p-6 sm:p-8"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
+          <div className="flex items-center gap-2 border-b border-border/40 pb-4 mb-6">
+            <Sparkles className="w-4.5 h-4.5 text-primary fill-primary animate-pulse-soft" />
+            <span className="font-extrabold uppercase tracking-widest text-xs">Relationship Milestone settings</span>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <h3 className="text-base font-extrabold text-foreground">Anniversary Milestone Date</h3>
+              <p className="text-xs text-muted-foreground max-w-md">
+                Updating this date changes the anniversary milestones and the &ldquo;Days Together&rdquo; countdown shown across the application.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveAnniversary} className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
+              <input
+                type="date"
+                value={anniversaryDate}
+                onChange={(e) => setAnniversaryDate(e.target.value)}
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-muted/50 border border-border/80 focus:border-primary focus:outline-none transition-all font-semibold text-sm cursor-pointer"
+                required
+              />
+              <button
+                type="submit"
+                disabled={isSavingAnniversary}
+                className="w-full sm:w-auto px-5 py-2 bg-primary text-primary-foreground font-bold text-sm rounded-xl flex items-center justify-center gap-2 hover:bg-primary/95 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {isSavingAnniversary ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
+                Update Date
+              </button>
+            </form>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-2">
+            <span>Current anniversary: {relationshipStart ? format(new Date(relationshipStart), "MMMM d, yyyy") : "Not set"}</span>
+            <span className="font-extrabold text-primary">{togetherDays} beautiful days shared together ❤️</span>
+          </div>
+        </motion.div>
+
       </div>
     </PageTransition>
   );

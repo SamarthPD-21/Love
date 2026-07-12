@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 import { FloatingHearts } from "@/components/animations/FloatingHearts";
@@ -12,17 +12,44 @@ import { cn } from "@/lib/utils";
 import api from "@/lib/api";
 import { useSoundStore } from "@/stores/useSoundStore";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
-import { Volume2, VolumeX, Heart } from "lucide-react";
+import { useToastStore } from "@/stores/useToastStore";
+import PersistentPlayer from "@/components/music/PersistentPlayer";
+import { useTheme } from "next-themes";
+import { useEffect } from "react";
+import { Volume2, VolumeX, Heart, Sun, Moon, RefreshCw } from "lucide-react";
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { timeOfDay } = useTimeOfDay();
   const { isMuted, toggleMute } = useSoundStore();
   const { playSound } = useSoundEffects();
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const showToast = useToastStore((s) => s.showToast);
+
+  const handleRefresh = async () => {
+    playSound("whoosh");
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries();
+      showToast("Space synchronized!", "success");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 800);
+    }
+  };
 
   const { data: profile } = useQuery({
     queryKey: ["user-me"],
@@ -59,9 +86,9 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex min-h-dvh">
       {/* Ambient background animation */}
       {isNight ? (
-        <Fireflies count={15} />
+        <Fireflies count={10} />
       ) : (
-        <FloatingHearts count={8} />
+        <FloatingHearts count={5} />
       )}
 
       {/* Sidebar — always visible on lg, drawer on mobile */}
@@ -118,6 +145,29 @@ export function AppShell({ children }: AppShellProps) {
               {getTimeEmoji()}
             </span>
 
+            {/* Theme toggle */}
+            {mounted ? (
+              <button
+                onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+                className="p-2 rounded-lg bg-muted/60 dark:bg-muted/40 hover:bg-muted dark:hover:bg-muted/60 transition-all cursor-pointer active:scale-90 border border-border/50 text-foreground"
+                aria-label={resolvedTheme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+              >
+                {resolvedTheme === "dark" ? <Sun className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4 text-primary" />}
+              </button>
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-muted/20 animate-pulse border border-border/50" />
+            )}
+
+            {/* Global Refresh Button */}
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="p-2 rounded-lg bg-muted/60 dark:bg-muted/40 hover:bg-muted dark:hover:bg-muted/60 transition-all cursor-pointer active:scale-90 border border-border/50 text-foreground"
+              aria-label="Synchronize Space"
+            >
+              <RefreshCw className={cn("w-4 h-4 text-primary", isRefreshing ? "animate-spin" : "")} />
+            </button>
+
             {/* Global sound toggle */}
             <button
               onClick={handleMuteClick}
@@ -132,13 +182,16 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </header>
 
-        <div className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {children}
         </div>
       </main>
 
       {/* Bottom nav — mobile only */}
       <BottomNav onMenuOpen={() => setSidebarOpen(true)} />
+
+      {/* Persistent global music player */}
+      <PersistentPlayer />
     </div>
   );
 }

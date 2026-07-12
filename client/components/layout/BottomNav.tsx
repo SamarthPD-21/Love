@@ -4,14 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Home, Camera, Mail, Heart, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 const bottomNavItems = [
-  { label: "Home", href: "/", icon: Home, emoji: "🏠" },
-  { label: "Memories", href: "/memories", icon: Camera, emoji: "📸" },
-  { label: "Letters", href: "/open-when", icon: Mail, emoji: "💌" },
-  { label: "Us", href: "/stats", icon: Heart, emoji: "❤️" },
+  { label: "Home", href: "/", emoji: "🏠" },
+  { label: "Scrapbook", href: "/scrapbook", emoji: "📸" },
+  { label: "Letters", href: "/letters", emoji: "💌" },
+  { label: "Comfort", href: "/comfort", emoji: "🫂" },
 ];
 
 interface BottomNavProps {

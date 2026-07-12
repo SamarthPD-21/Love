@@ -3,6 +3,8 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 export interface IMemoryJarNote extends Document {
   _id: Types.ObjectId;
   content: string;
+  isDrawn: boolean;
+  drawnAt?: Date;
   relationshipId: Types.ObjectId;
   userId: Types.ObjectId;
   createdAt: Date;
@@ -13,6 +15,14 @@ const memoryJarNoteSchema = new Schema<IMemoryJarNote>({
     type: String,
     required: true,
     trim: true,
+  },
+  isDrawn: {
+    type: Boolean,
+    default: false,
+  },
+  drawnAt: {
+    type: Date,
+    default: null,
   },
   relationshipId: {
     type: Schema.Types.ObjectId,

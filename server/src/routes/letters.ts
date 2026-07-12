@@ -1,6 +1,7 @@
 import { Router, Response } from "express";
 import { authMiddleware } from "../middleware/auth";
 import { Letter } from "../models/Letter";
+import { VoiceNote } from "../models/VoiceNote";
 import { User } from "../models/User";
 import { z } from "zod";
 
@@ -14,6 +15,7 @@ const letterCreateSchema = z.object({
   content: z.string().min(1, "Content is required"),
   photos: z.array(z.string()).default([]),
   voiceNote: z.string().optional(),
+  voiceDuration: z.number().optional(),
   songLink: z.string().optional(),
   unlockType: z.enum(["date", "event", "manual"]).default("manual"),
   unlockDate: z.string().optional().nullable().transform((val) => val ? new Date(val) : undefined),
@@ -134,18 +136,34 @@ router.post("/", async (req: any, res: Response) => {
       return;
     }
 
-    const letterData = {
-      ...validation.data,
+    const letter = new Letter({
+      title: validation.data.title,
+      content: validation.data.content,
+      photos: validation.data.photos,
+      voiceNote: validation.data.voiceNote,
+      songLink: validation.data.songLink,
+      unlockType: validation.data.unlockType,
+      unlockDate: validation.data.unlockDate,
+      unlockEvent: validation.data.unlockEvent,
       relationshipId: user.relationshipId,
       userId: user._id,
-      isUnlocked: validation.data.unlockType === "manual" ? false : false, // start locked
-    };
-
-    // If it's a manual letter, let's unlock it immediately if written by current user, or start locked?
-    // Usually, the writer might want it to be locked so the other person has to unlock it manually, or unlock immediately.
-    // Let's make manual letters start locked, so the receiver has to open it. Or if it's manual, we can let it be locked by default.
-    const letter = new Letter(letterData);
+      isUnlocked: false,
+    });
     await letter.save();
+
+    // If a voiceNote is attached, also save it as a standalone VoiceNote document
+    if (validation.data.voiceNote) {
+      const voiceNote = new VoiceNote({
+        title: `Voice attachment in letter: "${letter.title}"`,
+        audioUrl: validation.data.voiceNote,
+        duration: validation.data.voiceDuration || 0,
+        category: "Love", // default category for letters
+        relationshipId: user.relationshipId,
+        userId: user._id,
+        letterId: letter._id,
+      });
+      await voiceNote.save();
+    }
 
     res.status(201).json({ success: true, data: letter });
   } catch (error: any) {

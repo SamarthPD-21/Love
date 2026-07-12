@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Mic, Square, Play, Trash2, Check, Loader2, Pause } from "lucide-react";
 import api from "@/lib/api";
+import { useToastStore } from "@/stores/useToastStore";
 import { cn } from "@/lib/utils";
 
 interface AudioRecorderProps {
@@ -17,6 +18,7 @@ export function AudioRecorder({ onUploadComplete, className }: AudioRecorderProp
   const [recordTime, setRecordTime] = useState(0);
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const showToast = useToastStore((s) => s.showToast);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -66,7 +68,7 @@ export function AudioRecorder({ onUploadComplete, className }: AudioRecorderProp
       }, 1000);
     } catch (error) {
       console.error("Error accessing microphone:", error);
-      alert("Microphone access denied or not supported on this browser.");
+      showToast("Microphone access denied or not supported on this browser.", "error");
     }
   };
 
@@ -126,7 +128,7 @@ export function AudioRecorder({ onUploadComplete, className }: AudioRecorderProp
       }
     } catch (error) {
       console.error("Upload voice note error:", error);
-      alert("Failed to upload audio file. Please try again.");
+      showToast("Failed to upload audio file. Please try again.", "error");
     } finally {
       setIsUploading(false);
     }

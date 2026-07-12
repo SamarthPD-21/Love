@@ -7,6 +7,7 @@ import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
+import { useToastStore } from "@/stores/useToastStore";
 
 interface JarNote {
   _id: string;
@@ -21,21 +22,25 @@ interface JarNote {
 
 export default function MemoryJarPage() {
   const [notes, setNotes] = useState<JarNote[]>([]);
+  const [undrawnCount, setUndrawnCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [content, setContent] = useState("");
   const [creating, setCreating] = useState(false);
   const { playSound } = useSoundEffects();
+  const showToast = useToastStore((s) => s.showToast);
 
   // Drawing states
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawnNote, setDrawnNote] = useState<JarNote | null>(null);
 
-  const fetchNotes = async () => {
+  const fetchNotes = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const response = await api.get("/memory-jar");
       if (response.data.success) {
         setNotes(response.data.data);
+        setUndrawnCount(response.data.undrawnCount || 0);
       }
     } catch (err) {
       console.error("Failed to fetch jar notes:", err);
@@ -57,9 +62,11 @@ export default function MemoryJarPage() {
       const response = await api.post("/memory-jar", { content });
       if (response.data.success) {
         playSound("success");
-        setNotes((prev) => [response.data.data, ...prev]);
         setContent("");
         setIsModalOpen(false);
+        showToast("Note dropped inside the jar! 🫙", "success");
+        // Re-fetch to update the undrawn count (new note doesn't show in notes history chest until drawn)
+        fetchNotes(true);
       }
     } catch (err) {
       console.error("Failed to add note to jar:", err);
@@ -69,7 +76,10 @@ export default function MemoryJarPage() {
   };
 
   const handleDraw = async () => {
-    if (notes.length === 0) return;
+    if (undrawnCount === 0) {
+      showToast("The jar is empty! Drop some sweet notes inside first.", "info");
+      return;
+    }
     playSound("whoosh");
     setIsDrawing(true);
     setDrawnNote(null);
@@ -78,9 +88,13 @@ export default function MemoryJarPage() {
     setTimeout(async () => {
       try {
         const response = await api.get("/memory-jar/draw");
-        if (response.data.success) {
+        if (response.data.success && response.data.data) {
           playSound("chime");
           setDrawnNote(response.data.data);
+          // Refresh list to update history (newly drawn note added) and count
+          fetchNotes(true);
+        } else {
+          showToast("All scrolls have been drawn!", "info");
         }
       } catch (err) {
         console.error("Failed to draw note:", err);
@@ -97,12 +111,13 @@ export default function MemoryJarPage() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Remove this note from the jar?")) return;
+    if (!confirm("Remove this note permanently?")) return;
     try {
       playSound("tap");
       await api.delete(`/memory-jar/${id}`);
       setNotes((prev) => prev.filter((n) => n._id !== id));
       if (drawnNote?._id === id) setDrawnNote(null);
+      showToast("Note removed.", "success");
     } catch (err) {
       console.error("Failed to delete note:", err);
     }
@@ -115,13 +130,27 @@ export default function MemoryJarPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Archive className="w-8 h-8 text-primary animate-pulse-soft" /> Memory Jar
+            <button
+              onClick={() => {
+                playSound("tap");
+                fetchNotes();
+              }}
+              disabled={loading}
+              className="p-1.5 rounded-xl bg-card border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center justify-center"
+              title="Refresh Jar"
+            >
+              <RefreshCw className={cn("w-3.5 h-3.5", loading ? "animate-spin" : "")} />
+            </button>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Drop little notes in our virtual jar. Shake it to draw a random note whenever you miss them! 🫙
           </p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            playSound("tap");
+            setIsModalOpen(true);
+          }}
           className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-all duration-200 cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98]"
         >
           <Plus className="w-4 h-4" /> Drop a Note
@@ -187,11 +216,11 @@ export default function MemoryJarPage() {
                   />
                 </svg>
 
-                {/* Floating small hearts inside the jar */}
+                {/* Floating small hearts inside the jar representing undrawn count */}
                 <div className="absolute inset-0 top-20 bottom-8 left-8 right-8 overflow-hidden flex flex-wrap items-center justify-center gap-2 opacity-90 pointer-events-none z-20">
-                  {notes.map((note, i) => (
+                  {Array.from({ length: Math.min(undrawnCount, 15) }).map((_, i) => (
                     <motion.div
-                      key={note._id}
+                      key={i}
                       animate={{
                         y: [0, Math.sin(i) * 5, 0],
                         x: [0, Math.cos(i) * 3, 0],
@@ -208,16 +237,16 @@ export default function MemoryJarPage() {
               </motion.div>
 
               <div>
-                <h3 className="text-xl font-bold text-foreground">
-                  {notes.length} Scrolls of Love
+                <h3 className="text-xl font-bold text-foreground font-display">
+                  {undrawnCount} Scrolls inside the Jar
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1.5 max-w-xs mx-auto leading-relaxed">
-                  Shake the jar to pick a random scroll, or tap any scroll in the chest below to open it!
+                  Shake the jar to pick a random scroll, or tap any scroll in the history chest below to open it!
                 </p>
               </div>
 
               <button
-                disabled={notes.length === 0 || isDrawing}
+                disabled={undrawnCount === 0 || isDrawing}
                 onClick={handleDraw}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
               >
@@ -231,7 +260,7 @@ export default function MemoryJarPage() {
         {/* Right Panel: Drawn Note Display */}
         <div className="flex flex-col gap-4">
           <h3 className="font-bold text-foreground flex items-center gap-2 text-sm uppercase tracking-wider">
-            <Heart className="w-4 h-4 text-primary fill-primary" /> Unfolded Scroll
+            <Heart className="w-4 h-4 text-primary fill-primary animate-pulse" /> Unfolded Scroll
           </h3>
 
           <AnimatePresence mode="wait">
@@ -242,7 +271,7 @@ export default function MemoryJarPage() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -15 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="flex-1 flex flex-col justify-between p-6 bg-background border-2 border-border rounded-3xl relative overflow-hidden text-center shadow-lg"
+                className="flex-1 flex flex-col justify-between p-6 bg-background border-2 border-border rounded-3xl relative overflow-hidden text-center shadow-lg min-h-[300px]"
               >
                 {/* Scroll border style decoration */}
                 <div className="absolute inset-y-0 left-2 w-[1px] border-l border-dashed border-amber-300" />
@@ -294,7 +323,7 @@ export default function MemoryJarPage() {
             ) : (
               <motion.div
                 key="empty"
-                className="flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-3xl bg-card/50 text-center"
+                className="flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-3xl bg-card/50 text-center min-h-[300px]"
               >
                 <Archive className="w-8 h-8 text-muted-foreground/30 mb-3 animate-float" />
                 <p className="text-xs text-muted-foreground italic max-w-[200px] leading-relaxed">
@@ -310,7 +339,7 @@ export default function MemoryJarPage() {
       {notes.length > 0 && (
         <div className="mt-8 bg-card/40 border border-border/50 backdrop-blur-xs p-6 rounded-3xl shadow-md">
           <h3 className="font-bold text-foreground text-xs uppercase tracking-wider flex items-center gap-2 mb-4">
-            <Heart className="w-4 h-4 text-primary" /> Jar Chest History ({notes.length})
+            <Heart className="w-4 h-4 text-primary" /> Already Unfolded Chest History ({notes.length})
           </h3>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">

@@ -3,54 +3,31 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn, daysBetween } from "@/lib/utils";
 import api from "@/lib/api";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
+import { useToastStore } from "@/stores/useToastStore";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import {
   Home,
   Heart,
-  Camera,
-  Archive,
-  Mail,
-  ScrollText,
-  Mic,
-  Globe,
-  Music,
-  Film,
-  Sparkles,
-  BookOpen,
-  Flower2,
-  Target,
-  Gamepad2,
-  HandHeart,
-  BarChart3,
-  Settings,
-  Timer,
   X,
   User,
+  Sun,
+  Moon,
+  RefreshCw,
 } from "lucide-react";
 
 const navItems = [
-  { label: "Home", href: "/", icon: Home, emoji: "🏠" },
-  { label: "Countdown", href: "/countdowns", icon: Timer, emoji: "❤️" },
-  { label: "Memories", href: "/memories", icon: Camera, emoji: "📸" },
-  { label: "Memory Jar", href: "/memory-jar", icon: Archive, emoji: "🫙" },
-  { label: "Open When", href: "/open-when", icon: Mail, emoji: "💌" },
-  { label: "Letters", href: "/letters", icon: ScrollText, emoji: "📜" },
-  { label: "Voice Notes", href: "/voice-notes", icon: Mic, emoji: "🎤" },
-  { label: "Timeline", href: "/timeline", icon: Globe, emoji: "🌎" },
-  { label: "Songs", href: "/songs", icon: Music, emoji: "🎵" },
-  { label: "Movies", href: "/movies", icon: Film, emoji: "🎬" },
-  { label: "Daily Surprise", href: "/daily-surprise", icon: Sparkles, emoji: "🌸" },
-  { label: "Journal", href: "/journal", icon: BookOpen, emoji: "📝" },
-  { label: "Gratitude", href: "/gratitude", icon: Flower2, emoji: "🌼" },
-  { label: "Dreams", href: "/dreams", icon: Target, emoji: "🎯" },
-  { label: "Games", href: "/games", icon: Gamepad2, emoji: "🎮" },
-  { label: "Comfort", href: "/comfort", icon: HandHeart, emoji: "🫂" },
-  { label: "Stats", href: "/stats", icon: BarChart3, emoji: "📊" },
-  { label: "Partner Profile", href: "/profile", icon: User, emoji: "👤" },
-  { label: "Settings", href: "/settings", icon: Settings, emoji: "⚙️" },
+  { label: "Home", href: "/", emoji: "🏠" },
+  { label: "Scrapbook", href: "/scrapbook", emoji: "📸" },
+  { label: "Letters", href: "/letters", emoji: "💌" },
+  { label: "Comfort", href: "/comfort", emoji: "🫂" },
+  { label: "Dreams", href: "/dreams", emoji: "🌙" },
+  { label: "Lounge", href: "/lounge", emoji: "🎵" },
+  { label: "Settings", href: "/settings", emoji: "⚙️" },
 ];
 
 interface SidebarProps {
@@ -95,7 +72,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           "bg-card/95 backdrop-blur-xl border-r border-border",
           "transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full",
-          "lg:translate-x-0 lg:static lg:z-auto"
+          "lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:min-h-dvh lg:z-auto"
         )}
       >
         {/* Logo */}
@@ -228,13 +205,97 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border flex flex-col items-center gap-3">
+          <GlobalRefreshButton />
+          <ThemeToggle />
           <p className="text-xs text-muted-foreground text-center handwritten text-base">
             Made with love ♥
           </p>
         </div>
       </aside>
     </>
+  );
+}
+
+function GlobalRefreshButton() {
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { playSound } = useSoundEffects();
+  const showToast = useToastStore((s) => s.showToast);
+
+  const handleRefresh = async () => {
+    playSound("whoosh");
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries();
+      showToast("Space synchronized!", "success");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 800);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleRefresh}
+      disabled={isRefreshing}
+      className={cn(
+        "flex items-center justify-between w-full px-4 py-2.5 rounded-xl border border-border/50",
+        "bg-muted/40 hover:bg-muted/80 transition-all duration-300",
+        "text-sm font-medium text-foreground cursor-pointer group active:scale-[0.98] disabled:opacity-85"
+      )}
+      aria-label="Synchronize Space"
+    >
+      <span className="flex items-center gap-2">
+        <RefreshCw className={cn("w-4 h-4 text-primary", isRefreshing ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500")} />
+        <span>Sync Space</span>
+      </span>
+      <span className="text-[10px] text-muted-foreground uppercase font-black tracking-wider">
+        Sync
+      </span>
+    </button>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="h-10 w-full bg-muted/20 animate-pulse rounded-xl" />;
+  }
+
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
+
+  return (
+    <button
+      onClick={toggleTheme}
+      className={cn(
+        "flex items-center justify-between w-full px-4 py-2.5 rounded-xl border border-border/50",
+        "bg-muted/40 hover:bg-muted/80 transition-all duration-300",
+        "text-sm font-medium text-foreground cursor-pointer group active:scale-[0.98]"
+      )}
+      aria-label="Toggle Theme"
+    >
+      <span className="flex items-center gap-2">
+        {resolvedTheme === "dark" ? (
+          <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform duration-500" />
+        ) : (
+          <Moon className="w-4 h-4 text-indigo-500 group-hover:-rotate-12 transition-transform duration-500" />
+        )}
+        <span>{resolvedTheme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+      </span>
+      <span className="text-[10px] text-muted-foreground uppercase font-black tracking-wider">
+        Theme
+      </span>
+    </button>
   );
 }
 

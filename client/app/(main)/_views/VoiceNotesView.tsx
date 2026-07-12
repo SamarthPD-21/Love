@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { Mic, ArrowRight, Loader2, Trash2, Calendar, Radio } from "lucide-react";
 import { format } from "date-fns";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { AudioRecorder } from "@/components/voice/AudioRecorder";
 import { AudioPlayer } from "@/components/voice/AudioPlayer";
+import { useToastStore } from "@/stores/useToastStore";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +28,7 @@ export default function VoiceNotesPage() {
   const [noteCategory, setNoteCategory] = useState("Love");
   const [noteTitle, setNoteTitle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const showToast = useToastStore((s) => s.showToast);
 
   // Fetch voice notes
   const { data: voiceNotes = [], isLoading } = useQuery({
@@ -45,6 +48,7 @@ export default function VoiceNotesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["voice-notes"] });
+      showToast("Voice note deleted successfully.", "success");
     },
   });
 
@@ -61,9 +65,10 @@ export default function VoiceNotesPage() {
       setNoteTitle("");
       setShowRecorder(false);
       queryClient.invalidateQueries({ queryKey: ["voice-notes"] });
+      showToast("Voice note uploaded and saved successfully! 🎤", "success");
     } catch (error) {
       console.error("Save voice note error:", error);
-      alert("Failed to save voice note metadata. Audio was uploaded.");
+      showToast("Failed to save voice note metadata. Audio was uploaded.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -190,26 +195,42 @@ export default function VoiceNotesPage() {
             {voiceNotes.map((note: any) => {
               const formattedDate = format(new Date(note.createdAt), "MMMM d, yyyy");
               return (
-                <div key={note._id} className="flex flex-col sm:flex-row sm:items-center gap-2 group">
-                  <AudioPlayer
-                    url={note.audioUrl}
-                    duration={note.duration}
-                    title={note.title || `${note.category} Voice Note`}
-                    sender={note.userId?.name}
-                    className="flex-1"
-                  />
-                  <div className="flex items-center justify-between sm:justify-end gap-3 px-3 sm:px-0">
-                    <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {formattedDate}
-                    </span>
-                    <button
-                      onClick={() => handleDelete(note._id)}
-                      className="p-2 bg-muted hover:bg-destructive/10 hover:text-destructive text-muted-foreground rounded-xl transition-all sm:opacity-0 sm:group-hover:opacity-100"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                <div key={note._id} className="flex flex-col gap-1.5 w-full group">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <AudioPlayer
+                      url={note.audioUrl}
+                      duration={note.duration}
+                      title={note.title || `${note.category} Voice Note`}
+                      sender={note.userId?.name}
+                      className="flex-1"
+                    />
+                    <div className="flex items-center justify-between sm:justify-end gap-3 px-3 sm:px-0">
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {formattedDate}
+                      </span>
+                      <button
+                        onClick={() => handleDelete(note._id)}
+                        className="p-2 bg-muted hover:bg-destructive/10 hover:text-destructive text-muted-foreground rounded-xl transition-all sm:opacity-0 sm:group-hover:opacity-100"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
+                  {(note.letterId || note.openWhenLetterId) && (
+                    <div className="px-3 py-1 text-[10px] text-muted-foreground flex items-center gap-1.5 bg-muted/20 border border-dashed border-border/40 rounded-lg max-w-fit ml-1">
+                      <span>📎</span>
+                      {note.letterId ? (
+                        <Link href={`/letters/${note.letterId._id}`} className="text-primary hover:underline font-bold">
+                          Sent in letter: &ldquo;{note.letterId.title}&rdquo;
+                        </Link>
+                      ) : (
+                        <span className="font-semibold">
+                          Sent in Open When: &ldquo;{note.openWhenLetterId?.title}&rdquo;
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

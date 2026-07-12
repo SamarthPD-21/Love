@@ -1,6 +1,7 @@
 import { Router, Response } from "express";
 import { authMiddleware } from "../middleware/auth";
 import { OpenWhenLetter } from "../models/OpenWhenLetter";
+import { VoiceNote } from "../models/VoiceNote";
 import { User } from "../models/User";
 import { z } from "zod";
 
@@ -15,6 +16,7 @@ const openWhenLetterSchema = z.object({
   content: z.string().min(1, "Content is required"),
   photos: z.array(z.string()).default([]),
   voiceNote: z.string().optional(),
+  voiceDuration: z.number().optional(),
   videoUrl: z.string().optional(),
   songLink: z.string().optional(),
   gifUrl: z.string().optional(),
@@ -121,6 +123,21 @@ router.post("/", async (req: any, res: Response) => {
     });
 
     await letter.save();
+
+    // If a voiceNote is attached, also save it as a standalone VoiceNote document
+    if (validation.data.voiceNote) {
+      const voiceNote = new VoiceNote({
+        title: `Voice attachment in open-when letter: "${letter.title}"`,
+        audioUrl: validation.data.voiceNote,
+        duration: validation.data.voiceDuration || 0,
+        category: letter.category || "Comfort",
+        relationshipId: user.relationshipId,
+        userId: user._id,
+        openWhenLetterId: letter._id,
+      });
+      await voiceNote.save();
+    }
+
     res.status(201).json({ success: true, data: letter });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

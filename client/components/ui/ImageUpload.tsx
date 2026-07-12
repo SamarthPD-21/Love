@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { UploadCloud, X, Film, Image as ImageIcon, Loader2 } from "lucide-react";
 import api from "@/lib/api";
+import { useToastStore } from "@/stores/useToastStore";
 import { cn } from "@/lib/utils";
 
 interface ImageUploadProps {
@@ -22,13 +23,14 @@ export function ImageUpload({
   const [dragActive, setDragActive] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const showToast = useToastStore((s) => s.showToast);
 
   const handleFiles = async (files: FileList) => {
     if (files.length === 0) return;
     
     // Check if we exceed max files
     if (value.length + files.length > maxFiles) {
-      alert(`You can only upload up to ${maxFiles} files`);
+      showToast(`You can only upload up to ${maxFiles} files`, "error");
       return;
     }
 
@@ -57,7 +59,7 @@ export function ImageUpload({
       }
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to upload files. Please try again.");
+      showToast("Failed to upload files. Please try again.", "error");
     } finally {
       setIsUploading(false);
       setProgress(0);

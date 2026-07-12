@@ -8,6 +8,8 @@ export interface IVoiceNote extends Document {
   category: string; // Morning, Night, Comfort, Motivation, Love, Funny, Sleep, etc.
   relationshipId: Types.ObjectId;
   userId: Types.ObjectId;
+  letterId?: Types.ObjectId;
+  openWhenLetterId?: Types.ObjectId;
   createdAt: Date;
 }
 
@@ -41,6 +43,16 @@ const voiceNoteSchema = new Schema<IVoiceNote>({
     type: Schema.Types.ObjectId,
     ref: "User",
     required: true,
+  },
+  letterId: {
+    type: Schema.Types.ObjectId,
+    ref: "Letter",
+    default: null,
+  },
+  openWhenLetterId: {
+    type: Schema.Types.ObjectId,
+    ref: "OpenWhenLetter",
+    default: null,
   },
   createdAt: {
     type: Date,
