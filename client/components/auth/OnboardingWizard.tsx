@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Mail, Lock, Eye, EyeOff, User, KeyRound, Loader2, Copy, Check } from "lucide-react";
@@ -15,7 +15,14 @@ type WizardStep = "login" | "signup" | "invite" | "code_display";
 export function OnboardingWizard({ defaultStep = "login" }: { defaultStep?: WizardStep }) {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
   const { playSound } = useSoundEffects();
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace("/");
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   const [step, setStep] = useState<WizardStep>(defaultStep);
   const [direction, setDirection] = useState(1);
@@ -141,6 +148,17 @@ export function OnboardingWizard({ defaultStep = "login" }: { defaultStep?: Wiza
       scale: 0.98,
     }),
   };
+
+  if (authLoading || isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 gap-4 min-h-[300px]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <p className="handwritten text-lg font-medium text-muted-foreground animate-pulse-soft">
+          Entering our home...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md mx-auto">
