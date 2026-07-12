@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Target, Timer, Map as MapIcon } from "lucide-react";
 import { RoomHeader } from "@/components/ui/RoomHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -11,6 +11,16 @@ import MapView from "../_views/MapView";
 
 export default function DreamsPage() {
   const [activeTab, setActiveTab] = useState("dreams");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab && ["dreams", "countdowns", "map"].includes(tab)) {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
 
   const segments = [
     { id: "dreams", label: "Bucket List", icon: Target },

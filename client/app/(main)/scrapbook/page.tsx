@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Camera, Archive, Globe } from "lucide-react";
 import { RoomHeader } from "@/components/ui/RoomHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -11,6 +11,16 @@ import TimelineView from "../_views/TimelineView";
 
 export default function ScrapbookPage() {
   const [activeTab, setActiveTab] = useState("photos");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab && ["photos", "jar", "milestones"].includes(tab)) {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
 
   const segments = [
     { id: "photos", label: "Photos", icon: Camera },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HandHeart, Flower2, BookOpen } from "lucide-react";
 import { RoomHeader } from "@/components/ui/RoomHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -11,6 +11,16 @@ import JournalView from "../_views/JournalView";
 
 export default function ComfortPage() {
   const [activeTab, setActiveTab] = useState("hugs");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab && ["hugs", "gratitude", "journal"].includes(tab)) {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
 
   const segments = [
     { id: "hugs", label: "Comfort", icon: HandHeart },

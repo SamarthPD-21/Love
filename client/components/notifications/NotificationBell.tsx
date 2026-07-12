@@ -16,19 +16,38 @@ import { useCelebration } from "@/stores/useCelebrationStore";
 import { FloatingReaction } from "@/components/animations/FloatingReaction";
 import type { AppNotification } from "@/types";
 
-/** Map entity types to their deep-link pages. */
+/** Map notification type → correct deep-link page (incl. tab param). */
+const TYPE_HREF: Record<string, string> = {
+  letter_created:   "/letters",
+  letter_deleted:   "/letters",
+  letter_unlocked:  "/letters",
+  memory_created:   "/scrapbook",
+  memory_deleted:   "/scrapbook",
+  memory_commented: "/scrapbook",
+  voice_created:    "/letters?tab=voice-notes",
+  jar_note_created: "/scrapbook?tab=jar",           // Memory Jar lives in Scrapbook
+  hug_sent:         "/comfort",
+  countdown_created:"/dreams?tab=countdowns",        // Countdowns tab inside Dreams
+  gratitude_added:  "/comfort?tab=gratitude",        // Gratitude tab inside Comfort
+  milestone_added:  "/scrapbook?tab=milestones",     // Milestones tab inside Scrapbook
+  song_added:       "/lounge",
+  map_pin_added:    "/dreams?tab=map",               // Travel Map tab inside Dreams
+  profile_updated:  "/profile",
+};
+
+/** Fallback by entityType when the notification type isn't in the map above. */
 const ENTITY_HREF: Record<string, string> = {
   Letter: "/letters",
   Memory: "/scrapbook",
-  VoiceNote: "/scrapbook",
-  MemoryJarNote: "/comfort",
-  Relationship: "/comfort",
-  Countdown: "/dreams",
-  Milestone: "/dreams",
-  Gratitude: "/comfort",
+  VoiceNote: "/letters?tab=voice-notes",
+  MemoryJarNote: "/scrapbook?tab=jar",
+  Relationship: "/profile",
+  Countdown: "/dreams?tab=countdowns",
+  Milestone: "/scrapbook?tab=milestones",
+  Gratitude: "/comfort?tab=gratitude",
   Song: "/lounge",
-  MapPin: "/profile",
-  User: "/profile",
+  MapPin: "/dreams?tab=map",
+  User: "/comfort",
 };
 
 export function NotificationBell({ className }: { className?: string }) {
@@ -84,12 +103,28 @@ export function NotificationBell({ className }: { className?: string }) {
   };
 
   const getHref = (notif: AppNotification) => {
+    // 1. Try type-specific mapping first (handles tabs correctly)
+    const typeBase = TYPE_HREF[notif.type];
+    if (typeBase) {
+      // For letters & memories, deep-link to the specific entity page
+      if (notif.entityId) {
+        if (notif.entityType === "Letter") return `/letters/${notif.entityId}`;
+        if (notif.entityType === "Memory") return `/scrapbook/${notif.entityId}`;
+      }
+      return typeBase;
+    }
+
+    // 2. Fall back to entityType mapping
     if (notif.entityType && ENTITY_HREF[notif.entityType]) {
       const base = ENTITY_HREF[notif.entityType];
-      if (notif.entityId) return `${base}?notif_id=${notif.entityId}`;
+      if (notif.entityId) {
+        if (notif.entityType === "Letter") return `/letters/${notif.entityId}`;
+        if (notif.entityType === "Memory") return `/scrapbook/${notif.entityId}`;
+      }
       return base;
     }
-    return "#";
+
+    return "/";
   };
 
   return (

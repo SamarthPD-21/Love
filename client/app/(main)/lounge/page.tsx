@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Music, Film, Gamepad2 } from "lucide-react";
 import { RoomHeader } from "@/components/ui/RoomHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -11,6 +11,16 @@ import GamesView from "../_views/GamesView";
 
 export default function LoungePage() {
   const [activeTab, setActiveTab] = useState("playlist");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab && ["playlist", "watchlist", "games"].includes(tab)) {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
 
   const segments = [
     { id: "playlist", label: "Playlist", icon: Music },
