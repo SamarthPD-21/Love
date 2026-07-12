@@ -9,6 +9,7 @@ import api from "@/lib/api";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { useToastStore } from "@/stores/useToastStore";
 import { useTheme } from "next-themes";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useEffect, useState } from "react";
 import {
   Home,
@@ -206,6 +207,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Footer */}
         <div className="p-4 border-t border-border flex flex-col items-center gap-3">
+          {/* Notification Bell */}
+          <div className="w-full flex justify-center">
+            <NotificationBell className="w-full" />
+          </div>
           <GlobalRefreshButton />
           <ThemeToggle />
           <p className="text-xs text-muted-foreground text-center handwritten text-base">

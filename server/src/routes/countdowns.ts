@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware } from "../middleware/auth";
 import { Countdown } from "../models/Countdown";
 import { User } from "../models/User";
+import { createNotification } from "../services/notify";
 import { z } from "zod";
 
 const router = Router();
@@ -63,6 +64,15 @@ router.post("/", async (req: any, res: Response) => {
     });
 
     await countdown.save();
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "countdown_created",
+      entityType: "Countdown",
+      entityId: countdown._id.toString(),
+      meta: { detail: countdown.title },
+    });
+
     res.status(201).json({ success: true, data: countdown });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

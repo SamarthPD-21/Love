@@ -3,6 +3,7 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
+import http from "http";
 import { connectDB } from "./config/db";
 import authRoutes from "./routes/auth";
 import userRoutes from "./routes/users";
@@ -24,6 +25,8 @@ import mapRoutes from "./routes/map";
 import journalRoutes from "./routes/journal";
 import statsRoutes from "./routes/stats";
 import locationRoutes from "./routes/location";
+import notificationRoutes from "./routes/notifications";
+import { initSockets } from "./sockets";
 
 const app = express();
 
@@ -53,6 +56,7 @@ app.use("/api/map", mapRoutes);
 app.use("/api/journal", journalRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/location", locationRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // ── Health check ────────────────────────────────────────────
 app.get("/api/health", (_req, res) => {
@@ -65,8 +69,13 @@ const PORT = parseInt(process.env.PORT || "5000", 10);
 async function main() {
   await connectDB();
 
-  app.listen(PORT, () => {
+  // Wrap Express in an HTTP server so socket.io can share the same port.
+  const server = http.createServer(app);
+  initSockets(server);
+
+  server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🔌 Socket.io live on the same port`);
   });
 }
 

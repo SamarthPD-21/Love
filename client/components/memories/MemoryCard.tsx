@@ -51,7 +51,7 @@ export function MemoryCard({ memory, onFavoriteToggle }: MemoryCardProps) {
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80 p-4 pb-6 shadow-md rounded-sm flex flex-col w-full relative"
     >
-      <Link href={`/memories/${memory._id}`} className="block flex-1">
+      <Link href={`/scrapbook/${memory._id}`} className="block flex-1">
         {/* Media Window */}
         <div className="relative aspect-[4/3] bg-zinc-100 dark:bg-zinc-950 overflow-hidden border border-zinc-200/30 dark:border-zinc-800/50 mb-4 rounded-xs">
           {mediaUrl ? (

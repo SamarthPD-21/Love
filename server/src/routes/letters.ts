@@ -3,6 +3,7 @@ import { authMiddleware } from "../middleware/auth";
 import { Letter } from "../models/Letter";
 import { VoiceNote } from "../models/VoiceNote";
 import { User } from "../models/User";
+import { createNotification } from "../services/notify";
 import { z } from "zod";
 
 const router = Router();
@@ -165,6 +166,14 @@ router.post("/", async (req: any, res: Response) => {
       await voiceNote.save();
     }
 
+    createNotification({
+      actorId: user._id.toString(),
+      type: "letter_created",
+      entityType: "Letter",
+      entityId: letter._id.toString(),
+      meta: { detail: letter.title },
+    });
+
     res.status(201).json({ success: true, data: letter });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -195,6 +204,14 @@ router.post("/:id/unlock", async (req: any, res: Response) => {
 
     letter.isUnlocked = true;
     await letter.save();
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "letter_unlocked",
+      entityType: "Letter",
+      entityId: letter._id.toString(),
+      meta: { detail: letter.title },
+    });
 
     res.json({ success: true, data: letter });
   } catch (error: any) {
@@ -258,6 +275,13 @@ router.delete("/:id", async (req: any, res: Response) => {
       res.status(404).json({ error: "Letter not found" });
       return;
     }
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "letter_deleted",
+      entityType: "Letter",
+      meta: { detail: letter.title },
+    });
 
     res.json({ success: true, message: "Letter deleted successfully" });
   } catch (error: any) {

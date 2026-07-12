@@ -74,7 +74,7 @@ export default function MemoriesPage() {
           </div>
           
           <Link
-            href="/memories/new"
+            href="/scrapbook/new-memory"
             className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary-hover shadow-sm hover:shadow-md transition-all text-sm w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
@@ -135,7 +135,7 @@ export default function MemoriesPage() {
             </p>
             {!searchQuery && !selectedAlbumId && !showOnlyFavorites && (
               <Link
-                href="/memories/new"
+                href="/scrapbook/new-memory"
                 className="inline-flex px-4 py-2 bg-primary text-primary-foreground font-semibold text-xs rounded-xl hover:bg-primary-hover shadow-sm"
               >
                 Add Your First Memory

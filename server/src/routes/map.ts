@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware } from "../middleware/auth";
 import { MapPin } from "../models/MapPin";
 import { User } from "../models/User";
+import { createNotification } from "../services/notify";
 import { z } from "zod";
 
 const router = Router();
@@ -58,6 +59,14 @@ router.post("/", async (req: any, res: Response) => {
 
     await pin.save();
     const populated = await pin.populate("userId", "name avatar");
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "map_pin_added",
+      entityType: "MapPin",
+      entityId: pin._id.toString(),
+      meta: { detail: pin.title },
+    });
 
     res.status(201).json({ success: true, data: populated });
   } catch (error: any) {

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { User } from "../models/User";
 import { Relationship } from "../models/Relationship";
 import { authMiddleware } from "../middleware/auth";
+import { createNotification } from "../services/notify";
 
 const router = Router();
 
@@ -59,6 +60,16 @@ router.put("/me", async (req: Request, res: Response) => {
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
+    }
+
+    // Light-touch: only ping the partner when the avatar actually changed.
+    if (parsed.data.avatar) {
+      createNotification({
+        actorId: user._id.toString(),
+        type: "profile_updated",
+        entityType: "User",
+        entityId: user._id.toString(),
+      });
     }
 
     res.json({ user });
@@ -205,6 +216,13 @@ router.post("/hugs", async (req: Request, res: Response) => {
 
     const partnerId = user.partnerId ? user.partnerId.toString() : null;
     const partnerHugs = partnerId ? (relationship.hugs.get(partnerId) || 0) : 0;
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "hug_sent",
+      entityType: "Relationship",
+      entityId: relationship._id.toString(),
+    });
 
     res.json({
       success: true,

@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware } from "../middleware/auth";
 import { VoiceNote } from "../models/VoiceNote";
 import { User } from "../models/User";
+import { createNotification } from "../services/notify";
 import { z } from "zod";
 
 const router = Router();
@@ -73,6 +74,14 @@ router.post("/", async (req: any, res: Response) => {
     });
 
     await voiceNote.save();
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "voice_created",
+      entityType: "VoiceNote",
+      entityId: voiceNote._id.toString(),
+    });
+
     res.status(201).json({ success: true, data: voiceNote });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

@@ -4,16 +4,19 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Gift, Camera, CloudSun, MessageCircleHeart, Clock, Sparkles, Loader2, ArrowRight, MapPin } from "lucide-react";
+import { Heart, Gift, Camera, CloudSun, MessageCircleHeart, Clock, Sparkles, Loader2, ArrowRight, MapPin, Activity } from "lucide-react";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useCountdown } from "@/hooks/useCountdown";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useCelebration } from "@/stores/useCelebrationStore";
 import { cn, daysBetween, formatNumber } from "@/lib/utils";
 import api from "@/lib/api";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { useDistance } from "@/hooks/useDistance";
+import { useNotifications } from "@/hooks/useNotifications";
+import type { AppNotification } from "@/types";
 
 const RELATIONSHIP_FALLBACK_START = "2024-10-01";
 
@@ -35,6 +38,10 @@ export default function HomePage() {
   const { timeOfDay, greeting, subGreeting } = useTimeOfDay();
   const { playSound } = useSoundEffects();
   const { distance, isLoading: distanceLoading } = useDistance();
+  const celebrate = useCelebration();
+
+  // Fetch recent notifications for the activity strip
+  const { data: recentNotifs = [] } = useNotifications(5);
 
   // Geolocation & Weather States
   const [weather, setWeather] = useState<{ temp: number; text: string; emoji: string } | null>(null);
@@ -51,6 +58,7 @@ export default function HomePage() {
 
   const handleOpenSurprise = () => {
     playSound("chime");
+    celebrate("big", "🎁");
     setRevealSurprise(true);
     const todayStr = format(new Date(), "yyyy-MM-dd");
     localStorage.setItem(`surprise-opened-${todayStr}`, "true");
@@ -235,6 +243,47 @@ export default function HomePage() {
             </motion.div>
           </div>
         </motion.div>
+
+        {/* ── Recent Activity Strip ── */}
+        {recentNotifs.length > 0 && (
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Activity className="w-3.5 h-3.5 text-primary animate-pulse-soft" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Recent Activity
+              </span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+              {recentNotifs.slice(0, 5).map((notif: AppNotification) => (
+                <motion.div
+                  key={notif._id}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  className={cn(
+                    "flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border",
+                    "bg-card/60 dark:bg-card/60 border-border/50 shadow-sm",
+                    "hover:border-primary/30 transition-all cursor-pointer group",
+                    !notif.isRead && "border-primary/20 bg-primary/[0.03]"
+                  )}
+                >
+                  <span className="text-base group-hover:animate-bounce">
+                    {notif.emoji}
+                  </span>
+                  <span className="text-xs font-medium text-foreground whitespace-nowrap truncate max-w-[180px]">
+                    {notif.title}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+                    {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: false })}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* ── Quick Shortcuts ── */}
         <motion.div

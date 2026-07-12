@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware } from "../middleware/auth";
 import { Gratitude } from "../models/Gratitude";
 import { User } from "../models/User";
+import { createNotification } from "../services/notify";
 import { z } from "zod";
 
 const router = Router();
@@ -54,6 +55,14 @@ router.post("/", async (req: any, res: Response) => {
 
     await item.save();
     const populated = await item.populate("userId", "name avatar");
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "gratitude_added",
+      entityType: "Gratitude",
+      entityId: item._id.toString(),
+      meta: { detail: item.content },
+    });
 
     res.status(201).json({ success: true, data: populated });
   } catch (error: any) {

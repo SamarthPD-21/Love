@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware } from "../middleware/auth";
 import { Memory } from "../models/Memory";
 import { User } from "../models/User";
+import { createNotification } from "../services/notify";
 import { z } from "zod";
 
 const router = Router();
@@ -127,6 +128,14 @@ router.post("/", async (req: any, res: Response) => {
     const memory = new Memory(memoryData);
     await memory.save();
 
+    createNotification({
+      actorId: user._id.toString(),
+      type: "memory_created",
+      entityType: "Memory",
+      entityId: memory._id.toString(),
+      meta: { detail: memory.title },
+    });
+
     res.status(201).json({ success: true, data: memory });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -194,6 +203,13 @@ router.delete("/:id", async (req: any, res: Response) => {
       res.status(404).json({ error: "Memory not found" });
       return;
     }
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "memory_deleted",
+      entityType: "Memory",
+      meta: { detail: memory.title },
+    });
 
     res.json({ success: true, message: "Memory deleted successfully" });
   } catch (error: any) {
@@ -268,6 +284,14 @@ router.post("/:id/comments", async (req: any, res: Response) => {
       res.status(404).json({ error: "Memory not found" });
       return;
     }
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "memory_commented",
+      entityType: "Memory",
+      entityId: memory._id.toString(),
+      meta: { detail: memory.title },
+    });
 
     res.status(201).json({ success: true, data: memory.comments });
   } catch (error: any) {

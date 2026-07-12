@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware } from "../middleware/auth";
 import { MemoryJarNote } from "../models/MemoryJarNote";
 import { User } from "../models/User";
+import { createNotification } from "../services/notify";
 import { z } from "zod";
 
 const router = Router();
@@ -101,6 +102,13 @@ router.post("/", async (req: any, res: Response) => {
 
     await note.save();
     const populated = await note.populate("userId", "name avatar");
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "jar_note_created",
+      entityType: "MemoryJarNote",
+      entityId: note._id.toString(),
+    });
 
     res.status(201).json({ success: true, data: populated });
   } catch (error: any) {

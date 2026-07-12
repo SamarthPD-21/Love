@@ -7,7 +7,11 @@ import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 import { FloatingHearts } from "@/components/animations/FloatingHearts";
 import { Fireflies } from "@/components/animations/Fireflies";
+import { SparkleTrail } from "@/components/animations/SparkleTrail";
+import { Confetti } from "@/components/animations/Confetti";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
+import { useLiveNotifications } from "@/hooks/useNotifications";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
 import { useSoundStore } from "@/stores/useSoundStore";
@@ -37,6 +41,9 @@ export function AppShell({ children }: AppShellProps) {
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const showToast = useToastStore((s) => s.showToast);
+
+  // Live notification listener (socket.io) + unread polling
+  useLiveNotifications();
 
   const handleRefresh = async () => {
     playSound("whoosh");
@@ -86,10 +93,19 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex min-h-dvh">
       {/* Ambient background animation */}
       {isNight ? (
-        <Fireflies count={10} />
+        <>
+          <Fireflies count={10} />
+          <SparkleTrail count={12} />
+        </>
       ) : (
-        <FloatingHearts count={5} />
+        <>
+          <FloatingHearts count={5} />
+          <SparkleTrail count={15} />
+        </>
       )}
+
+      {/* Global confetti layer */}
+      <Confetti />
 
       {/* Sidebar — always visible on lg, drawer on mobile */}
       <AnimatePresence>
@@ -144,6 +160,11 @@ export function AppShell({ children }: AppShellProps) {
             <span className="text-sm cursor-help animate-float" title={`It's ${timeOfDay}!`}>
               {getTimeEmoji()}
             </span>
+
+            {/* Notification Bell */}
+            <div className="relative">
+              <NotificationBell />
+            </div>
 
             {/* Theme toggle */}
             {mounted ? (

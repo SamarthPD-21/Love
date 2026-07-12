@@ -1,4 +1,5 @@
 import api from "./api";
+import { disconnectSocket } from "./socket";
 import type { AuthResponse, LoginPayload, RegisterPayload, User } from "@/types";
 
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
@@ -58,6 +59,7 @@ export function logout(): void {
   if (typeof window !== "undefined") {
     localStorage.removeItem("home-token");
     localStorage.removeItem("home-user");
+    disconnectSocket();
     window.location.href = "/login";
   }
 }

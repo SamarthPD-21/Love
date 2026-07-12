@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { authMiddleware } from "../middleware/auth";
 import { Milestone } from "../models/Milestone";
 import { User } from "../models/User";
+import { createNotification } from "../services/notify";
 import { z } from "zod";
 
 const router = Router();
@@ -64,6 +65,15 @@ router.post("/", async (req: any, res: Response) => {
     });
 
     await milestone.save();
+
+    createNotification({
+      actorId: user._id.toString(),
+      type: "milestone_added",
+      entityType: "Milestone",
+      entityId: milestone._id.toString(),
+      meta: { detail: milestone.title },
+    });
+
     res.status(201).json({ success: true, data: milestone });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

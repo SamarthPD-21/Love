@@ -205,6 +205,47 @@ export interface LocationPin {
   createdAt: string;
 }
 
+// ── Notifications ───────────────────────────────────────────
+export type NotificationType =
+  | "letter_created"
+  | "letter_deleted"
+  | "letter_unlocked"
+  | "memory_created"
+  | "memory_deleted"
+  | "memory_commented"
+  | "voice_created"
+  | "jar_note_created"
+  | "hug_sent"
+  | "countdown_created"
+  | "gratitude_added"
+  | "milestone_added"
+  | "song_added"
+  | "map_pin_added"
+  | "profile_updated";
+
+/** Minimal actor shape (populated from actorUserId). */
+export interface NotificationActor {
+  _id: string;
+  name: string;
+  avatar?: string;
+}
+
+export interface AppNotification {
+  _id: string;
+  relationshipId: string;
+  actorUserId: NotificationActor;
+  recipientUserId: string;
+  type: NotificationType;
+  entityType: string;
+  entityId?: string;
+  title: string;
+  emoji: string;
+  isRead: boolean;
+  createdAt: string;
+  /** Only present on live socket pushes — signals a confetti burst. */
+  isCelebration?: boolean;
+}
+
 // Navigation
 export interface NavItem {
   label: string;
