@@ -105,7 +105,6 @@ export default function NewMemoryPage() {
             value={photos}
             onChange={(urls) => setPhotos(urls)}
             maxFiles={10}
-            folder="memories"
           />
         </div>
 
