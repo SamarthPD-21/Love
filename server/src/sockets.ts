@@ -1,6 +1,8 @@
 import { Server as SocketServer, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
 import jwt from "jsonwebtoken";
+import { User } from "./models/User";
+import { Movie } from "./models/Movie";
 
 interface JwtPayload {
   userId: string;
@@ -30,7 +32,19 @@ export function initSockets(server: HttpServer): SocketServer {
 
   io = new SocketServer(server, {
     cors: {
-      origin: clientOrigin,
+      origin: (origin, callback) => {
+        if (
+          !origin || 
+          origin.startsWith("chrome-extension://") || 
+          origin === clientOrigin || 
+          origin.includes("localhost") || 
+          origin.includes("127.0.0.1")
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
       methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
       credentials: true,
     },
@@ -63,6 +77,28 @@ export function initSockets(server: HttpServer): SocketServer {
     }
   });
 
+interface CinemaSession {
+  movieId: string;
+  movieTitle: string;
+  movieType: string;
+  watchLink?: string;
+  status: "playing" | "paused";
+  currentTime: number;
+  participants: string[]; // array of userIds
+  showStarted: boolean;
+  readyUsers: string[]; // array of userIds
+  updatedAt: number;
+}
+
+const activeCinemaSessions = new Map<string, CinemaSession>(); // key: relationshipId
+
+const getRelId = (rel: any): string => {
+  if (!rel) return "";
+  return typeof rel === "object"
+    ? (rel._id?.toString() || rel.id?.toString() || "")
+    : rel.toString();
+};
+
   io.on("connection", (socket: Socket) => {
     const userId = (socket as any).userId as string;
     if (!userId) {
@@ -72,8 +108,307 @@ export function initSockets(server: HttpServer): SocketServer {
 
     socket.join(userRoom(userId));
 
+    socket.on("join_cinema", async (payload: { relationshipId: any }) => {
+      try {
+        const relationshipId = getRelId(payload.relationshipId);
+        if (!relationshipId) return;
+
+        (socket as any).relationshipId = relationshipId;
+        await socket.join(`cinema:${relationshipId}`);
+
+        let session = activeCinemaSessions.get(relationshipId);
+        if (!session) {
+          session = {
+            movieId: "",
+            movieTitle: "",
+            movieType: "",
+            watchLink: "",
+            status: "paused",
+            currentTime: 0,
+            participants: [userId],
+            showStarted: false,
+            readyUsers: [],
+            updatedAt: Date.now(),
+          };
+          activeCinemaSessions.set(relationshipId, session);
+        } else {
+          if (!session.participants.includes(userId)) {
+            session.participants.push(userId);
+          }
+        }
+        
+        // Emit directly to the connecting socket
+        socket.emit("cinema_session_state", session);
+        // Broadcast to partner in the room
+        socket.to(`cinema:${relationshipId}`).emit("cinema_session_state", session);
+
+        const user = await User.findById(userId);
+        if (user && user.partnerId) {
+          emitToUser(user.partnerId.toString(), "partner_joined_cinema", { userId });
+        }
+      } catch (err) {
+        console.error("join_cinema error:", err);
+      }
+    });
+
+    socket.on("start_cinema", async (payload: { relationshipId: any; movieId: string; movieTitle: string; movieType: string; watchLink?: string }) => {
+      try {
+        const relationshipId = getRelId(payload.relationshipId);
+        const { movieId, movieTitle, movieType, watchLink } = payload;
+        if (!relationshipId || !movieId) return;
+
+        const session: CinemaSession = {
+          movieId,
+          movieTitle,
+          movieType,
+          watchLink,
+          status: "paused",
+          currentTime: 0,
+          participants: [userId],
+          showStarted: false,
+          readyUsers: [],
+          updatedAt: Date.now(),
+        };
+
+        activeCinemaSessions.set(relationshipId, session);
+        io?.to(`cinema:${relationshipId}`).emit("cinema_session_state", session);
+
+        const user = await User.findById(userId);
+        if (user && user.partnerId) {
+          emitToUser(user.partnerId.toString(), "cinema_started_alert", {
+            movieId,
+            movieTitle,
+          });
+        }
+      } catch (err) {
+        console.error("start_cinema error:", err);
+      }
+    });
+
+    socket.on("cinema_state_change", (payload: { relationshipId: any; status: "playing" | "paused"; currentTime: number }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      const { status, currentTime } = payload;
+      if (!relationshipId) return;
+
+      const session = activeCinemaSessions.get(relationshipId);
+      if (session) {
+        session.status = status;
+        session.currentTime = currentTime;
+        session.updatedAt = Date.now();
+        
+        socket.to(`cinema:${relationshipId}`).emit("cinema_state_changed", {
+          status,
+          currentTime,
+          userId,
+        });
+      }
+    });
+
+    socket.on("cinema_countdown", (payload: { relationshipId: any }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      if (!relationshipId) return;
+
+      io?.to(`cinema:${relationshipId}`).emit("cinema_countdown_trigger", { userId });
+    });
+
+    socket.on("cinema_chat", (payload: { relationshipId: any; text: string; senderName: string }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      const { text, senderName } = payload;
+      if (!relationshipId) return;
+
+      socket.to(`cinema:${relationshipId}`).emit("cinema_chat_received", {
+        text,
+        senderName,
+        userId,
+        createdAt: new Date().toISOString(),
+      });
+    });
+
+    socket.on("cinema_reaction", (payload: { relationshipId: any; emoji: string }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      const { emoji } = payload;
+      if (!relationshipId) return;
+
+      socket.to(`cinema:${relationshipId}`).emit("cinema_reaction_received", {
+        emoji,
+        userId,
+      });
+    });
+
+    socket.on("cinema_start_show", (payload: { relationshipId: any }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      if (!relationshipId) return;
+
+      const session = activeCinemaSessions.get(relationshipId);
+      if (session) {
+        session.showStarted = true;
+        io?.to(`cinema:${relationshipId}`).emit("cinema_show_started");
+      }
+    });
+
+    socket.on("cinema_select_movie", (payload: { relationshipId: any; movieId: string; movieTitle: string; movieType: string; watchLink?: string }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      if (!relationshipId) return;
+
+      const session = activeCinemaSessions.get(relationshipId);
+      if (session) {
+        session.movieId = payload.movieId;
+        session.movieTitle = payload.movieTitle;
+        session.movieType = payload.movieType;
+        session.watchLink = payload.watchLink;
+        session.status = "paused";
+        session.currentTime = 0;
+        session.showStarted = false;
+        session.readyUsers = [];
+        session.updatedAt = Date.now();
+        io?.to(`cinema:${relationshipId}`).emit("cinema_session_state", session);
+      }
+    });
+
+    socket.on("cinema_ready_toggle", (payload: { relationshipId: any; ready: boolean }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      if (!relationshipId) return;
+
+      const session = activeCinemaSessions.get(relationshipId);
+      if (session) {
+        if (!session.readyUsers) {
+          session.readyUsers = [];
+        }
+        if (payload.ready) {
+          if (!session.readyUsers.includes(userId)) {
+            session.readyUsers.push(userId);
+          }
+        } else {
+          session.readyUsers = session.readyUsers.filter((id) => id !== userId);
+        }
+
+        // 2/2 watch check: start show if both are ready
+        if (session.readyUsers.length >= 2) {
+          session.showStarted = true;
+          io?.to(`cinema:${relationshipId}`).emit("cinema_show_started");
+        }
+        io?.to(`cinema:${relationshipId}`).emit("cinema_session_state", session);
+      }
+    });
+
+    socket.on("cinema_dim_lights", (payload: { relationshipId: any; dimmed: boolean }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      const { dimmed } = payload;
+      if (!relationshipId) return;
+      socket.to(`cinema:${relationshipId}`).emit("cinema_dim_lights_changed", { dimmed, userId });
+    });
+
+    socket.on("cinema_throw_popcorn", (payload: { relationshipId: any }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      if (!relationshipId) return;
+      socket.to(`cinema:${relationshipId}`).emit("cinema_popcorn_thrown", { userId });
+    });
+
+    socket.on("cinema_send_cuddle", (payload: { relationshipId: any; senderName: string }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      const { senderName } = payload;
+      if (!relationshipId) return;
+      socket.to(`cinema:${relationshipId}`).emit("cinema_cuddle_received", { senderName, userId });
+    });
+
+    socket.on("cinema_sync_snacks", (payload: { relationshipId: any; snacks: Record<string, boolean> }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      const { snacks } = payload;
+      if (!relationshipId) return;
+      socket.to(`cinema:${relationshipId}`).emit("cinema_snacks_synced", { snacks, userId });
+    });
+
+    socket.on("extension_url_change", async (payload: { url: string }) => {
+      try {
+        const user = await User.findById(userId);
+        if (user && user.partnerId) {
+          emitToUser(user.partnerId.toString(), "extension_url_changed", { url: payload.url });
+        }
+      } catch (err) {
+        console.error("extension_url_change error:", err);
+      }
+    });
+
+    socket.on("extension_video_control", async (payload: { action: string; time: number }) => {
+      try {
+        console.log("Server: Received extension_video_control:", payload, "from userId:", userId);
+        const user = await User.findById(userId);
+        if (user && user.partnerId) {
+          console.log("Server: Relaying extension_video_controlled to partnerId:", user.partnerId.toString());
+          emitToUser(user.partnerId.toString(), "extension_video_controlled", {
+            action: payload.action,
+            time: payload.time,
+          });
+        }
+      } catch (err) {
+        console.error("extension_video_control error:", err);
+      }
+    });
+
+    socket.on("cinema_resolve_link_response", async (payload: { movieId: string; watchLink: string }) => {
+      try {
+        console.log("Server: Received resolved watchLink from extension:", payload);
+        const movie = await Movie.findById(payload.movieId);
+        if (movie) {
+          movie.watchLink = payload.watchLink;
+          await movie.save();
+          console.log(`Server: Saved watchLink for movie "${movie.title}": ${payload.watchLink}`);
+          
+          const user = await User.findById(userId);
+          if (user) {
+            const relationshipId = getRelId(user.relationshipId);
+            let session = activeCinemaSessions.get(relationshipId);
+            if (session && session.movieId === payload.movieId) {
+              session.watchLink = payload.watchLink;
+              io?.to(`cinema:${relationshipId}`).emit("cinema_session_state", session);
+            }
+          }
+          
+          // Also emit general movie_updated to reload watchlist
+          emitToUser(movie.userId.toString(), "movie_updated", movie);
+          const u = await User.findById(movie.userId);
+          if (u && u.partnerId) {
+            emitToUser(u.partnerId.toString(), "movie_updated", movie);
+          }
+        }
+      } catch (err) {
+        console.error("cinema_resolve_link_response error:", err);
+      }
+    });
+
+    socket.on("leave_cinema", (payload: { relationshipId: any }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      if (!relationshipId) return;
+
+      socket.leave(`cinema:${relationshipId}`);
+      const session = activeCinemaSessions.get(relationshipId);
+      if (session) {
+        session.participants = session.participants.filter((p) => p !== userId);
+        session.readyUsers = (session.readyUsers || []).filter((id) => id !== userId);
+        if (session.participants.length === 0) {
+          activeCinemaSessions.delete(relationshipId);
+        } else {
+          socket.to(`cinema:${relationshipId}`).emit("partner_left_cinema", { userId });
+          io?.to(`cinema:${relationshipId}`).emit("cinema_session_state", session);
+        }
+      }
+    });
+
     socket.on("disconnect", () => {
-      // socket.io handles leaving rooms automatically.
+      const relId = (socket as any).relationshipId as string;
+      if (relId) {
+        const session = activeCinemaSessions.get(relId);
+        if (session) {
+          session.participants = session.participants.filter(p => p !== userId);
+          session.readyUsers = (session.readyUsers || []).filter((id) => id !== userId);
+          if (session.participants.length === 0) {
+            activeCinemaSessions.delete(relId);
+          } else {
+            socket.to(`cinema:${relId}`).emit("partner_left_cinema", { userId });
+            io?.to(`cinema:${relId}`).emit("cinema_session_state", session);
+          }
+        }
+      }
     });
   });
 

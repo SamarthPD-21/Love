@@ -3,153 +3,188 @@ import { Movie } from "../models/Movie";
 import { User } from "../models/User";
 import { emitToUser } from "../sockets";
 
-const TMDB_API_KEY = process.env.TMDB_API_KEY;
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-/**
- * Normalizes title string for robust match comparison.
- */
 function normalizeTitle(title: string): string {
   return title
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "") // remove special characters
-    .replace(/\s+/g, " ")        // normalize spaces
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
-/**
- * Fetch search page and resolve the streaming link from 1hd.art.
- * This only works when the server IP is not blocked by Cloudflare.
- */
+// ---------------------------------------------------------------------------
+// Source 1 – 1hd.art  (works from residential IPs / extension fallback)
+// ---------------------------------------------------------------------------
+
 export async function fetchWatchLinkFrom1HD(
   title: string,
   type: "movie" | "show"
 ): Promise<string | null> {
   try {
     const searchUrl = `https://1hd.art/search?keyword=${encodeURIComponent(title)}`;
-
-    const response = await fetch(searchUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Referer": "https://1hd.art/",
-        "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-User": "?1",
-        "Upgrade-Insecure-Requests": "1",
-        "Cache-Control": "max-age=0",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch 1hd.art search, status: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    const results: Array<{ href: string; title: string; type: string; year: string }> = [];
-
-    $(".film-list .item-film").each((_, element) => {
-      const href = $(element).find("a.film-mask").attr("href");
-      const filmNameLink = $(element).find("h3.film-name a");
-      const filmTitle = filmNameLink.attr("title") || filmNameLink.text();
-      const filmType = $(element).find(".film-info .item").first().text();
-      const filmYear = $(element).find(".film-info .item").last().text();
-
-      if (href) {
-        const watchUrl = href.startsWith("http") ? href : `https://1hd.art${href}`;
-        results.push({ href: watchUrl, title: filmTitle, type: filmType, year: filmYear });
+    
+    // Import got-scraping dynamically to bypass CommonJS/ESM compilation rewriting
+    const { gotScraping } = await eval('import("got-scraping")');
+    
+    const response = await gotScraping({
+      url: searchUrl,
+      headerGeneratorOptions: {
+        browsers: [
+          { name: 'chrome', minVersion: 120 }
+        ],
+        devices: ['desktop'],
+        operatingSystems: ['windows', 'linux']
       }
     });
 
-    if (results.length === 0) return null;
+    if (response.statusCode !== 200) {
+      throw new Error(`Failed to fetch 1hd.art, status: ${response.statusCode}`);
+    }
+
+    const html = response.body;
+    const $ = cheerio.load(html);
+    const results: Array<{ href: string; title: string; type: string }> = [];
+
+    $(".film-list .item-film").each((_, element) => {
+      const href = $(element).find("a.film-mask").attr("href");
+      const filmTitle =
+        $(element).find("h3.film-name a").attr("title") ||
+        $(element).find("h3.film-name a").text();
+      const filmType = $(element).find(".film-info .item").first().text();
+
+      if (href) {
+        results.push({
+          href: href.startsWith("http") ? href : `https://1hd.art${href}`,
+          title: filmTitle,
+          type: filmType,
+        });
+      }
+    });
+
+    if (!results.length) return null;
 
     const targetType = type === "movie" ? "movie" : "tv";
-    const normalizedTarget = normalizeTitle(title);
+    const norm = normalizeTitle(title);
 
-    let bestMatch = results.find((r) => {
-      const matchTypeOk = r.type.toLowerCase().includes(targetType);
-      const matchTitleOk = normalizeTitle(r.title) === normalizedTarget;
-      return matchTypeOk && matchTitleOk;
-    });
-    if (!bestMatch) bestMatch = results.find((r) => normalizeTitle(r.title) === normalizedTarget);
-    if (!bestMatch) bestMatch = results.find((r) => r.type.toLowerCase().includes(targetType));
-    if (!bestMatch) bestMatch = results[0];
+    const pick =
+      results.find((r) => r.type.toLowerCase().includes(targetType) && normalizeTitle(r.title) === norm) ||
+      results.find((r) => normalizeTitle(r.title) === norm) ||
+      results.find((r) => r.type.toLowerCase().includes(targetType)) ||
+      results[0];
 
-    return bestMatch?.href ?? null;
+    return pick?.href ?? null;
   } catch (err) {
     console.error(`fetchWatchLinkFrom1HD error for "${title}":`, err);
     return null;
   }
 }
 
-/**
- * Look up a movie/show on TMDB and return its numeric ID.
- */
-async function fetchTmdbId(
+// ---------------------------------------------------------------------------
+// Source 2 – Wikidata SPARQL → IMDB ID → VidSrc embed
+//   • 100 % free, no API key, no registration, run by Wikimedia Foundation
+//   • Returns a VidSrc embed URL like https://vidsrc.to/embed/movie/tt1234567
+// ---------------------------------------------------------------------------
+
+interface WikidataResult {
+  results: {
+    bindings: Array<{
+      imdbID?: { value: string };
+      wikidataClass?: { value: string };
+    }>;
+  };
+}
+
+async function fetchImdbIdFromWikidata(
   title: string,
   type: "movie" | "show"
-): Promise<number | null> {
-  if (!TMDB_API_KEY) return null;
-
+): Promise<string | null> {
   try {
-    const mediaType = type === "movie" ? "movie" : "tv";
-    const url = `https://api.themoviedb.org/3/search/${mediaType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`TMDB status ${res.status}`);
-    const json = await res.json() as { results?: { id: number; title?: string; name?: string }[] };
-    const results = json.results ?? [];
-    if (results.length === 0) return null;
+    // Q11424 = film, Q5398426 = television series
+    const typeFilter =
+      type === "movie"
+        ? `VALUES ?class { wd:Q11424 wd:Q29168811 wd:Q24869 }`   // film / animated film / short film
+        : `VALUES ?class { wd:Q5398426 wd:Q21191270 wd:Q63952888 }`;  // TV series / miniseries / web series
 
-    // Try to find the best title match first
-    const norm = normalizeTitle(title);
-    const exact = results.find((r) => {
-      const t = type === "movie" ? (r.title ?? "") : (r.name ?? "");
-      return normalizeTitle(t) === norm;
-    });
-    return (exact ?? results[0]).id;
+    // Try case-insensitive label match first, then looser CONTAINS search
+    const escapedTitle = title.replace(/"/g, '\\"');
+    const sparqlExact = `
+      SELECT ?imdbID WHERE {
+        ${typeFilter}
+        ?item wdt:P31 ?class .
+        ?item wdt:P345 ?imdbID .
+        ?item rdfs:label ?label .
+        FILTER(LCASE(STR(?label)) = LCASE("${escapedTitle}"))
+      }
+      LIMIT 3
+    `;
+
+    const sparqlFuzzy = `
+      SELECT ?imdbID ?label WHERE {
+        ${typeFilter}
+        ?item wdt:P31 ?class .
+        ?item wdt:P345 ?imdbID .
+        ?item rdfs:label ?label .
+        FILTER(CONTAINS(LCASE(STR(?label)), LCASE("${escapedTitle}")))
+      }
+      LIMIT 5
+    `;
+
+    const endpoint = "https://query.wikidata.org/sparql";
+    const headers = {
+      Accept: "application/sparql-results+json",
+      "User-Agent": "LoveCinemaBot/1.0 (https://github.com/SamarthPD-21/Love-Cinema-Sync)",
+    };
+
+    // Try exact first
+    let res = await fetch(`${endpoint}?query=${encodeURIComponent(sparqlExact)}`, { headers });
+    if (res.ok) {
+      const json = (await res.json()) as WikidataResult;
+      const bindings = json.results?.bindings ?? [];
+      if (bindings.length > 0 && bindings[0].imdbID) {
+        const id = bindings[0].imdbID.value;
+        console.log(`[MovieBot] Wikidata exact match for "${title}": ${id}`);
+        return id;
+      }
+    }
+
+    // Fuzzy fallback
+    res = await fetch(`${endpoint}?query=${encodeURIComponent(sparqlFuzzy)}`, { headers });
+    if (!res.ok) throw new Error(`Wikidata SPARQL status ${res.status}`);
+    const json = (await res.json()) as WikidataResult;
+    const bindings = json.results?.bindings ?? [];
+    if (bindings.length > 0 && bindings[0].imdbID) {
+      const id = bindings[0].imdbID.value;
+      console.log(`[MovieBot] Wikidata fuzzy match for "${title}": ${id}`);
+      return id;
+    }
+
+    return null;
   } catch (err) {
-    console.error(`fetchTmdbId error for "${title}":`, err);
+    console.error(`fetchImdbIdFromWikidata error for "${title}":`, err);
     return null;
   }
 }
 
-/**
- * Build a VidSrc embed URL from a TMDB ID.
- * VidSrc works from any IP and doesn't block datacenters.
- */
-function buildVidSrcUrl(tmdbId: number, type: "movie" | "show"): string {
-  const mediaType = type === "movie" ? "movie" : "tv";
-  // vidsrc.to/embed/{type}/{tmdbId}
-  return `https://vidsrc.to/embed/${mediaType}/${tmdbId}`;
-}
-
-/**
- * Fallback: resolve a VidSrc embed URL via TMDB.
- */
 async function fetchWatchLinkFromVidSrc(
   title: string,
   type: "movie" | "show"
 ): Promise<string | null> {
-  const tmdbId = await fetchTmdbId(title, type);
-  if (!tmdbId) {
-    console.log(`[MovieBot] No TMDB ID found for "${title}", cannot build VidSrc link.`);
-    return null;
-  }
-  const url = buildVidSrcUrl(tmdbId, type);
-  console.log(`[MovieBot] VidSrc fallback for "${title}": ${url}`);
+  const imdbId = await fetchImdbIdFromWikidata(title, type);
+  if (!imdbId) return null;
+
+  const mediaType = type === "movie" ? "movie" : "tv";
+  const url = `https://vidsrc.to/embed/${mediaType}/${imdbId}`;
+  console.log(`[MovieBot] VidSrc URL for "${title}": ${url}`);
   return url;
 }
 
-/**
- * Background worker task to fetch watchLink and save to database.
- * Tries: 1) 1hd.art direct  2) VidSrc via TMDB  3) Extension fallback
- */
+// ---------------------------------------------------------------------------
+// Main orchestrator
+// ---------------------------------------------------------------------------
+
 export async function fetchWatchLink(movieId: string): Promise<void> {
   try {
     const movie = await Movie.findById(movieId);
@@ -158,30 +193,32 @@ export async function fetchWatchLink(movieId: string): Promise<void> {
       return;
     }
 
-    console.log(`[MovieBot] Fetching link for "${movie.title}" (${movie.type})...`);
+    console.log(`[MovieBot] Resolving link for "${movie.title}" (${movie.type})...`);
 
-    // --- Attempt 1: 1hd.art (may be blocked on datacenter IPs) ---
+    // Attempt 1: 1hd.art (fast, works on residential IPs)
     let link = await fetchWatchLinkFrom1HD(movie.title, movie.type);
 
-    // --- Attempt 2: VidSrc via TMDB (always works) ---
+    // Attempt 2: Wikidata → VidSrc (always works on Render, no API key needed)
     if (!link) {
-      console.log(`[MovieBot] 1hd.art failed for "${movie.title}", trying VidSrc via TMDB...`);
+      console.log(`[MovieBot] 1hd.art blocked, trying Wikidata → VidSrc for "${movie.title}"...`);
       link = await fetchWatchLinkFromVidSrc(movie.title, movie.type);
     }
 
     if (link) {
       movie.watchLink = link;
       await movie.save();
-      console.log(`[MovieBot] Successfully found link for "${movie.title}": ${link}`);
+      console.log(`[MovieBot] ✅ Saved link for "${movie.title}": ${link}`);
 
       emitToUser(movie.userId.toString(), "movie_updated", movie);
       const user = await User.findById(movie.userId);
-      if (user && user.partnerId) {
+      if (user?.partnerId) {
         emitToUser(user.partnerId.toString(), "movie_updated", movie);
       }
     } else {
-      // --- Attempt 3: Extension fallback (works if extension is connected) ---
-      console.log(`[MovieBot] No link found for "${movie.title}" via any server source. Emitting extension resolution request.`);
+      // Attempt 3: Extension fallback (works if the browser extension is connected)
+      console.log(
+        `[MovieBot] No server-side link found for "${movie.title}". Requesting via extension...`
+      );
       const { getIO } = require("../sockets");
       const io = getIO();
       if (io) {
