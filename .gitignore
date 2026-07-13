@@ -4,8 +4,10 @@
 # Whitelist the directories and files we want to track
 !/client/
 !/server/
+!/extension/
 !/.gitignore
 !/README.md
+!/CHROMEWEBSTORE.md
 
 # Globally ignore dependencies and build files inside the whitelisted directories
 node_modules/
