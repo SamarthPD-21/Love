@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Music, Film, Gamepad2 } from "lucide-react";
+import { Music, Film, Gamepad2, Tv } from "lucide-react";
 import { RoomHeader } from "@/components/ui/RoomHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { getSocket } from "@/lib/socket";
 
 import SongsView from "../_views/SongsView";
 import MoviesView from "../_views/MoviesView";
+import CinemaView from "../_views/CinemaView";
 import GamesView from "../_views/GamesView";
 
 export default function LoungePage() {
@@ -16,15 +18,30 @@ export default function LoungePage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
-      if (tab && ["playlist", "watchlist", "games"].includes(tab)) {
+      if (tab && ["playlist", "watchlist", "cinema", "games"].includes(tab)) {
         Promise.resolve().then(() => setActiveTab(tab));
       }
     }
   }, []);
 
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleCinemaAlert = () => {
+      setActiveTab("cinema");
+    };
+
+    socket.on("cinema_started_alert", handleCinemaAlert);
+    return () => {
+      socket.off("cinema_started_alert", handleCinemaAlert);
+    };
+  }, []);
+
   const segments = [
     { id: "playlist", label: "Playlist", icon: Music },
     { id: "watchlist", label: "Watchlist", icon: Film },
+    { id: "cinema", label: "Cinema Room", icon: Tv },
     { id: "games", label: "Games", icon: Gamepad2 },
   ];
 
@@ -47,7 +64,12 @@ export default function LoungePage() {
 
       <div className="flex-1 w-full relative">
         {activeTab === "playlist" && <SongsView />}
-        {activeTab === "watchlist" && <MoviesView />}
+        {activeTab === "watchlist" && (
+          <MoviesView onStartCinema={() => setActiveTab("cinema")} />
+        )}
+        {activeTab === "cinema" && (
+          <CinemaView onBackToWatchlist={() => setActiveTab("watchlist")} />
+        )}
         {activeTab === "games" && <GamesView />}
       </div>
     </div>

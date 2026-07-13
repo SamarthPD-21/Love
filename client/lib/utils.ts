@@ -84,3 +84,12 @@ export function getDailySubGreeting(): string {
   );
   return dailySubGreetings[dayOfYear % dailySubGreetings.length];
 }
+
+/**
+ * Helper to safely extract the relationship ID string.
+ * Handles both plain strings and populated Relationship objects.
+ */
+export function getRelationshipId(rel: any): string {
+  if (!rel) return "";
+  return typeof rel === "object" ? (rel._id || rel.id || "") : rel;
+}

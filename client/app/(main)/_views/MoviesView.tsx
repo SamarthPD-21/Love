@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Film, Plus, Trash2, CheckCircle2, Star, Loader2, X, AlertCircle, Play } from "lucide-react";
+import { Film, Plus, Trash2, CheckCircle2, Star, Loader2, X, AlertCircle, Play, Users } from "lucide-react";
 import api from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, getRelationshipId } from "@/lib/utils";
 import { format } from "date-fns";
 import { getSocket } from "@/lib/socket";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 interface Movie {
   _id: string;
@@ -19,11 +20,27 @@ interface Movie {
   createdAt: string;
 }
 
-export default function MoviesPage() {
+export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => void }) {
+  const { user } = useAuthStore();
+  const socket = getSocket();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState("");
+
+  const handleStartWatchTogether = (movie: Movie) => {
+    if (!socket || !user || !user.relationshipId) return;
+    socket.emit("start_cinema", {
+      relationshipId: getRelationshipId(user.relationshipId),
+      movieId: movie._id,
+      movieTitle: movie.title,
+      movieType: movie.type,
+      watchLink: movie.watchLink,
+    });
+    if (onStartCinema) {
+      onStartCinema();
+    }
+  };
 
   // Filter tab
   const [activeTab, setActiveTab] = useState<"watchlist" | "watched">("watchlist");
@@ -298,6 +315,16 @@ export default function MoviesPage() {
                         <Play className="w-3.5 h-3.5 fill-white" />
                         <span>Watch Now</span>
                       </a>
+                    )}
+
+                    {movie.status === "watchlist" && (
+                      <button
+                        onClick={() => handleStartWatchTogether(movie)}
+                        className="flex items-center gap-1 py-1.5 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/40 active:scale-95"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        <span>Watch Together</span>
+                      </button>
                     )}
 
                     <button
