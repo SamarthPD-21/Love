@@ -35,6 +35,7 @@ const COPY: Record<NotificationType, { emoji: string; text: string }> = {
   song_added: { emoji: "🎵", text: "{name} added a new song to the lounge!" },
   map_pin_added: { emoji: "📍", text: "{name} pinned a new place on the map!" },
   profile_updated: { emoji: "✨", text: "{name} refreshed their profile." },
+  movie_added: { emoji: "🎬", text: "{name} added a movie to the watchlist!" },
 };
 
 /**

@@ -20,6 +20,7 @@ export const NOTIFICATION_TYPES = [
   "song_added",
   "map_pin_added",
   "profile_updated",
+  "movie_added",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

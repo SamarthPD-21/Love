@@ -7,6 +7,7 @@ export interface IMovie extends Document {
   status: "watchlist" | "watched";
   rating?: number; // 1-5
   review?: string;
+  watchLink?: string;
   relationshipId: Types.ObjectId;
   userId: Types.ObjectId;
   createdAt: Date;
@@ -36,6 +37,10 @@ const movieSchema = new Schema<IMovie>({
   review: {
     type: String,
     default: "",
+  },
+  watchLink: {
+    type: String,
+    trim: true,
   },
   relationshipId: {
     type: Schema.Types.ObjectId,

@@ -180,6 +180,7 @@ export interface Movie {
   status: "wishlist" | "watched";
   rating?: number;
   review?: string;
+  watchLink?: string;
   photos: string[];
   addedBy: string;
   watchedDate?: string;

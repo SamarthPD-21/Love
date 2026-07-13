@@ -3,6 +3,8 @@ import { authMiddleware } from "../middleware/auth";
 import { Movie } from "../models/Movie";
 import { User } from "../models/User";
 import { z } from "zod";
+import { fetchWatchLink } from "../services/movieBot";
+import { createNotification } from "../services/notify";
 
 const router = Router();
 router.use(authMiddleware);
@@ -13,6 +15,7 @@ const movieSchema = z.object({
   status: z.enum(["watchlist", "watched"]).default("watchlist"),
   rating: z.number().min(1).max(5).optional().nullable(),
   review: z.string().optional(),
+  watchLink: z.string().optional().nullable(),
 });
 
 // GET /api/movies
@@ -58,6 +61,20 @@ router.post("/", async (req: any, res: Response) => {
     await movie.save();
     const populated = await movie.populate("userId", "name avatar");
 
+    // Trigger the background bot scraping non-blockingly
+    fetchWatchLink(movie._id.toString()).catch((err) =>
+      console.error("[MovieBot] background fetch failed:", err)
+    );
+
+    // Notify partner
+    createNotification({
+      actorId: user._id.toString(),
+      type: "movie_added",
+      entityType: "Movie",
+      entityId: movie._id.toString(),
+      meta: { detail: movie.title },
+    });
+
     res.status(201).json({ success: true, data: populated });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -88,6 +105,13 @@ router.put("/:id", async (req: any, res: Response) => {
     if (!movie) {
       res.status(404).json({ error: "Movie not found" });
       return;
+    }
+
+    // If title has been updated, run the background bot scraper again
+    if (validation.data.title) {
+      fetchWatchLink(movie._id.toString()).catch((err) =>
+        console.error("[MovieBot] background fetch after title update failed:", err)
+      );
     }
 
     const populated = await movie.populate("userId", "name avatar");

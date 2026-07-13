@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Film, Plus, Trash2, CheckCircle2, Star, Loader2, X, AlertCircle } from "lucide-react";
+import { Film, Plus, Trash2, CheckCircle2, Star, Loader2, X, AlertCircle, Play } from "lucide-react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { getSocket } from "@/lib/socket";
 
 interface Movie {
   _id: string;
@@ -14,6 +15,7 @@ interface Movie {
   status: "watchlist" | "watched";
   rating?: number;
   review?: string;
+  watchLink?: string;
   createdAt: string;
 }
 
@@ -52,6 +54,22 @@ export default function MoviesPage() {
 
   useEffect(() => {
     Promise.resolve().then(() => fetchMovies());
+  }, []);
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleMovieUpdated = (updatedMovie: Movie) => {
+      setMovies((prev) =>
+        prev.map((m) => (m._id === updatedMovie._id ? updatedMovie : m))
+      );
+    };
+
+    socket.on("movie_updated", handleMovieUpdated);
+    return () => {
+      socket.off("movie_updated", handleMovieUpdated);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -262,18 +280,39 @@ export default function MoviesPage() {
                     Added: {format(new Date(movie.createdAt), "MMM d, yyyy")}
                   </span>
 
-                  <button
-                    onClick={() => handleToggleStatus(movie)}
-                    className={cn(
-                      "flex items-center gap-1 py-1.5 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer border",
-                      movie.status === "watched"
-                        ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500 border-emerald-100 dark:border-emerald-900/30"
-                        : "bg-primary text-white border-primary hover:bg-primary-hover hover:border-primary-hover"
+                  <div className="flex items-center gap-2">
+                    {movie.status === "watchlist" && movie.watchLink && (
+                      <a
+                        href={movie.watchLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => {
+                          try {
+                            const audio = new Audio("/sounds/tap.mp3");
+                            audio.volume = 0.2;
+                            audio.play().catch(() => {});
+                          } catch (e) {}
+                        }}
+                        className="flex items-center gap-1 py-1.5 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm hover:shadow active:scale-95"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-white" />
+                        <span>Watch Now</span>
+                      </a>
                     )}
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>{movie.status === "watched" ? "Watched" : "Mark Watched"}</span>
-                  </button>
+
+                    <button
+                      onClick={() => handleToggleStatus(movie)}
+                      className={cn(
+                        "flex items-center gap-1 py-1.5 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer border",
+                        movie.status === "watched"
+                          ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500 border-emerald-100 dark:border-emerald-900/30"
+                          : "bg-primary text-white border-primary hover:bg-primary-hover hover:border-primary-hover"
+                      )}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{movie.status === "watched" ? "Watched" : "Mark Watched"}</span>
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
