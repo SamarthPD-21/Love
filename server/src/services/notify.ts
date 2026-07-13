@@ -62,6 +62,18 @@ function renderTitle(text: string, firstName: string, detail?: string): string {
  * Fully non-fatal: any error is logged and swallowed so it never breaks
  * the originating request.
  */
+function incrementTitleCount(currentTitle: string): string {
+  const regex = /\(x(\d+)\)$/;
+  const match = currentTitle.match(regex);
+  if (match) {
+    const count = parseInt(match[1], 10);
+    return currentTitle.replace(regex, `(x${count + 1})`);
+  }
+  return `${currentTitle} (x2)`;
+}
+
+const COALESCE_TYPES: NotificationType[] = ["hug_sent", "profile_updated"];
+
 export async function createNotification(
   input: CreateNotificationInput
 ): Promise<INotification | null> {
@@ -81,17 +93,38 @@ export async function createNotification(
     const firstName = actor.name?.split(" ")[0] || "Your partner";
     const title = renderTitle(copy.text, firstName, input.meta?.detail);
 
-    const notification = await Notification.create({
-      relationshipId: actor.relationshipId,
-      actorUserId: actor._id,
-      recipientUserId: actor.partnerId,
-      type: input.type,
-      entityType: input.entityType || "",
-      entityId: input.entityId || undefined,
-      title,
-      emoji: copy.emoji,
-      isRead: false,
-    });
+    let notification: INotification | null = null;
+
+    if (COALESCE_TYPES.includes(input.type)) {
+      const existing = await Notification.findOne({
+        recipientUserId: actor.partnerId,
+        actorUserId: actor._id,
+        type: input.type,
+        isRead: false,
+        entityId: input.entityId || undefined,
+      });
+
+      if (existing) {
+        existing.title = incrementTitleCount(existing.title);
+        existing.createdAt = new Date();
+        existing.isRead = false;
+        notification = await existing.save();
+      }
+    }
+
+    if (!notification) {
+      notification = await Notification.create({
+        relationshipId: actor.relationshipId,
+        actorUserId: actor._id,
+        recipientUserId: actor.partnerId,
+        type: input.type,
+        entityType: input.entityType || "",
+        entityId: input.entityId || undefined,
+        title,
+        emoji: copy.emoji,
+        isRead: false,
+      });
+    }
 
     // Push to the partner in real time. Include a flag so the client
     // knows whether to fire the confetti.

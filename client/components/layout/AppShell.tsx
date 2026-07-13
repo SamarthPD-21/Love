@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
+import { BottomSheet } from "./BottomSheet";
 import { FloatingHearts } from "@/components/animations/FloatingHearts";
 import { Fireflies } from "@/components/animations/Fireflies";
 import { SparkleTrail } from "@/components/animations/SparkleTrail";
@@ -20,7 +22,7 @@ import { useToastStore } from "@/stores/useToastStore";
 import PersistentPlayer from "@/components/music/PersistentPlayer";
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
-import { Volume2, VolumeX, Heart, Sun, Moon, RefreshCw } from "lucide-react";
+import { Heart } from "lucide-react";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -35,8 +37,8 @@ export function AppShell({ children }: AppShellProps) {
   }, []);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const { timeOfDay } = useTimeOfDay();
-  const { isMuted, toggleMute } = useSoundStore();
   const { playSound } = useSoundEffects();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -82,15 +84,13 @@ export function AppShell({ children }: AppShellProps) {
     }
   };
 
-  const handleMuteClick = () => {
-    toggleMute();
-    if (isMuted) {
-      setTimeout(() => playSound("tap"), 50);
-    }
+  const handleMenuOpen = () => {
+    setSidebarOpen(false);
+    setSheetOpen(true);
   };
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex min-h-dvh lg:h-screen lg:overflow-hidden">
       {/* Ambient background animation */}
       {isNight ? (
         <>
@@ -115,15 +115,19 @@ export function AppShell({ children }: AppShellProps) {
       {/* Main content */}
       <main
         className={cn(
-          "flex-1 flex flex-col min-h-dvh relative z-10",
-          "pb-20 lg:pb-0", // Bottom nav padding on mobile
+          "flex-1 min-w-0 flex flex-col min-h-dvh lg:h-screen lg:overflow-y-auto relative z-10",
+          "pb-[80px] lg:pb-0", // Bottom nav padding on mobile (matches 68px bar + safe area)
         )}
       >
-        {/* Mobile Header Bar */}
-        <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-[#FDF6F0]/75 dark:bg-[#0F0A1A]/75 border-b border-border/30 backdrop-blur-md">
+        {/* Header Bar — visible on all viewports, aligns to top-right on desktop */}
+        <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 sm:px-6 lg:px-8 lg:py-4 bg-background/75 border-b border-border/10 backdrop-blur-md lg:justify-end">
           {partner ? (
-            <div className="flex items-center gap-2">
-              <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-primary/15 flex items-center justify-center border border-primary/10">
+            <Link
+              href="/profile"
+              onClick={() => playSound("tap")}
+              className="flex lg:hidden items-center gap-2.5 group cursor-pointer hover:opacity-85 active:scale-95 transition-all"
+            >
+              <div className="relative w-9 h-9 rounded-xl overflow-hidden bg-primary/15 flex items-center justify-center border border-primary/10">
                 {partner.avatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -136,70 +140,30 @@ export function AppShell({ children }: AppShellProps) {
                     {partner.name.slice(0, 2)}
                   </span>
                 )}
-                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-white dark:border-zinc-950 animate-pulse" />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-950 animate-pulse" />
               </div>
               <div className="min-w-0">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold block leading-none">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold block leading-none group-hover:text-primary transition-colors">
                   Partner
                 </span>
-                <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-50 leading-none">
+                <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-50 leading-none mt-0.5 group-hover:text-primary transition-colors block">
                   {partner.name}
                 </span>
               </div>
-            </div>
+            </Link>
           ) : (
-            <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+            <div className="flex lg:hidden items-center gap-1.5 text-xs font-bold text-muted-foreground">
               <Heart className="w-3.5 h-3.5 text-primary fill-primary/20 animate-pulse-soft" />
               <span>Home Space</span>
             </div>
           )}
 
-          {/* Controls */}
-          <div className="flex items-center gap-3">
-            {/* Time of day indicator */}
+          {/* Controls — only time emoji + notification bell */}
+          <div className="flex items-center gap-2.5">
             <span className="text-sm cursor-help animate-float" title={`It's ${timeOfDay}!`}>
               {getTimeEmoji()}
             </span>
-
-            {/* Notification Bell */}
-            <div className="relative">
-              <NotificationBell />
-            </div>
-
-            {/* Theme toggle */}
-            {mounted ? (
-              <button
-                onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-                className="p-2 rounded-lg bg-muted/60 dark:bg-muted/40 hover:bg-muted dark:hover:bg-muted/60 transition-all cursor-pointer active:scale-90 border border-border/50 text-foreground"
-                aria-label={resolvedTheme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-              >
-                {resolvedTheme === "dark" ? <Sun className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4 text-primary" />}
-              </button>
-            ) : (
-              <div className="w-8 h-8 rounded-lg bg-muted/20 animate-pulse border border-border/50" />
-            )}
-
-            {/* Global Refresh Button */}
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="p-2 rounded-lg bg-muted/60 dark:bg-muted/40 hover:bg-muted dark:hover:bg-muted/60 transition-all cursor-pointer active:scale-90 border border-border/50 text-foreground"
-              aria-label="Synchronize Space"
-            >
-              <RefreshCw className={cn("w-4 h-4 text-primary", isRefreshing ? "animate-spin" : "")} />
-            </button>
-
-            {/* Global sound toggle */}
-            <button
-              onClick={handleMuteClick}
-              className={cn(
-                "p-2 rounded-lg bg-muted/60 dark:bg-muted/40 hover:bg-muted dark:hover:bg-muted/60 transition-all cursor-pointer active:scale-90 border border-border/50",
-                isMuted ? "text-muted-foreground" : "text-primary"
-              )}
-              aria-label={isMuted ? "Unmute sounds" : "Mute sounds"}
-            >
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
+            <NotificationBell />
           </div>
         </header>
 
@@ -209,7 +173,10 @@ export function AppShell({ children }: AppShellProps) {
       </main>
 
       {/* Bottom nav — mobile only */}
-      <BottomNav onMenuOpen={() => setSidebarOpen(true)} />
+      <BottomNav onMenuOpen={handleMenuOpen} />
+
+      {/* Bottom sheet — secondary nav + quick actions (mobile only) */}
+      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
 
       {/* Persistent global music player */}
       <PersistentPlayer />

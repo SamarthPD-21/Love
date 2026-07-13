@@ -201,7 +201,7 @@ export default function HomePage() {
         {/* ── Hero Greeting ── */}
         <motion.div
           className={cn(
-            "rounded-3xl p-8 sm:p-10 mb-8 relative overflow-hidden shadow-xl border border-white/10 glass",
+            "rounded-3xl p-6 sm:p-10 mb-8 relative overflow-hidden shadow-xl border border-white/10 glass",
             bgClass,
           )}
           initial={{ opacity: 0, scale: 0.97 }}

@@ -9,7 +9,6 @@ import api from "@/lib/api";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { useToastStore } from "@/stores/useToastStore";
 import { useTheme } from "next-themes";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useEffect, useState } from "react";
 import {
   Heart,
@@ -71,8 +70,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           "fixed top-0 left-0 h-full w-[280px] z-50 flex flex-col",
           "bg-card/95 backdrop-blur-xl border-r border-border",
           "transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full",
-          "lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:min-h-dvh lg:z-auto"
+          isOpen ? "translate-x-0 flex" : "-translate-x-full hidden lg:flex",
+          "lg:translate-x-0 lg:relative lg:h-screen lg:z-auto"
         )}
       >
         {/* Logo */}
@@ -85,11 +84,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClose();
             }}
           >
-            <div className="w-9 h-9 rounded-xl bg-primary/10 animate-glow-pulse flex items-center justify-center">
-              <Heart className="w-5 h-5 text-primary fill-primary animate-pulse-soft" />
+            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shadow-inner group-hover:scale-105 group-hover:rotate-3 transition-transform duration-300">
+              <Heart className="w-5 h-5 text-primary fill-primary animate-heartbeat" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-foreground">
-              Home
+            <span className="text-xl font-black tracking-tight bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent group-hover:brightness-105 transition-all">
+              Our Space
             </span>
           </Link>
           <button
@@ -109,7 +108,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 playSound("tap");
                 onClose();
               }}
-              className="flex items-center gap-3 p-3 rounded-2xl bg-card/60 dark:bg-card/60 border border-border/50 hover:bg-card/80 dark:hover:bg-card/80 transition-all duration-250 group cursor-pointer shadow-sm active:scale-[0.98]"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-card/40 dark:bg-[#120B20]/40 backdrop-blur-md border border-border/50 hover:bg-card/80 dark:hover:bg-[#120B20]/80 hover:border-primary/20 transition-all duration-300 group cursor-pointer shadow-sm active:scale-[0.98]"
             >
               {/* Partner Avatar */}
               <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0 border border-primary/10">
@@ -131,7 +130,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
               {/* Partner Details */}
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">
                   My Partner
                 </p>
                 <h4 className="text-sm font-extrabold text-foreground truncate group-hover:text-primary transition-colors">
@@ -169,7 +168,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href || 
               (item.href !== "/" && pathname.startsWith(item.href));
@@ -183,11 +182,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   onClose();
                 }}
                 className={cn(
-                  "relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium",
-                  "transition-all duration-200 active:scale-[0.98]",
+                  "relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 cursor-pointer group active:scale-[0.98]",
                   isActive
-                    ? "text-primary bg-primary/8 font-semibold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+                    ? "bg-gradient-to-r from-primary/[0.08] to-accent/[0.04] text-primary border border-primary/20 shadow-sm shadow-primary/5"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40 hover:translate-x-0.5",
                 )}
               >
                 {isActive && (
@@ -197,7 +195,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     transition={{ type: "spring", damping: 20, stiffness: 200 }}
                   />
                 )}
-                <span className="text-base">{item.emoji}</span>
+                <span className="text-base group-hover:scale-110 transition-transform duration-200">{item.emoji}</span>
                 <span>{item.label}</span>
               </Link>
             );
@@ -205,11 +203,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border flex flex-col items-center gap-3">
-          {/* Notification Bell */}
-          <div className="w-full flex justify-center">
-            <NotificationBell className="w-full" />
-          </div>
+        <div className="p-4 border-t border-border flex flex-col items-center gap-3 w-full">
           <GlobalRefreshButton />
           <ThemeToggle />
           <p className="text-xs text-muted-foreground text-center handwritten text-base">

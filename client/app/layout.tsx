@@ -45,9 +45,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${playfairDisplay.variable}`}
+      className={`${dmSans.variable} ${playfairDisplay.variable} overflow-x-hidden`}
     >
-      <body className="min-h-dvh antialiased">
+      <body className="min-h-dvh antialiased overflow-x-hidden">
         <Providers>{children}</Providers>
       </body>
     </html>

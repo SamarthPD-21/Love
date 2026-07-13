@@ -103,6 +103,12 @@
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45);
   --shadow-glow: 0 0 24px rgba(232, 88, 122, 0.12), 0 0 8px rgba(232, 88, 122, 0.06);
   --shadow-gold: 0 0 20px rgba(196, 148, 90, 0.1);
+
+  /* Gradients */
+  --gradient-morning: linear-gradient(135deg, #1A0F1F 0%, #2F172E 35%, #351C2C 65%, #150E22 100%);
+  --gradient-afternoon: linear-gradient(135deg, #20141A 0%, #301E22 35%, #251B2E 65%, #150F22 100%);
+  --gradient-evening: linear-gradient(135deg, #18102E 0%, #2B1742 35%, #3C1C35 65%, #120A22 100%);
+  --gradient-night: linear-gradient(135deg, #0C0715 0%, #150C24 35%, #1B0F22 65%, #08060F 100%);
 }
 
 /* ── Tailwind Theme Integration ── */
@@ -263,13 +269,23 @@ button:active, a:active {
 
 /* ── Card Styles ── */
 .card-cozy {
-  background: var(--card);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(190, 58, 110, 0.03);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
+}
+
+[data-theme="dark"] .card-cozy {
+  background: rgba(26, 18, 41, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
 }
 
 .card-cozy::before {
@@ -285,13 +301,14 @@ button:active, a:active {
 }
 
 .card-cozy:hover {
-  box-shadow: var(--shadow-glow), var(--shadow-sm);
-  transform: translateY(-2px);
-  border-color: rgba(190, 58, 110, 0.25);
+  box-shadow: var(--shadow-glow), 0 16px 48px rgba(190, 58, 110, 0.08);
+  transform: translateY(-4px) scale(1.005);
+  border-color: rgba(190, 58, 110, 0.3);
 }
 
 [data-theme="dark"] .card-cozy:hover {
-  border-color: rgba(232, 88, 122, 0.3);
+  box-shadow: 0 0 32px rgba(232, 88, 122, 0.06), 0 16px 48px rgba(0, 0, 0, 0.35);
+  border-color: rgba(232, 88, 122, 0.35);
 }
 
 .card-cozy:hover::before {

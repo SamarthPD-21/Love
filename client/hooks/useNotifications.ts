@@ -42,6 +42,28 @@ export function useMarkAllRead() {
     mutationFn: async () => {
       await api.patch("/notifications/read");
     },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+      const previousQueries = queryClient.getQueriesData({ queryKey: ["notifications"] });
+
+      queryClient.setQueryData(["notifications", "unread"], 0);
+      queryClient.setQueriesData({ queryKey: ["notifications"] }, (old: any, query: any) => {
+        const key = query.queryKey;
+        if (key.length === 2 && typeof key[1] === "number") {
+          return old?.map((n: any) => ({ ...n, isRead: true })) || [];
+        }
+        return old;
+      });
+
+      return { previousQueries };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, queryData]) => {
+          queryClient.setQueryData(queryKey, queryData);
+        });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
@@ -54,6 +76,31 @@ export function useMarkOneRead() {
     mutationFn: async (id: string) => {
       await api.patch(`/notifications/${id}/read`);
     },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+      const previousQueries = queryClient.getQueriesData({ queryKey: ["notifications"] });
+
+      queryClient.setQueryData(["notifications", "unread"], (old: number | undefined) => {
+        if (old === undefined) return 0;
+        return Math.max(0, old - 1);
+      });
+      queryClient.setQueriesData({ queryKey: ["notifications"] }, (old: any, query: any) => {
+        const key = query.queryKey;
+        if (key.length === 2 && typeof key[1] === "number") {
+          return old?.map((n: any) => n._id === id ? { ...n, isRead: true } : n) || [];
+        }
+        return old;
+      });
+
+      return { previousQueries };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, queryData]) => {
+          queryClient.setQueryData(queryKey, queryData);
+        });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
@@ -65,6 +112,41 @@ export function useDismissNotification() {
   return useMutation({
     mutationFn: async (id: string) => {
       await api.delete(`/notifications/${id}`);
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+      const previousQueries = queryClient.getQueriesData({ queryKey: ["notifications"] });
+
+      // Determine if dismissed notification was unread so we can update count
+      let wasUnread = false;
+
+      queryClient.setQueriesData({ queryKey: ["notifications"] }, (old: any, query: any) => {
+        const key = query.queryKey;
+        if (key.length === 2 && typeof key[1] === "number") {
+          const found = old?.find((n: any) => n._id === id);
+          if (found && !found.isRead) {
+            wasUnread = true;
+          }
+          return old?.filter((n: any) => n._id !== id) || [];
+        }
+        return old;
+      });
+
+      if (wasUnread) {
+        queryClient.setQueryData(["notifications", "unread"], (old: number | undefined) => {
+          if (old === undefined) return 0;
+          return Math.max(0, old - 1);
+        });
+      }
+
+      return { previousQueries };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, queryData]) => {
+          queryClient.setQueryData(queryKey, queryData);
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
