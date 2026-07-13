@@ -32,19 +32,7 @@ export function initSockets(server: HttpServer): SocketServer {
 
   io = new SocketServer(server, {
     cors: {
-      origin: (origin, callback) => {
-        if (
-          !origin || 
-          origin.startsWith("chrome-extension://") || 
-          origin === clientOrigin || 
-          origin.includes("localhost") || 
-          origin.includes("127.0.0.1")
-        ) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
-      },
+      origin: true,
       methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
       credentials: true,
     },
