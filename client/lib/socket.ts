@@ -28,7 +28,10 @@ export function getSocket(): Socket | null {
     const token = localStorage.getItem("home-token");
     if (!token) return null;
 
-    socket = io(getSocketUrl(), {
+    const socketUrl = getSocketUrl();
+    localStorage.setItem("home-socket-url", socketUrl);
+
+    socket = io(socketUrl, {
       auth: { token },
       transports: ["websocket"],
       reconnection: true,
