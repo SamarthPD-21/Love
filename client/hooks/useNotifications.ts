@@ -87,7 +87,8 @@ export function useMarkOneRead() {
       queryClient.setQueriesData({ queryKey: ["notifications"] }, (old: any, query: any) => {
         const key = query.queryKey;
         if (key.length === 2 && typeof key[1] === "number") {
-          return old?.map((n: any) => n._id === id ? { ...n, isRead: true } : n) || [];
+          const ids = id.split(",");
+          return old?.map((n: any) => ids.includes(n._id) ? { ...n, isRead: true } : n) || [];
         }
         return old;
       });

@@ -98,6 +98,16 @@ router.patch("/:id/read", async (req: any, res: Response) => {
       return;
     }
 
+    const ids = req.params.id.split(",");
+    if (ids.length > 1) {
+      await Notification.updateMany(
+        { _id: { $in: ids }, recipientUserId: user._id },
+        { $set: { isRead: true } }
+      );
+      res.json({ success: true, message: "Notifications marked as read" });
+      return;
+    }
+
     const notification = await Notification.findOneAndUpdate(
       { _id: req.params.id, recipientUserId: user._id },
       { $set: { isRead: true } },

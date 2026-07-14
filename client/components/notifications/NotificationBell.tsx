@@ -89,6 +89,77 @@ export function NotificationPanel({ open, onClose, variant = "mobile-header", tr
   const { data: notifications = [], refetch } = useNotifications(30);
   const markAllRead = useMarkAllRead();
 
+  // Filter: keep all unread, but only the top 10 read notifications for extreme performance
+  const unreadNotifs = notifications.filter((n) => !n.isRead);
+  const readNotifs = notifications.filter((n) => n.isRead);
+  const limitedReadNotifs = readNotifs.slice(0, 10);
+  const displayedRawNotifs = [...unreadNotifs, ...limitedReadNotifs];
+
+  // Group consecutive updates of the same type together (e.g. 5 hugs -> 1 item)
+  const clusterNotifications = (notifs: AppNotification[]) => {
+    if (!notifs.length) return [];
+    const result: AppNotification[] = [];
+
+    for (let i = 0; i < notifs.length; i++) {
+      const current = notifs[i];
+      const clusterableTypes = [
+        "hug_sent",
+        "gratitude_added",
+        "song_added",
+        "jar_note_created",
+        "memory_commented",
+      ];
+
+      if (clusterableTypes.includes(current.type)) {
+        const cluster = [current];
+        let j = i + 1;
+
+        while (j < notifs.length && notifs[j].type === current.type) {
+          cluster.push(notifs[j]);
+          j++;
+        }
+
+        if (cluster.length > 1) {
+          const count = cluster.length;
+          const allRead = cluster.every((n) => n.isRead);
+          const actorName =
+            typeof current.actorUserId === "object"
+              ? current.actorUserId.name
+              : "Partner";
+
+          let title = current.title;
+          if (current.type === "hug_sent") {
+            title = `${actorName} sent you ${count} hugs!`;
+          } else if (current.type === "gratitude_added") {
+            title = `${actorName} added ${count} gratitude notes!`;
+          } else if (current.type === "song_added") {
+            title = `${actorName} added ${count} songs to the playlist!`;
+          } else if (current.type === "jar_note_created") {
+            title = `${actorName} added ${count} notes to the jar!`;
+          } else if (current.type === "memory_commented") {
+            title = `${actorName} left ${count} comments on memories!`;
+          }
+
+          result.push({
+            ...current,
+            _id: cluster.map((n) => n._id).join(","), // Comma-separated IDs for bulk mark-read
+            title,
+            isRead: allRead,
+          });
+
+          i = j - 1;
+          continue;
+        }
+      }
+
+      result.push(current);
+    }
+
+    return result;
+  };
+
+  const displayedNotifications = clusterNotifications(displayedRawNotifs);
+
   // Refetch when opened
   useEffect(() => {
     if (open) refetch();
@@ -155,7 +226,7 @@ export function NotificationPanel({ open, onClose, variant = "mobile-header", tr
 
           {/* List */}
           <div className="flex-1 overflow-y-auto">
-            {notifications.length === 0 ? (
+            {displayedNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
                 <motion.span
                   className="text-4xl mb-3"
@@ -171,7 +242,7 @@ export function NotificationPanel({ open, onClose, variant = "mobile-header", tr
               </div>
             ) : (
               <AnimatePresence initial={false}>
-                {notifications.map((notif, i) => (
+                {displayedNotifications.map((notif, i) => (
                   <NotificationItem
                     key={notif._id}
                     notif={notif}
