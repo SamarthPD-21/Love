@@ -176,9 +176,42 @@ async function fetchWatchLinkFromVidSrc(
   if (!imdbId) return null;
 
   const mediaType = type === "movie" ? "movie" : "tv";
-  const url = `https://vidsrc.to/embed/${mediaType}/${imdbId}`;
-  console.log(`[MovieBot] VidSrc URL for "${title}": ${url}`);
-  return url;
+
+  // Try multiple embed sources in order of reliability/speed
+  const embedSources = [
+    { name: "VidSrc.to", url: `https://vidsrc.to/embed/${mediaType}/${imdbId}` },
+    { name: "VidSrcMe.ru", url: `https://vidsrcme.ru/embed/${mediaType}/${imdbId}` },
+    { name: "VidSrc.xyz", url: `https://vidsrc.xyz/embed/${mediaType}/${imdbId}` },
+    { name: "Embed.su", url: `https://embed.su/embed/${mediaType}/${imdbId}` },
+    { name: "AutoEmbed", url: `https://player.autoembed.cc/embed/${mediaType}/${imdbId}` },
+    { name: "2Embed", url: `https://2embed.cc/embed/${imdbId}` },
+    { name: "SmashyStream", url: `https://player.smashy.stream/${mediaType}/${imdbId}` },
+  ];
+
+  // Quick HEAD check to find first responding source
+  for (const source of embedSources) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(source.url, {
+        method: "HEAD",
+        signal: controller.signal,
+        redirect: "follow",
+      });
+      clearTimeout(timeout);
+      if (res.ok || res.status === 302 || res.status === 301) {
+        console.log(`[MovieBot] ${source.name} responded for "${title}": ${source.url}`);
+        return source.url;
+      }
+    } catch {
+      // Source timed out or errored, try next
+    }
+  }
+
+  // Fallback: return vidsrc.to anyway (may work client-side with extension headers)
+  const fallback = embedSources[0].url;
+  console.log(`[MovieBot] No embed source responded via HEAD, using fallback for "${title}": ${fallback}`);
+  return fallback;
 }
 
 // ---------------------------------------------------------------------------

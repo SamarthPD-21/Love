@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Users, Film, Heart, Smile, Sparkles, Flame, Check, Loader2, Search, RefreshCw, Star, ExternalLink } from "lucide-react";
 import api from "@/lib/api";
@@ -527,6 +528,25 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
 
   return (
     <div className="relative w-full max-w-6xl mx-auto min-h-[calc(100vh-12rem)]">
+      {/* Immersive Cinema Link Banner */}
+      <div className="mb-6 p-5 rounded-3xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-primary/15 flex items-center justify-center text-primary shrink-0 animate-pulse">
+            <Film className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-foreground">Want a real movie date experience?</h4>
+            <p className="text-xs text-muted-foreground">Try the new immersive full-screen cinema hall with integrated side chat.</p>
+          </div>
+        </div>
+        <Link
+          href="/cinema"
+          className="px-5 py-2.5 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-black transition-all cursor-pointer shadow-sm shadow-primary/15 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] shrink-0"
+        >
+          Launch Full-screen Theater 🍿
+        </Link>
+      </div>
+
       {/* Light dimming overlay */}
       <div
         className={cn(
@@ -582,16 +602,16 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
         {/* Left Column: Embed Player / Movie Selector */}
         <div className="lg:col-span-2 flex flex-col gap-6 z-40">
           {!session.movieId ? (
-            <div className="card-cozy p-6 flex flex-col gap-6 min-h-[450px]">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4">
+            <div className="card-cozy p-6 flex flex-col gap-6 min-h-[450px] border border-border/60">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-4">
                 <div>
-                  <h3 className="text-xl font-extrabold text-foreground">Cinema Lobby</h3>
+                  <h3 className="text-xl font-extrabold text-foreground font-serif">Cinema Lobby</h3>
                   <p className="text-xs text-muted-foreground">Select a movie from your list to watch together</p>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-background border border-border/80 shadow-sm text-foreground self-start">
-                  <Users className="w-4 h-4 text-primary" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-muted/40 border border-border/60 shadow-sm text-foreground self-start">
+                  <Users className="w-4 h-4 text-primary animate-pulse" />
                   <span>{isPartnerPresent ? "Partner in Lobby" : "Waiting for partner"}</span>
-                  <span className={cn("w-2 h-2 rounded-full ml-1", isPartnerPresent ? "bg-emerald-500 animate-pulse" : "bg-zinc-400")} />
+                  <span className={cn("w-2 h-2 rounded-full ml-1", isPartnerPresent ? "bg-emerald-500 animate-pulse shadow-[0_0_6px_#10b981]" : "bg-zinc-400")} />
                 </div>
               </div>
 
@@ -604,16 +624,16 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search movies & shows..."
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:shadow-[0_0_12px_rgba(232,88,122,0.06)] transition-all duration-200"
                   />
                 </div>
-                <div className="flex bg-background border border-border/80 rounded-xl p-1 self-start sm:self-auto">
+                <div className="flex bg-muted/40 border border-border/60 rounded-xl p-1 self-start sm:self-auto shadow-inner">
                   <button
                     onClick={() => setActiveFilter("watchlist")}
                     className={cn(
                       "px-4 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all",
                       activeFilter === "watchlist"
-                        ? "bg-primary text-white"
+                        ? "bg-primary text-white shadow"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -624,7 +644,7 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
                     className={cn(
                       "px-4 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all",
                       activeFilter === "watched"
-                        ? "bg-primary text-white"
+                        ? "bg-primary text-white shadow"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -637,7 +657,7 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
               {loadingMovies ? (
                 <div className="flex-1 flex flex-col items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
-                  <span className="text-xs text-muted-foreground">Loading movie selection...</span>
+                  <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Loading movie selection...</span>
                 </div>
               ) : (
                 (() => {
@@ -649,7 +669,7 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
 
                   if (filtered.length === 0) {
                     return (
-                      <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border border-dashed border-border/80 rounded-2xl">
+                      <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border border-dashed border-border/60 rounded-2xl bg-white/[0.005]">
                         <Film className="w-10 h-10 text-muted-foreground/30 mb-2" />
                         <p className="text-sm font-semibold text-foreground">No matches found</p>
                         <p className="text-xs text-muted-foreground max-w-xs mt-1">
@@ -666,37 +686,37 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
                       {filtered.map((movie) => (
                         <div
                           key={movie._id}
-                          className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-500/5 dark:bg-white/5 border border-border/40 hover:border-primary/30 transition-all duration-300 hover:shadow-md group relative overflow-hidden gap-4"
+                          className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-br from-card/80 to-card/40 border border-border/40 hover:border-primary/25 hover:from-card hover:to-primary/[0.01] transition-all duration-300 hover:shadow-md group relative overflow-hidden gap-4"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-500/20 flex items-center justify-center text-amber-500 shrink-0 group-hover:scale-110 transition-transform">
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary/10 to-accent/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:rotate-2 transition-all">
                               <Film className="w-5 h-5" />
                             </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[8px] font-extrabold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                            <div className="min-w-0 flex flex-col gap-1.5 justify-center">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[8px] font-black uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-md leading-none">
                                   {movie.type}
                                 </span>
                                 {movie.rating && (
-                                  <div className="flex items-center gap-0.5 text-amber-400">
-                                    <Star className="w-3 h-3 fill-amber-400" />
-                                    <span className="text-[10px] font-bold">{movie.rating}</span>
+                                  <div className="flex items-center gap-0.5 text-amber-500 leading-none">
+                                    <Star className="w-3 h-3 fill-amber-500 stroke-none" />
+                                    <span className="text-[10px] font-black">{movie.rating}</span>
                                   </div>
                                 )}
                               </div>
-                              <h4 className="text-sm font-bold text-foreground mt-0.5 group-hover:text-primary transition-colors truncate">
+                              <h4 className="text-sm font-extrabold text-foreground group-hover:text-primary transition-colors truncate leading-tight">
                                 {movie.title}
                               </h4>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-[10px] text-muted-foreground hidden sm:inline">
-                              {movie.watchLink ? "🔗 1hd" : "🔌 Search"}
+                            <span className="text-[10px] text-muted-foreground/60 hidden sm:inline font-bold">
+                              {movie.watchLink ? "🔗 Stream Ready" : "🔌 Search"}
                             </span>
                             <button
                               onClick={() => handleLoadMovie(movie)}
-                              className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm group-hover:shadow hover:shadow-primary/10"
+                              className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm hover:shadow-md shadow-primary/10"
                             >
                               Load 🎬
                             </button>
@@ -885,31 +905,33 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
           )}
 
           {/* Cozy Interaction Zone Card */}
-          <div className="card-cozy p-6 flex flex-col gap-4">
-            <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">
+          <div className="card-cozy p-6 flex flex-col gap-4 border border-border/60">
+            <h3 className="font-bold text-foreground text-sm uppercase tracking-wider font-serif">
               Cozy Interaction Zone
             </h3>
-            <div className="flex flex-wrap gap-4">
-              <button
-                onClick={handleThrowPopcorn}
-                className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm transition-all cursor-pointer active:scale-95 shadow"
-              >
-                🍿 Popcorn Fight!
-              </button>
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleThrowPopcorn}
+                  className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-xs transition-all cursor-pointer active:scale-95 shadow-md shadow-amber-500/10 hover:shadow-lg"
+                >
+                  <span>🍿 Popcorn Fight!</span>
+                </button>
 
-              <button
-                onClick={handleSendCuddle}
-                className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm transition-all cursor-pointer active:scale-95 shadow"
-              >
-                🤗 Send Cuddle
-              </button>
+                <button
+                  onClick={handleSendCuddle}
+                  className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-extrabold text-xs transition-all cursor-pointer active:scale-95 shadow-md shadow-rose-500/10 hover:shadow-lg"
+                >
+                  <span>🤗 Send Cuddle</span>
+                </button>
+              </div>
 
-              <div className="flex items-center gap-2 ml-auto border-l border-border/60 pl-4">
+              <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-border/60 pt-3 sm:pt-0 sm:pl-4 w-full sm:w-auto justify-center sm:justify-start">
                 {reactions.map((emoji) => (
                   <button
                     key={emoji}
                     onClick={() => handleSendReaction(emoji)}
-                    className="p-2.5 rounded-xl bg-background border border-border/60 hover:bg-muted text-xl transition-all cursor-pointer active:scale-125"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-background border border-border/60 hover:bg-primary/5 hover:border-primary/30 text-lg transition-all cursor-pointer active:scale-90"
                   >
                     {emoji}
                   </button>
@@ -922,8 +944,8 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
         {/* Right Column: Snack checklist & Ephemeral Chat */}
         <div className="flex flex-col gap-6 z-40">
           {/* Snack checklist */}
-          <div className="card-cozy p-6 flex flex-col gap-4">
-            <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">
+          <div className="card-cozy p-6 flex flex-col gap-4 border border-border/60">
+            <h3 className="font-bold text-foreground text-sm uppercase tracking-wider font-serif">
               Snack Bar Prep
             </h3>
             
@@ -938,16 +960,16 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
                   key={snack.key}
                   onClick={() => handleToggleSnack(snack.key)}
                   className={cn(
-                    "flex items-center justify-between p-3.5 rounded-2xl border text-sm font-bold transition-all cursor-pointer active:scale-98",
+                    "flex items-center justify-between p-3.5 rounded-2xl border text-xs font-bold transition-all cubic-bezier(0.4, 0, 0.2, 1) cursor-pointer active:scale-[0.97]",
                     snacks[snack.key]
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                      : "bg-background border-border/60 text-muted-foreground hover:text-foreground"
+                      ? "bg-emerald-550/10 border-emerald-550/35 text-emerald-600 dark:text-emerald-400 shadow-sm shadow-emerald-500/5"
+                      : "bg-background border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/10"
                   )}
                 >
                   <span>{snack.label}</span>
                   {snacks[snack.key] && (
                     <motion.span initial={{ scale: 0.5 }} animate={{ scale: 1 }}>
-                      <Check className="w-4 h-4 text-emerald-500 stroke-[3px]" />
+                      <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3px]" />
                     </motion.span>
                   )}
                 </button>
@@ -956,21 +978,22 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
           </div>
 
           {/* Chatbox */}
-          <div className="card-cozy p-6 flex flex-col h-[400px]">
-            <div className="flex items-center gap-2 border-b border-border/80 pb-4 mb-4">
+          <div className="card-cozy p-6 flex flex-col h-[400px] border border-border/60">
+            <div className="flex items-center gap-2 border-b border-border/60 pb-4 mb-4">
               <Users className="w-4 h-4 text-primary" />
-              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider font-serif">
                 Cinema Date Chat
               </h3>
             </div>
 
             {/* Message history */}
-            <div className="flex-1 overflow-y-auto pr-1 space-y-3 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto pr-1 space-y-3.5 cinema-scrollbar">
               {chatMessages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center text-zinc-500/80 p-4">
-                  <Flame className="w-8 h-8 mb-2 opacity-30 animate-pulse text-rose-400" />
-                  <p className="text-xs max-w-[180px] leading-relaxed">
-                    Grab your snacks, dim the lights, and start chatting!
+                <div className="h-full flex flex-col items-center justify-center text-center p-4">
+                  <Smile className="w-8 h-8 mb-2 opacity-35 animate-bounce text-primary" />
+                  <p className="text-xs font-bold text-muted-foreground">No messages yet</p>
+                  <p className="text-[10px] text-zinc-400 mt-1 max-w-[180px] leading-relaxed">
+                    Grab your snacks, dim the lights, and start chatting during your movie date!
                   </p>
                 </div>
               ) : (
@@ -978,19 +1001,19 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
                   <div
                     key={msg.id}
                     className={cn(
-                      "flex flex-col max-w-[80%]",
+                      "flex flex-col max-w-[85%] gap-0.5",
                       msg.isSelf ? "ml-auto items-end" : "mr-auto items-start"
                     )}
                   >
-                    <span className="text-[10px] text-muted-foreground font-semibold px-1 mb-0.5">
+                    <span className="text-[9px] text-muted-foreground font-semibold px-1">
                       {msg.senderName}
                     </span>
                     <div
                       className={cn(
-                        "px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm break-words",
+                        "px-3.5 py-2 rounded-2xl text-xs leading-relaxed break-words",
                         msg.isSelf
-                          ? "bg-primary text-white rounded-tr-none"
-                          : "bg-background border border-border text-foreground rounded-tl-none"
+                          ? "bg-gradient-to-br from-primary to-primary-hover text-white rounded-tr-none shadow-sm shadow-primary/5"
+                          : "bg-background border border-border/80 text-foreground rounded-tl-none"
                       )}
                     >
                       {msg.text}
@@ -1002,18 +1025,18 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
             </div>
 
             {/* Text Input area */}
-            <form onSubmit={handleSendChat} className="flex gap-2 mt-4 pt-4 border-t border-border/80">
+            <form onSubmit={handleSendChat} className="flex gap-2 mt-4 pt-4 border-t border-border/60 bg-transparent">
               <input
                 type="text"
                 required
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Type a message..."
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                className="flex-1 px-4 py-2.5 rounded-xl text-xs bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:shadow-[0_0_12px_rgba(232,88,122,0.06)] transition-all duration-200"
               />
               <button
                 type="submit"
-                className="p-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white transition-all duration-200 cursor-pointer active:scale-95"
+                className="w-9 h-9 rounded-xl bg-primary hover:bg-primary-hover text-white flex items-center justify-center cursor-pointer transition-colors active:scale-95 shadow shadow-primary/10"
               >
                 <Send className="w-4 h-4 fill-white" />
               </button>
