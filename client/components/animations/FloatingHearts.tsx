@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface Heart {
   id: number;
@@ -10,6 +9,8 @@ interface Heart {
   duration: number;
   delay: number;
   opacity: number;
+  drift: number;
+  color: string;
 }
 
 interface FloatingHeartsProps {
@@ -20,7 +21,7 @@ interface FloatingHeartsProps {
 const colors = ["#BE3A6E", "#B8A9C9", "#D4A574", "#E8587A"]; // Rose, Mauve, Gold, Light Rose
 
 export function FloatingHearts({ count = 24, className = "" }: FloatingHeartsProps) {
-  const [hearts, setHearts] = useState<(Heart & { color: string })[]>([]);
+  const [hearts, setHearts] = useState<Heart[]>([]);
 
   useEffect(() => {
     const generated = Array.from({ length: count }, (_, i) => ({
@@ -30,44 +31,36 @@ export function FloatingHearts({ count = 24, className = "" }: FloatingHeartsPro
       duration: 10 + Math.random() * 15,
       delay: Math.random() * 12,
       opacity: 0.12 + Math.random() * 0.18,
+      drift: -60 + Math.random() * 120, // drift in pixels
       color: colors[i % colors.length],
     }));
-    Promise.resolve().then(() => setHearts(generated));
+    setHearts(generated);
   }, [count]);
 
   return (
     <div
-      className={`pointer-events-none fixed inset-0 overflow-hidden z-0 ${className}`}
+      className={`pointer-events-none fixed inset-0 overflow-hidden z-0 heart-field ${className}`}
       aria-hidden="true"
     >
-      <AnimatePresence>
-        {hearts.map((heart) => (
-          <motion.div
-            key={heart.id}
-            className="absolute"
-            style={{
+      {hearts.map((heart) => (
+        <span
+          key={heart.id}
+          className="heart-particle"
+          style={
+            {
               left: `${heart.x}%`,
               fontSize: `${heart.size}px`,
-              opacity: heart.opacity,
               color: heart.color,
-            }}
-            initial={{ y: "110vh", rotate: 0 }}
-            animate={{
-              y: "-10vh",
-              rotate: [0, 20, -20, 15, -15, 0],
-              x: [0, 30, -30, 20, -20, 0],
-            }}
-            transition={{
-              duration: heart.duration,
-              delay: heart.delay,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          >
-            ♥
-          </motion.div>
-        ))}
-      </AnimatePresence>
+              animationDuration: `${heart.duration}s`,
+              animationDelay: `${heart.delay}s`,
+              "--heart-max-opacity": heart.opacity,
+              "--heart-drift": `${heart.drift}px`,
+            } as React.CSSProperties
+          }
+        >
+          ♥
+        </span>
+      ))}
     </div>
   );
 }

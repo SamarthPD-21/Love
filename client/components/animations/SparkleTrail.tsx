@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 
 interface Sparkle {
   id: number;
@@ -10,7 +9,9 @@ interface Sparkle {
   size: number;
   duration: number;
   delay: number;
-  opacity: number;
+  maxOpacity: number;
+  drift: number; // horizontal drift in px
+  lift: number;  // vertical lift in px
 }
 
 interface SparkleTrailProps {
@@ -20,10 +21,13 @@ interface SparkleTrailProps {
 
 /**
  * Ambient drifting sparkles — soft golden dots that float upward.
- * Used alongside FloatingHearts (daytime) and Fireflies (nighttime)
- * for an extra layer of warmth.
+ *
+ * Performance: rendered with pure CSS @keyframes (compositor/GPU thread),
+ * NOT Framer Motion JS loops. Each sparkle sets its own timing via inline
+ * CSS custom properties so the browser animates them off the main thread.
+ * Respects `prefers-reduced-motion`.
  */
-export function SparkleTrail({ count = 18, className = "" }: SparkleTrailProps) {
+export function SparkleTrail({ count = 12, className = "" }: SparkleTrailProps) {
   const [sparkles, setSparkles] = useState<Sparkle[]>([]);
 
   useEffect(() => {
@@ -34,40 +38,35 @@ export function SparkleTrail({ count = 18, className = "" }: SparkleTrailProps) 
       size: 3 + Math.random() * 5,
       duration: 8 + Math.random() * 12,
       delay: Math.random() * 10,
-      opacity: 0.15 + Math.random() * 0.25,
+      maxOpacity: 0.15 + Math.random() * 0.25,
+      drift: -40 + Math.random() * 60,
+      lift: 60 + Math.random() * 60,
     }));
-    Promise.resolve().then(() => setSparkles(generated));
+    setSparkles(generated);
   }, [count]);
 
   return (
     <div
-      className={`pointer-events-none fixed inset-0 overflow-hidden z-0 ${className}`}
+      className={`pointer-events-none fixed inset-0 overflow-hidden z-0 sparkle-field ${className}`}
       aria-hidden="true"
     >
       {sparkles.map((sp) => (
-        <motion.div
+        <span
           key={sp.id}
-          className="absolute rounded-full"
-          style={{
-            left: `${sp.x}%`,
-            top: `${sp.y}%`,
-            width: `${sp.size}px`,
-            height: `${sp.size}px`,
-            background: "radial-gradient(circle, rgba(255,215,0,0.9) 0%, rgba(255,215,0,0) 70%)",
-            boxShadow: `0 0 ${sp.size * 3}px rgba(255,215,0,0.3)`,
-          }}
-          animate={{
-            opacity: [0, sp.opacity, 0.1, sp.opacity, 0],
-            y: [0, -40, -80, -50, -100],
-            x: [0, 15, -20, 10, -10],
-            scale: [0.5, 1.2, 0.8, 1.1, 0.5],
-          }}
-          transition={{
-            duration: sp.duration,
-            delay: sp.delay,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          className="sparkle"
+          style={
+            {
+              left: `${sp.x}%`,
+              top: `${sp.y}%`,
+              width: `${sp.size}px`,
+              height: `${sp.size}px`,
+              animationDuration: `${sp.duration}s`,
+              animationDelay: `${sp.delay}s`,
+              "--sp-max-opacity": sp.maxOpacity,
+              "--sp-drift": `${sp.drift}px`,
+              "--sp-lift": `${sp.lift}px`,
+            } as React.CSSProperties
+          }
         />
       ))}
     </div>

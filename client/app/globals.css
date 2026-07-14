@@ -521,6 +521,27 @@ button:active, a:active {
 .stagger-children > *:nth-child(7) { animation-delay: 480ms; }
 .stagger-children > *:nth-child(8) { animation-delay: 560ms; }
 
+/* ── Ambient Sparkles (compositor-only, no JS main-thread cost) ── */
+.sparkle-field .sparkle {
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.9) 0%, rgba(255, 215, 0, 0) 70%);
+  box-shadow: 0 0 9px rgba(255, 215, 0, 0.3);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: sparkle-rise;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes sparkle-rise {
+  0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
+  25%  { opacity: var(--sp-max-opacity); }
+  50%  { transform: translate(calc(var(--sp-drift) * 0.6), calc(var(--sp-lift) * -0.5)) scale(1.1); }
+  75%  { opacity: var(--sp-max-opacity); }
+  100% { transform: translate(var(--sp-drift), calc(var(--sp-lift) * -1)) scale(0.5); opacity: 0; }
+}
+
 /* ── Selection Color ── */
 ::selection {
   background: var(--primary);
@@ -561,4 +582,65 @@ button:active, a:active {
 
 .btn-primary:active {
   transform: translateY(0) scale(0.98);
+}
+
+/* ── Floating Hearts Animation ── */
+.heart-field .heart-particle {
+  position: absolute;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: heart-float;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes heart-float {
+  0% {
+    transform: translateY(110vh) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--heart-max-opacity);
+  }
+  50% {
+    transform: translateY(50vh) translateX(var(--heart-drift)) rotate(180deg);
+  }
+  90% {
+    opacity: var(--heart-max-opacity);
+  }
+  100% {
+    transform: translateY(-10vh) translateX(calc(var(--heart-drift) * 1.5)) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* ── Fireflies Animation ── */
+.firefly-field .firefly-particle {
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255,223,140,0.95) 0%, rgba(255,223,140,0) 70%);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: firefly-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes firefly-drift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  25% {
+    transform: translate(var(--ff-drift-x), var(--ff-drift-y)) scale(1.4);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate(calc(var(--ff-drift-x) * -0.6), calc(var(--ff-drift-y) * 0.5)) scale(0.7);
+    opacity: 0.2;
+  }
+  75% {
+    transform: translate(calc(var(--ff-drift-x) * 0.5), calc(var(--ff-drift-y) * -0.8)) scale(1.3);
+    opacity: 0.9;
+  }
 }

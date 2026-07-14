@@ -38,8 +38,74 @@ export function Confetti() {
   const animRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
   const burstsRef = useRef<number[]>([]);
+  const isAnimatingRef = useRef(false);
 
   const bursts = useCelebrationStore((s) => s.bursts);
+
+  // Setup canvas size listener
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const draw = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      isAnimatingRef.current = false;
+      return;
+    }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      isAnimatingRef.current = false;
+      return;
+    }
+
+    if (particlesRef.current.length === 0) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      isAnimatingRef.current = false;
+      return;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particlesRef.current = particlesRef.current.filter((p) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.12; // gravity
+      p.vx *= 0.99;
+      p.rot += p.rotV;
+      p.life -= 1 / p.maxLife;
+
+      if (p.life <= 0) return false;
+
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, p.life * 2);
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rot * Math.PI) / 180);
+
+      if (p.emoji) {
+        ctx.font = `${p.w}px serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(p.emoji, 0, 0);
+      } else {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+
+      ctx.restore();
+      return true;
+    });
+
+    animRef.current = requestAnimationFrame(draw);
+  };
 
   // Track new burst IDs so we can spawn particles.
   useEffect(() => {
@@ -50,12 +116,14 @@ export function Confetti() {
     if (newIds.length === 0) return;
     burstsRef.current = bursts.map((b) => b.id);
 
+    const canvas = canvasRef.current;
+    const originX = (canvas?.width ?? window.innerWidth) / 2;
+    const originY = (canvas?.height ?? window.innerHeight) / 2;
+
     for (const id of newIds) {
       const burst = bursts.find((b) => b.id === id);
       const count = burst?.intensity === "big" ? 80 : 35;
       const useEmoji = burst?.emoji;
-      const originX = (canvasRef.current?.width ?? 400) / 2;
-      const originY = (canvasRef.current?.height ?? 300) / 2;
 
       for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
@@ -83,74 +151,20 @@ export function Confetti() {
     if (particlesRef.current.length > 250) {
       particlesRef.current = particlesRef.current.slice(-250);
     }
+
+    // Start animation loop if not already running
+    if (particlesRef.current.length > 0 && !isAnimatingRef.current) {
+      isAnimatingRef.current = true;
+      animRef.current = requestAnimationFrame(draw);
+    }
   }, [bursts]);
 
+  // Clean up loop on unmount
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    let wasEmpty = true;
-
-    const draw = () => {
-      if (particlesRef.current.length === 0) {
-        if (!wasEmpty) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          wasEmpty = true;
-        }
-        animRef.current = requestAnimationFrame(draw);
-        return;
-      }
-
-      wasEmpty = false;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particlesRef.current = particlesRef.current.filter((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.12; // gravity
-        p.vx *= 0.99;
-        p.rot += p.rotV;
-        p.life -= 1 / p.maxLife;
-
-        if (p.life <= 0) return false;
-
-        ctx.save();
-        ctx.globalAlpha = Math.min(1, p.life * 2);
-        ctx.translate(p.x, p.y);
-        ctx.rotate((p.rot * Math.PI) / 180);
-
-        if (p.emoji) {
-          ctx.font = `${p.w}px serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(p.emoji, 0, 0);
-        } else {
-          ctx.fillStyle = p.color;
-          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        }
-
-        ctx.restore();
-        return true;
-      });
-
-      animRef.current = requestAnimationFrame(draw);
-    };
-
-    animRef.current = requestAnimationFrame(draw);
-
     return () => {
-      cancelAnimationFrame(animRef.current);
-      window.removeEventListener("resize", resize);
+      if (animRef.current) {
+        cancelAnimationFrame(animRef.current);
+      }
     };
   }, []);
 

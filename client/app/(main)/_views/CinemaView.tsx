@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Users, Film, Heart, Smile, Sparkles, Flame, Check, Loader2, Search, RefreshCw, Star, ExternalLink } from "lucide-react";
 import api from "@/lib/api";
@@ -57,16 +57,20 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
     candy: false,
   });
 
-  const [isExtensionActive, setIsExtensionActive] = useState(false);
+   const [isExtensionActive, setIsExtensionActive] = useState(false);
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   useEffect(() => {
     const checkExtension = () => {
       const active = document.body.hasAttribute("data-love-sync-extension-active");
-      setIsExtensionActive(active);
+      setIsExtensionActive((prev) => (prev !== active ? active : prev));
     };
     checkExtension();
     const interval = setInterval(checkExtension, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      timeoutsRef.current.forEach(clearTimeout);
+    };
   }, []);
 
   // Player Source switching states
@@ -330,9 +334,10 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
       delay: Math.random() * 0.4,
     }));
     setFloatingParticles((prev) => [...prev, ...batch]);
-    setTimeout(() => {
+    const t = setTimeout(() => {
       setFloatingParticles((prev) => prev.filter((r) => !batch.some((b) => b.id === r.id)));
     }, 3000);
+    timeoutsRef.current.push(t);
   };
 
   const triggerPopcornFight = () => {
@@ -343,9 +348,10 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
       delay: Math.random() * 0.5,
     }));
     setFloatingParticles((prev) => [...prev, ...batch]);
-    setTimeout(() => {
+    const t = setTimeout(() => {
       setFloatingParticles((prev) => prev.filter((r) => !batch.some((b) => b.id === r.id)));
     }, 3000);
+    timeoutsRef.current.push(t);
   };
 
   const handleSendReaction = (emoji: string) => {
@@ -474,6 +480,27 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
 
   const isSelfReady = session.readyUsers?.includes(user?._id || "") || false;
   const readyCount = session.readyUsers?.length || 0;
+
+  const playerIframe = useMemo(() => {
+    if (!session.watchLink) {
+      return (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-muted-foreground p-8 bg-zinc-950 animate-fade-in">
+          <Film className="w-12 h-12 mb-3 text-zinc-700 animate-pulse" />
+          <p className="text-sm font-semibold">No Watch Link found for this Movie.</p>
+          <p className="text-xs text-zinc-500 mt-1">Please configure a link or start a second-screen session.</p>
+        </div>
+      );
+    }
+    return (
+      <iframe
+        src={session.watchLink}
+        className="w-full h-full border-0"
+        allow="autoplay; encrypted-media; fullscreen"
+        allowFullScreen
+        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
+      />
+    );
+  }, [session.watchLink]);
 
   return (
     <div className="relative w-full max-w-6xl mx-auto min-h-[calc(100vh-12rem)]">
@@ -764,20 +791,7 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
 
               {/* Embedded Iframe Player */}
               <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-border/80 shadow-2xl">
-                {session.watchLink ? (
-                  <iframe
-                    src={session.watchLink}
-                    className="w-full h-full border-0"
-                    allow="autoplay; encrypted-media; fullscreen"
-                    allowFullScreen
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-muted-foreground p-8 bg-zinc-950">
-                    <Film className="w-12 h-12 mb-3 text-zinc-700 animate-pulse" />
-                    <p className="text-sm font-semibold">No Watch Link found for this Movie.</p>
-                    <p className="text-xs text-zinc-500 mt-1">Please configure a link or start a second-screen session.</p>
-                  </div>
-                )}
+                {playerIframe}
               </div>
 
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-background/50 p-4 rounded-xl border border-border/40 mt-1">
