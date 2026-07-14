@@ -21,6 +21,11 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     initialize();
+    
+    // Inject the correct socket/server URL so the Chrome extension reads it instantly
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+    const socketUrl = apiBase.replace(/\/api\/?$/, "");
+    document.body.setAttribute("data-socket-url", socketUrl);
   }, [initialize]);
 
   return <>{children}</>;

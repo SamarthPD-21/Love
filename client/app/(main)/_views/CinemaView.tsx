@@ -69,6 +69,115 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
     return () => clearInterval(interval);
   }, []);
 
+  // Player Source switching states
+  const [activeSource, setActiveSource] = useState<string>("default");
+  const [resolvingSource, setResolvingSource] = useState(false);
+  const [cachedAlternativeLinks, setCachedAlternativeLinks] = useState<Record<string, { vidsrc_to: string; vidsrc_me: string }>>({});
+
+  useEffect(() => {
+    if (session?.watchLink) {
+      if (session.watchLink.includes("vidsrc.to")) {
+        setActiveSource("vidsrc_to");
+      } else if (session.watchLink.includes("vidsrc.me")) {
+        setActiveSource("vidsrc_me");
+      } else {
+        setActiveSource("default");
+      }
+    }
+  }, [session?.watchLink]);
+
+  const handleSourceChange = async (sourceKey: string) => {
+    if (!session || !socket || !user) return;
+    setActiveSource(sourceKey);
+
+    if (sourceKey === "default") {
+      try {
+        setResolvingSource(true);
+        const res = await api.get(`/movies/${session.movieId}`);
+        if (res.data.success && res.data.data.watchLink) {
+          socket.emit("cinema_select_movie", {
+            relationshipId: getRelationshipId(user.relationshipId),
+            movieId: session.movieId,
+            movieTitle: session.movieTitle,
+            movieType: session.movieType,
+            watchLink: res.data.data.watchLink,
+          });
+        }
+      } catch (e) {
+        console.error("Failed to restore default source link:", e);
+      } finally {
+        setResolvingSource(false);
+      }
+      return;
+    }
+
+    let links = cachedAlternativeLinks[session.movieId];
+    if (!links) {
+      try {
+        setResolvingSource(true);
+        const typeFilter =
+          session.movieType === "movie"
+            ? `VALUES ?class { wd:Q11424 wd:Q29168811 wd:Q24869 }`
+            : `VALUES ?class { wd:Q5398426 wd:Q21191270 wd:Q63952888 }`;
+
+        const escapedTitle = session.movieTitle.replace(/"/g, '\\"');
+        const query = `
+          SELECT ?imdbID WHERE {
+            ${typeFilter}
+            ?item wdt:P31 ?class .
+            ?item wdt:P345 ?imdbID .
+            ?item rdfs:label ?label .
+            FILTER(LCASE(STR(?label)) = LCASE("${escapedTitle}"))
+          }
+          LIMIT 3
+        `;
+
+        const endpoint = "https://query.wikidata.org/sparql";
+        const url = `${endpoint}?query=${encodeURIComponent(query)}`;
+        const response = await fetch(url, {
+          headers: {
+            Accept: "application/sparql-results+json",
+          },
+        });
+
+        if (response.ok) {
+          const json = await response.json();
+          const bindings = json.results?.bindings ?? [];
+          if (bindings.length > 0 && bindings[0].imdbID) {
+            const imdbId = bindings[0].imdbID.value;
+            const mediaType = session.movieType === "movie" ? "movie" : "tv";
+            links = {
+              vidsrc_to: `https://vidsrc.to/embed/${mediaType}/${imdbId}`,
+              vidsrc_me: `https://vidsrc.me/embed/${mediaType}/${imdbId}`,
+            };
+            setCachedAlternativeLinks((prev) => ({
+              ...prev,
+              [session.movieId]: links!,
+            }));
+          }
+        }
+      } catch (e) {
+        console.error("Failed to query Wikidata alternative links:", e);
+      } finally {
+        setResolvingSource(false);
+      }
+    }
+
+    if (links) {
+      const targetUrl = sourceKey === "vidsrc_to" ? links.vidsrc_to : links.vidsrc_me;
+      socket.emit("cinema_select_movie", {
+        relationshipId: getRelationshipId(user.relationshipId),
+        movieId: session.movieId,
+        movieTitle: session.movieTitle,
+        movieType: session.movieType,
+        watchLink: targetUrl,
+      });
+    } else {
+      alert("Unable to automatically resolve an alternative IMDB link for this title.");
+      setActiveSource("default");
+    }
+  };
+
   // Lobby states
   const [movies, setMovies] = useState<any[]>([]);
   const [loadingMovies, setLoadingMovies] = useState(false);
@@ -671,10 +780,28 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
                 )}
               </div>
 
-              <div className="flex justify-between items-center bg-background/50 p-4 rounded-xl border border-border/40 mt-1">
-                <span className="text-xs font-semibold text-muted-foreground">
-                  🍿 Streamed via 1hd.art inside app
-                </span>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-background/50 p-4 rounded-xl border border-border/40 mt-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-muted-foreground">
+                    Player Source:
+                  </span>
+                  {resolvingSource ? (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold px-2 py-1">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                      <span>Searching...</span>
+                    </div>
+                  ) : (
+                    <select
+                      value={activeSource}
+                      onChange={(e) => handleSourceChange(e.target.value)}
+                      className="bg-background border border-border/80 text-xs font-semibold rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                    >
+                      <option value="default">Source 1 (1HD)</option>
+                      <option value="vidsrc_to">Source 2 (VidSrc.to)</option>
+                      <option value="vidsrc_me">Source 3 (vidsrc.me)</option>
+                    </select>
+                  )}
+                </div>
                 
                 <div className="flex gap-2">
                   <button

@@ -37,6 +37,31 @@ router.get("/", async (req: any, res: Response) => {
   }
 });
 
+// GET /api/movies/:id
+router.get("/:id", async (req: any, res: Response) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || !user.relationshipId) {
+      res.status(404).json({ error: "Relationship not found" });
+      return;
+    }
+
+    const movie = await Movie.findOne({
+      _id: req.params.id,
+      relationshipId: user.relationshipId,
+    }).populate("userId", "name avatar");
+
+    if (!movie) {
+      res.status(404).json({ error: "Movie not found" });
+      return;
+    }
+
+    res.json({ success: true, data: movie });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/movies
 router.post("/", async (req: any, res: Response) => {
   try {
