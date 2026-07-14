@@ -80,6 +80,34 @@ interface CinemaSession {
 
 const activeCinemaSessions = new Map<string, CinemaSession>(); // key: relationshipId
 
+const updateCinemaRoomParticipants = (relationshipId: string) => {
+  if (!io) return;
+  const session = activeCinemaSessions.get(relationshipId);
+  if (!session) return;
+
+  const roomName = `cinema:${relationshipId}`;
+  const clients = io.sockets.adapter.rooms.get(roomName);
+  const activeUserIds = new Set<string>();
+
+  if (clients) {
+    for (const clientId of clients) {
+      const clientSocket = io.sockets.sockets.get(clientId);
+      if (clientSocket && (clientSocket as any).userId) {
+        activeUserIds.add((clientSocket as any).userId.toString());
+      }
+    }
+  }
+
+  session.participants = Array.from(activeUserIds);
+  session.readyUsers = (session.readyUsers || []).filter((uid) => activeUserIds.has(uid.toString()));
+
+  if (session.participants.length === 0) {
+    activeCinemaSessions.delete(relationshipId);
+  } else {
+    io.to(roomName).emit("cinema_session_state", session);
+  }
+};
+
 const getRelId = (rel: any): string => {
   if (!rel) return "";
   return typeof rel === "object"
@@ -113,22 +141,15 @@ const getRelId = (rel: any): string => {
             watchLink: "",
             status: "paused",
             currentTime: 0,
-            participants: [userId],
+            participants: [],
             showStarted: false,
             readyUsers: [],
             updatedAt: Date.now(),
           };
           activeCinemaSessions.set(relationshipId, session);
-        } else {
-          if (!session.participants.includes(userId)) {
-            session.participants.push(userId);
-          }
         }
-        
-        // Emit directly to the connecting socket
-        socket.emit("cinema_session_state", session);
-        // Broadcast to partner in the room
-        socket.to(`cinema:${relationshipId}`).emit("cinema_session_state", session);
+
+        updateCinemaRoomParticipants(relationshipId);
 
         const user = await User.findById(userId);
         if (user && user.partnerId) {
@@ -364,38 +385,20 @@ const getRelId = (rel: any): string => {
       }
     });
 
-    socket.on("leave_cinema", (payload: { relationshipId: any }) => {
+    socket.on("leave_cinema", async (payload: { relationshipId: any }) => {
       const relationshipId = getRelId(payload.relationshipId);
       if (!relationshipId) return;
 
-      socket.leave(`cinema:${relationshipId}`);
-      const session = activeCinemaSessions.get(relationshipId);
-      if (session) {
-        session.participants = session.participants.filter((p) => p !== userId);
-        session.readyUsers = (session.readyUsers || []).filter((id) => id !== userId);
-        if (session.participants.length === 0) {
-          activeCinemaSessions.delete(relationshipId);
-        } else {
-          socket.to(`cinema:${relationshipId}`).emit("partner_left_cinema", { userId });
-          io?.to(`cinema:${relationshipId}`).emit("cinema_session_state", session);
-        }
-      }
+      await socket.leave(`cinema:${relationshipId}`);
+      updateCinemaRoomParticipants(relationshipId);
+      socket.to(`cinema:${relationshipId}`).emit("partner_left_cinema", { userId });
     });
 
     socket.on("disconnect", () => {
       const relId = (socket as any).relationshipId as string;
       if (relId) {
-        const session = activeCinemaSessions.get(relId);
-        if (session) {
-          session.participants = session.participants.filter(p => p !== userId);
-          session.readyUsers = (session.readyUsers || []).filter((id) => id !== userId);
-          if (session.participants.length === 0) {
-            activeCinemaSessions.delete(relId);
-          } else {
-            socket.to(`cinema:${relId}`).emit("partner_left_cinema", { userId });
-            io?.to(`cinema:${relId}`).emit("cinema_session_state", session);
-          }
-        }
+        updateCinemaRoomParticipants(relId);
+        socket.to(`cinema:${relId}`).emit("partner_left_cinema", { userId });
       }
     });
   });
