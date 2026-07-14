@@ -252,20 +252,44 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                 whileHover={{ y: -4 }}
               >
                 <div>
-                  <div className="flex items-start justify-between gap-4 mb-2">
-                    <span className="text-[9px] font-bold text-primary uppercase tracking-wider bg-primary/10 py-1 px-2.5 rounded-full">
-                      {movie.type}
-                    </span>
+                  {/* Card Header: Metadata on left, Actions on right */}
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="flex flex-col gap-1">
+                      <span className="self-start text-[9px] font-bold text-primary uppercase tracking-wider bg-primary/10 py-0.5 px-2 rounded-full">
+                        {movie.type}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                        Added: {format(new Date(movie.createdAt), "MMM d, yyyy")}
+                      </span>
+                    </div>
 
-                    <button
-                      onClick={(e) => handleDelete(movie._id, e)}
-                      className="p-1 rounded-lg text-zinc-400 hover:text-rose-500 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      {/* Mark Watched Toggle Button */}
+                      <button
+                        onClick={() => handleToggleStatus(movie)}
+                        title={movie.status === "watched" ? "Mark as Unwatched" : "Mark as Watched"}
+                        className={cn(
+                          "p-1.5 rounded-lg border transition-all cursor-pointer",
+                          movie.status === "watched"
+                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20"
+                            : "bg-zinc-800/20 border-zinc-700/30 text-zinc-400 hover:text-emerald-500 hover:border-emerald-500/30 hover:bg-emerald-500/5"
+                        )}
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </button>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={(e) => handleDelete(movie._id, e)}
+                        title="Delete from Watchlist"
+                        className="p-1.5 rounded-lg bg-zinc-800/20 border border-zinc-700/30 text-zinc-400 hover:text-rose-500 hover:border-rose-500/30 hover:bg-rose-500/5 transition-all cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
-                  <h3 className="font-bold text-foreground text-base leading-tight">
+                  <h3 className="font-bold text-foreground text-base leading-tight mt-1">
                     {movie.title}
                   </h3>
 
@@ -292,55 +316,47 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                   )}
                 </div>
 
-                <div className="border-t border-border/60 pt-4 flex items-center justify-between mt-4">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                    Added: {format(new Date(movie.createdAt), "MMM d, yyyy")}
-                  </span>
+                {/* Bottom Section: Primary Streaming Actions */}
+                {movie.status === "watchlist" && (
+                  <div className="border-t border-border/40 pt-4 mt-4 flex gap-2">
+                    {movie.watchLink ? (
+                      <>
+                        <a
+                          href={movie.watchLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => {
+                            try {
+                              const audio = new Audio("/sounds/tap.mp3");
+                              audio.volume = 0.2;
+                              audio.play().catch(() => {});
+                            } catch (e) {}
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm hover:shadow active:scale-95"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-white" />
+                          <span>Watch Now</span>
+                        </a>
 
-                  <div className="flex items-center gap-2">
-                    {movie.status === "watchlist" && movie.watchLink && (
-                      <a
-                        href={movie.watchLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => {
-                          try {
-                            const audio = new Audio("/sounds/tap.mp3");
-                            audio.volume = 0.2;
-                            audio.play().catch(() => {});
-                          } catch (e) {}
-                        }}
-                        className="flex items-center gap-1 py-1.5 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm hover:shadow active:scale-95"
-                      >
-                        <Play className="w-3.5 h-3.5 fill-white" />
-                        <span>Watch Now</span>
-                      </a>
-                    )}
-
-                    {movie.status === "watchlist" && (
+                        <button
+                          onClick={() => handleStartWatchTogether(movie)}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer bg-amber-500/10 border border-amber-500/20 text-amber-500 hover:bg-amber-500/20 active:scale-95"
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                          <span>Together</span>
+                        </button>
+                      </>
+                    ) : (
                       <button
                         onClick={() => handleStartWatchTogether(movie)}
-                        className="flex items-center gap-1 py-1.5 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/40 active:scale-95"
+                        className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer bg-amber-500/10 border border-amber-500/20 text-amber-500 hover:bg-amber-500/20 active:scale-95"
                       >
                         <Users className="w-3.5 h-3.5" />
                         <span>Watch Together</span>
                       </button>
                     )}
-
-                    <button
-                      onClick={() => handleToggleStatus(movie)}
-                      className={cn(
-                        "flex items-center gap-1 py-1.5 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer border",
-                        movie.status === "watched"
-                          ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500 border-emerald-100 dark:border-emerald-900/30"
-                          : "bg-primary text-white border-primary hover:bg-primary-hover hover:border-primary-hover"
-                      )}
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>{movie.status === "watched" ? "Watched" : "Mark Watched"}</span>
-                    </button>
                   </div>
-                </div>
+                )}
               </motion.div>
             ))}
           </AnimatePresence>
