@@ -76,6 +76,7 @@ interface CinemaSession {
   showStarted: boolean;
   readyUsers: string[]; // array of userIds
   updatedAt: number;
+  activeServer?: string;
 }
 
 const activeCinemaSessions = new Map<string, CinemaSession>(); // key: relationshipId
