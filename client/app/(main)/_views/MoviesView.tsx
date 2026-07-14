@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Film, Plus, Trash2, CheckCircle2, Star, Loader2, X, AlertCircle, Play, Users } from "lucide-react";
+import { Film, Plus, Trash2, CheckCircle2, Star, Loader2, X, AlertCircle, Play, Users, Link as LinkIcon } from "lucide-react";
 import api from "@/lib/api";
 import { cn, getRelationshipId } from "@/lib/utils";
 import { format } from "date-fns";
@@ -48,7 +48,12 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
   // Form State
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"movie" | "show">("movie");
+  const [watchLink, setWatchLink] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Edit Link State
+  const [editingLinkMovieId, setEditingLinkMovieId] = useState<string | null>(null);
+  const [editLinkValue, setEditLinkValue] = useState("");
 
   // Review Edit State
   const [editingMovieId, setEditingMovieId] = useState<string | null>(null);
@@ -99,6 +104,7 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
       const response = await api.post("/movies", {
         title,
         type,
+        watchLink: watchLink.trim() || undefined,
         status: "watchlist",
       });
 
@@ -107,11 +113,31 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
         setIsModalOpen(false);
         setTitle("");
         setType("movie");
+        setWatchLink("");
       }
     } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.response?.data?.error || "Failed to add movie");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSaveWatchLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLinkMovieId) return;
+    try {
+      const response = await api.put(`/movies/${editingLinkMovieId}`, {
+        watchLink: editLinkValue.trim() || null,
+      });
+      if (response.data.success) {
+        setMovies((prev) =>
+          prev.map((m) => (m._id === editingLinkMovieId ? response.data.data : m))
+        );
+        setEditingLinkMovieId(null);
+        setEditLinkValue("");
+      }
+    } catch (err) {
+      console.error("Failed to update watch link:", err);
     }
   };
 
@@ -278,6 +304,18 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                         <CheckCircle2 className="w-4 h-4" />
                       </button>
 
+                      {/* Edit Link Button */}
+                      <button
+                        onClick={() => {
+                          setEditingLinkMovieId(movie._id);
+                          setEditLinkValue(movie.watchLink || "");
+                        }}
+                        title="Edit Watch Link"
+                        className="p-1.5 rounded-lg bg-zinc-800/20 border border-zinc-700/30 text-zinc-400 hover:text-amber-500 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all cursor-pointer"
+                      >
+                        <LinkIcon className="w-4 h-4" />
+                      </button>
+
                       {/* Delete Button */}
                       <button
                         onClick={(e) => handleDelete(movie._id, e)}
@@ -435,6 +473,20 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                   </div>
                 </div>
 
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Custom Watch Link (Optional)</label>
+                  <input
+                    type="url"
+                    value={watchLink}
+                    onChange={(e) => setWatchLink(e.target.value)}
+                    placeholder="e.g. https://vidsrc.to/embed/movie/tt..."
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200"
+                  />
+                  <p className="text-[10px] text-muted-foreground leading-normal">
+                    Leave blank to let MovieBot search automatically, or paste your own streaming/embed URL.
+                  </p>
+                </div>
+
                 {error && (
                   <p className="text-xs text-rose-500 font-semibold bg-rose-50 dark:bg-rose-950/20 py-1.5 px-3 rounded-lg border border-rose-100 dark:border-rose-900/30">
                     {error}
@@ -535,6 +587,63 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                   ) : (
                     "Save Review"
                   )}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Watch Link Modal */}
+      <AnimatePresence>
+        {editingLinkMovieId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setEditingLinkMovieId(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+            >
+              <button
+                onClick={() => setEditingLinkMovieId(null)}
+                className="absolute right-4 top-4 p-1.5 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
+                <LinkIcon className="w-5 h-5 text-primary" /> Edit Watch Link
+              </h3>
+
+              <form onSubmit={handleSaveWatchLink} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Streaming/Embed URL</label>
+                  <input
+                    type="url"
+                    required
+                    value={editLinkValue}
+                    onChange={(e) => setEditLinkValue(e.target.value)}
+                    placeholder="e.g. https://vidsrc.to/embed/movie/tt..."
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  />
+                  <p className="text-[10px] text-muted-foreground leading-normal">
+                    Enter the streaming link, embed URL, or direct video source link for this movie.
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 rounded-xl font-semibold text-sm bg-primary text-white hover:bg-primary-hover active:scale-[0.98] transition-all duration-200 shadow-md hover:shadow-lg mt-2 cursor-pointer"
+                >
+                  Save Link
                 </button>
               </form>
             </motion.div>

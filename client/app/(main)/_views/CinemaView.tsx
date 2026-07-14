@@ -19,6 +19,7 @@ interface CinemaSession {
   participants: string[];
   showStarted?: boolean;
   readyUsers?: string[];
+  activeServer?: string;
 }
 
 interface ChatMessage {
@@ -235,7 +236,18 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
         const present = activeSession.participants.length > 1;
         console.log("Is partner present:", present, "Participants:", activeSession.participants);
         setIsPartnerPresent(present);
+
+        // Update active server attribute on body for content.js
+        if (activeSession.activeServer) {
+          document.body.setAttribute("data-love-sync-server", activeSession.activeServer);
+        } else {
+          document.body.removeAttribute("data-love-sync-server");
+        }
       }
+    });
+
+    socket.on("cinema_server_changed", (data: { server: string }) => {
+      document.body.setAttribute("data-love-sync-server", data.server);
     });
 
     // Listen to partner presence changes
@@ -308,6 +320,7 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
     return () => {
       socket.off("connect", handleConnect);
       socket.off("cinema_session_state");
+      socket.off("cinema_server_changed");
       socket.off("partner_joined_cinema");
       socket.off("partner_left_cinema");
       socket.off("cinema_chat_received");
@@ -442,6 +455,16 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
     });
   };
 
+  const handleServerChange = (serverKey: string) => {
+    if (!socket || !user || !user.relationshipId) return;
+    const relId = getRelationshipId(user.relationshipId);
+    socket.emit("cinema_change_server", {
+      relationshipId: relId,
+      server: serverKey,
+    });
+    playSound("tap");
+  };
+
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim() || !socket || !user || !user.relationshipId) return;
@@ -468,21 +491,8 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
 
   const reactions = ["❤️", "😂", "😢", "😱", "🍿", "🎉"];
 
-  if (!session) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 min-h-[400px] text-center max-w-lg mx-auto">
-        <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
-        <h3 className="text-lg font-bold text-foreground">Connecting to Cinema...</h3>
-        <p className="text-xs text-muted-foreground mt-1">Establishing secure couple channel</p>
-      </div>
-    );
-  }
-
-  const isSelfReady = session.readyUsers?.includes(user?._id || "") || false;
-  const readyCount = session.readyUsers?.length || 0;
-
   const playerIframe = useMemo(() => {
-    if (!session.watchLink) {
+    if (!session || !session.watchLink) {
       return (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-muted-foreground p-8 bg-zinc-950 animate-fade-in">
           <Film className="w-12 h-12 mb-3 text-zinc-700 animate-pulse" />
@@ -500,7 +510,20 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
         sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
       />
     );
-  }, [session.watchLink]);
+  }, [session?.watchLink]);
+
+  if (!session) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 min-h-[400px] text-center max-w-lg mx-auto">
+        <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+        <h3 className="text-lg font-bold text-foreground">Connecting to Cinema...</h3>
+        <p className="text-xs text-muted-foreground mt-1">Establishing secure couple channel</p>
+      </div>
+    );
+  }
+
+  const isSelfReady = session.readyUsers?.includes(user?._id || "") || false;
+  const readyCount = session.readyUsers?.length || 0;
 
   return (
     <div className="relative w-full max-w-6xl mx-auto min-h-[calc(100vh-12rem)]">
@@ -816,6 +839,25 @@ export default function CinemaView({ onBackToWatchlist }: CinemaViewProps) {
                     </select>
                   )}
                 </div>
+
+                {activeSource === "default" && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-muted-foreground">
+                      1HD Server:
+                    </span>
+                    <select
+                      value={session.activeServer || "upcloud"}
+                      onChange={(e) => handleServerChange(e.target.value)}
+                      className="bg-background border border-border/80 text-xs font-semibold rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                    >
+                      <option value="upcloud">UpCloud</option>
+                      <option value="vidmoly">Vidmoly</option>
+                      <option value="videasy">Videasy</option>
+                      <option value="vidcloud">Vidcloud</option>
+                      <option value="vidfast">Vidfast</option>
+                    </select>
+                  </div>
+                )}
                 
                 <div className="flex gap-2">
                   <button

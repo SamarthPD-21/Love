@@ -193,6 +193,11 @@ export async function fetchWatchLink(movieId: string): Promise<void> {
       return;
     }
 
+    if (movie.watchLink && movie.watchLink.trim() !== "") {
+      console.log(`[MovieBot] Movie "${movie.title}" already has a watchLink. Skipping resolution.`);
+      return;
+    }
+
     console.log(`[MovieBot] Resolving link for "${movie.title}" (${movie.type})...`);
 
     // Attempt 1: 1hd.art (fast, works on residential IPs)

@@ -274,6 +274,18 @@ const getRelId = (rel: any): string => {
       }
     });
 
+    socket.on("cinema_change_server", (payload: { relationshipId: any; server: string }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      if (!relationshipId) return;
+
+      const session = activeCinemaSessions.get(relationshipId);
+      if (session) {
+        session.activeServer = payload.server;
+        io?.to(`cinema:${relationshipId}`).emit("cinema_session_state", session);
+        io?.to(`cinema:${relationshipId}`).emit("cinema_server_changed", { server: payload.server });
+      }
+    });
+
     socket.on("cinema_ready_toggle", (payload: { relationshipId: any; ready: boolean }) => {
       const relationshipId = getRelId(payload.relationshipId);
       if (!relationshipId) return;
