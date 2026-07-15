@@ -115,6 +115,10 @@ export default function CinemaPage() {
   const [gdriveLink, setGdriveLink] = useState("");
   const [gdriveTitle, setGdriveTitle] = useState("");
   const [gdrivePlayerMode, setGdrivePlayerMode] = useState<"iframe" | "html5">("iframe");
+  const [localFile, setLocalFile] = useState<File | null>(null);
+  const localFileUrl = useMemo(() => {
+    return localFile ? URL.createObjectURL(localFile) : "";
+  }, [localFile]);
 
   // Map of all IMDB-based embed sources (key → url builder fn)
   const altSourceBuilders: Record<string, (imdbId: string, mediaType: string) => string> = {
@@ -360,7 +364,11 @@ export default function CinemaPage() {
     if (session && !session.movieId) {
       fetchLobbyMovies();
     }
-  }, [session?.movieId]);
+    // Clean up localFile if the watchLink changes away from local
+    if (!session || session.watchLink !== "local") {
+      setLocalFile(null);
+    }
+  }, [session?.movieId, session?.watchLink]);
 
   // Socket Core Subscriptions
   useEffect(() => {
@@ -737,6 +745,68 @@ export default function CinemaPage() {
       );
     }
 
+    // If it is a local file co-watching session
+    if (session.watchLink === "local") {
+      if (localFile) {
+        return (
+          <video
+            src={localFileUrl}
+            className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
+            controls
+            autoPlay
+            playsInline
+          />
+        );
+      } else {
+        return (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-[#05050f] z-20">
+            <div className="cinema-projector mb-6 relative">
+              <Film className="w-8 h-8 text-[#E8587A]" />
+            </div>
+            <h3 className="text-lg font-extrabold text-white font-serif tracking-wider mb-2">
+              Syncing Local Video Playback
+            </h3>
+            <p className="text-xs text-zinc-400 max-w-sm mb-6 leading-relaxed">
+              Your partner loaded <span className="text-[#E8587A] font-extrabold">{session.movieTitle}</span>.
+              To watch together in 100% sync and original quality, select or drop your copy of this file below!
+            </p>
+            <label className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2">
+              <span>Select Video File</span>
+              <input
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setLocalFile(e.target.files[0]);
+                  }
+                }}
+              />
+            </label>
+          </div>
+        );
+      }
+    }
+
+    // If it is a direct video file link (ends with .mp4/.webm or contains them)
+    const isDirectVideo = session.watchLink.endsWith(".mp4") || 
+                          session.watchLink.endsWith(".webm") ||
+                          session.watchLink.includes(".mp4?") || 
+                          session.watchLink.includes(".webm?") ||
+                          (session.watchLink.includes(".loca.lt/") && session.watchLink.includes(".mp4"));
+
+    if (isDirectVideo) {
+      return (
+        <video
+          src={session.watchLink}
+          className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
+          controls
+          autoPlay
+          playsInline
+        />
+      );
+    }
+
     // If it is a Google Drive video and we have forced HTML5 Direct Stream mode
     if (session.movieId?.startsWith("gdrive-") && gdrivePlayerMode === "html5") {
       const fileId = session.movieId.replace("gdrive-", "");
@@ -760,7 +830,7 @@ export default function CinemaPage() {
         allowFullScreen
       />
     );
-  }, [session?.watchLink, session?.movieId, gdrivePlayerMode]);
+  }, [session?.watchLink, session?.movieId, session?.movieTitle, gdrivePlayerMode, localFile, localFileUrl]);
 
   // Loading Screen Layout
   if (!session) {
@@ -904,45 +974,99 @@ export default function CinemaPage() {
               </div>
             </div>
 
-            {/* Google Drive Link co-watching section */}
-            <div className="mb-8 p-6 rounded-3xl cinema-glass-panel border border-white/5 shadow-2xl relative flex flex-col gap-4">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#E8587A]/5 blur-3xl pointer-events-none" />
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#E8587A]/10 flex items-center justify-center text-[#E8587A]">
-                  <Link2 className="w-4 h-4" />
+            {/* Direct Source Options: Google Drive & Local Files */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {/* Google Drive Link co-watching section */}
+              <div className="p-6 rounded-3xl cinema-glass-panel border border-white/5 shadow-2xl relative flex flex-col justify-between gap-4">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#E8587A]/5 blur-3xl pointer-events-none" />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#E8587A]/10 flex items-center justify-center text-[#E8587A]">
+                    <Link2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
+                      Watch via Google Drive Link
+                    </h3>
+                    <p className="text-[10px] text-zinc-400">
+                      Paste any shared Google Drive video link to watch it in real-time sync with your partner
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
-                    Watch via Google Drive Link
-                  </h3>
-                  <p className="text-[10px] text-zinc-400">
-                    Paste any shared Google Drive video link to watch it in real-time sync with your partner
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4 w-full">
-                <input
-                  type="text"
-                  placeholder="Enter Title (optional)"
-                  value={gdriveTitle}
-                  onChange={(e) => setGdriveTitle(e.target.value)}
-                  className="px-4 py-3 rounded-2xl text-xs bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all sm:w-1/3"
-                />
-                <div className="flex-1 flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-4 w-full">
                   <input
                     type="text"
-                    placeholder="https://drive.google.com/file/d/FILE_ID/view"
-                    value={gdriveLink}
-                    onChange={(e) => setGdriveLink(e.target.value)}
-                    className="flex-1 px-4 py-3 rounded-2xl text-xs bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all"
+                    placeholder="Enter Title (optional)"
+                    value={gdriveTitle}
+                    onChange={(e) => setGdriveTitle(e.target.value)}
+                    className="px-4 py-3 rounded-2xl text-xs bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all sm:w-1/3"
                   />
-                  <button
-                    onClick={() => handleLoadGDriveLink(gdriveLink, gdriveTitle)}
-                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2 flex-shrink-0"
-                  >
-                    <span>Load</span>
-                    <Play className="w-3 h-3 fill-white stroke-none" />
-                  </button>
+                  <div className="flex-1 flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="https://drive.google.com/file/d/FILE_ID/view"
+                      value={gdriveLink}
+                      onChange={(e) => setGdriveLink(e.target.value)}
+                      className="flex-1 px-4 py-3 rounded-2xl text-xs bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all"
+                    />
+                    <button
+                      onClick={() => handleLoadGDriveLink(gdriveLink, gdriveTitle)}
+                      className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2 flex-shrink-0"
+                    >
+                      <span>Load</span>
+                      <Play className="w-3 h-3 fill-white stroke-none" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Local File synced co-watching section */}
+              <div className="p-6 rounded-3xl cinema-glass-panel border border-white/5 shadow-2xl relative flex flex-col justify-between gap-4">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4A574]/5 blur-3xl pointer-events-none" />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#D4A574]/10 flex items-center justify-center text-[#D4A574]">
+                    <Film className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
+                      Watch a Local File (Zero Buffering)
+                    </h3>
+                    <p className="text-[10px] text-zinc-400">
+                      Play a video file (MP4/MKV) from your PC. Partner loads their copy of the file for 100% sync!
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 w-full">
+                  <label className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#D4A574] to-[#E8587A] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2 flex-shrink-0">
+                    <span>Choose Video File</span>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          const file = e.target.files[0];
+                          setLocalFile(file);
+                          if (socket && user && user.relationshipId) {
+                            const relId = getRelationshipId(user.relationshipId);
+                            socket.emit("cinema_select_movie", {
+                              relationshipId: relId,
+                              movieId: `local-${Date.now()}`,
+                              movieTitle: file.name,
+                              movieType: "movie",
+                              watchLink: "local",
+                            });
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+                  {localFile ? (
+                    <span className="text-xs text-zinc-400 truncate max-w-[200px]" title={localFile.name}>
+                      Selected: {localFile.name}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-zinc-500 italic">No file chosen</span>
+                  )}
                 </div>
               </div>
             </div>
