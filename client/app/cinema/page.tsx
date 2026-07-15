@@ -118,6 +118,7 @@ export default function CinemaPage() {
   const [gdriveTitle, setGdriveTitle] = useState("");
   const [gdrivePlayerMode, setGdrivePlayerMode] = useState<"iframe" | "html5">("iframe");
   const [localFile, setLocalFile] = useState<File | null>(null);
+  const [videoMuted, setVideoMuted] = useState(false);
   const localFileUrl = useMemo(() => {
     return localFile ? URL.createObjectURL(localFile) : "";
   }, [localFile]);
@@ -820,6 +821,7 @@ export default function CinemaPage() {
           <video
             src={localFileUrl}
             {...syncVideoProps}
+            muted={videoMuted}
             className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
             controls
             autoPlay
@@ -869,6 +871,7 @@ export default function CinemaPage() {
         <video
           src={session.watchLink}
           {...syncVideoProps}
+          muted={videoMuted}
           className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
           controls
           autoPlay
@@ -885,6 +888,7 @@ export default function CinemaPage() {
         <video
           src={directUrl}
           {...syncVideoProps}
+          muted={videoMuted}
           className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
           controls
           autoPlay
@@ -1569,6 +1573,19 @@ export default function CinemaPage() {
                   title="Dim/brighten the ambient background"
                 >
                   💡 Lights
+                </button>
+
+                <button
+                  onClick={() => setVideoMuted(prev => !prev)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer active:scale-95 border",
+                    videoMuted
+                      ? "bg-rose-500/20 border-rose-500/40 text-rose-500"
+                      : "bg-white/5 border-white/5 text-zinc-400 hover:text-white"
+                  )}
+                  title={videoMuted ? "Unmute audio" : "Mute audio"}
+                >
+                  {videoMuted ? "🔇 Muted" : "🔊 Audio"}
                 </button>
 
                 {session.movieId?.startsWith("gdrive-") && (
