@@ -114,6 +114,7 @@ export default function CinemaPage() {
   const [cachedAlternativeLinks, setCachedAlternativeLinks] = useState<Record<string, Record<string, string>>>({});
   const [gdriveLink, setGdriveLink] = useState("");
   const [gdriveTitle, setGdriveTitle] = useState("");
+  const [gdrivePlayerMode, setGdrivePlayerMode] = useState<"iframe" | "html5">("iframe");
 
   // Map of all IMDB-based embed sources (key → url builder fn)
   const altSourceBuilders: Record<string, (imdbId: string, mediaType: string) => string> = {
@@ -715,6 +716,22 @@ export default function CinemaPage() {
             </div>
       );
     }
+
+    // If it is a Google Drive video and we have forced HTML5 Direct Stream mode
+    if (session.movieId?.startsWith("gdrive-") && gdrivePlayerMode === "html5") {
+      const fileId = session.movieId.replace("gdrive-", "");
+      const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+      return (
+        <video
+          src={directUrl}
+          className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
+          controls
+          autoPlay
+          playsInline
+        />
+      );
+    }
+
     return (
       <iframe
         src={session.watchLink}
@@ -723,7 +740,7 @@ export default function CinemaPage() {
         allowFullScreen
       />
     );
-  }, [session?.watchLink]);
+  }, [session?.watchLink, session?.movieId, gdrivePlayerMode]);
 
   // Loading Screen Layout
   if (!session) {
@@ -1338,6 +1355,16 @@ export default function CinemaPage() {
                 >
                   💡 Lights
                 </button>
+
+                {session.movieId?.startsWith("gdrive-") && (
+                  <button
+                    onClick={() => setGdrivePlayerMode(prev => prev === "iframe" ? "html5" : "iframe")}
+                    className="bg-[#E8587A]/10 border border-[#E8587A]/25 hover:bg-[#E8587A]/20 text-[#E8587A] px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+                    title="Toggle between Google's default web preview and raw direct file stream"
+                  >
+                    <span>{gdrivePlayerMode === "iframe" ? "⚡ Force Direct Stream" : "📁 Switch to Google Player"}</span>
+                  </button>
+                )}
 
                 <button
                   onClick={handleThrowPopcorn}
