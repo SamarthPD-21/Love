@@ -48,63 +48,36 @@ export default function SongsPage() {
   // Global Audio Player
   const { playSong, currentSong, isPlaying } = useAudioPlayerStore();
 
-  // Add Song Modal Form State
-  const [addMode, setAddMode] = useState<"search" | "url">("search");
+  // Add Song Form State
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
-  const [url, setUrl] = useState(""); // URL input (spotify or youtube)
-  const [extraDetails, setExtraDetails] = useState(""); // language or other descriptors
-  const [notes, setNotes] = useState("");
-
-  // Resolved Bot Search State
   const [spotifyUrl, setSpotifyUrl] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [youtubeVideoId, setYoutubeVideoId] = useState("");
-  const [botSearching, setBotSearching] = useState(false);
-  const [searchPerformed, setSearchPerformed] = useState(false);
+  const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Bot Search Query at top of modal
+  const [botQuery, setBotQuery] = useState("");
+  const [botSearching, setBotSearching] = useState(false);
 
   // Player preferences (toggling between spotify preview and full youtube playback)
   const [playerPreferences, setPlayerPreferences] = useState<Record<string, "youtube" | "spotify">>({});
 
-  // Auto-trigger bot if URL is pasted and meets basic criteria
-  useEffect(() => {
-    if (addMode !== "url" || !url) return;
-    
-    // Check if it's a valid youtube or spotify URL
-    const isSpotify = url.includes("spotify.com/track");
-    const isYoutube = url.includes("youtube.com") || url.includes("youtu.be");
-    if (!isSpotify && !isYoutube) return;
+  const handleBotSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!botQuery.trim()) return;
 
-    try {
-      new URL(url);
-    } catch (_) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      triggerBotSearch({ urlInput: url });
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [url, addMode]);
-
-  const triggerBotSearch = async ({ urlInput, titleInput, artistInput, detailsInput }: {
-    urlInput?: string;
-    titleInput?: string;
-    artistInput?: string;
-    detailsInput?: string;
-  }) => {
     setBotSearching(true);
     setError("");
-    setSearchPerformed(true);
+
+    // Determine if the input is a URL or search phrase
+    const isUrl = botQuery.startsWith("http://") || botQuery.startsWith("https://");
 
     try {
       const response = await api.post("/songs/fetch-details", {
-        url: urlInput || undefined,
-        title: titleInput || undefined,
-        artist: artistInput || undefined,
-        extraDetails: detailsInput || undefined,
+        url: isUrl ? botQuery : undefined,
+        title: !isUrl ? botQuery : undefined,
       });
 
       if (response.data.success && response.data.data) {
@@ -114,35 +87,16 @@ export default function SongsPage() {
         setSpotifyUrl(d.spotifyUrl || "");
         setYoutubeUrl(d.youtubeUrl || "");
         setYoutubeVideoId(d.youtubeVideoId || "");
-
-        // Set main url parameter to whatever we resolved (prefer Spotify link, fallback to Youtube)
-        if (d.spotifyUrl) {
-          setUrl(d.spotifyUrl);
-        } else if (d.youtubeUrl) {
-          setUrl(d.youtubeUrl);
-        }
+        showToast("Bot retrieved song details! 🤖🎵", "success");
       } else {
         setError("Bot could not find any matching details.");
       }
     } catch (err: any) {
       console.error("Bot search failed:", err);
-      setError(err.response?.data?.error || "Bot search failed to find links. Fill them manually.");
+      setError(err.response?.data?.error || "Bot could not find matching links. Please enter details manually.");
     } finally {
       setBotSearching(false);
     }
-  };
-
-  const handleManualSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title) {
-      setError("Please enter a song title");
-      return;
-    }
-    triggerBotSearch({
-      titleInput: title,
-      artistInput: artist,
-      detailsInput: extraDetails
-    });
   };
 
   const fetchSongs = async () => {
@@ -164,10 +118,18 @@ export default function SongsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !artist || !url) {
-      setError("Title, Artist, and a primary URL are required. Try running the bot search first.");
+    if (!title || !artist) {
+      setError("Title and Artist are required.");
       return;
     }
+    
+    // Require at least one link to save a song
+    const primaryUrl = spotifyUrl || youtubeUrl;
+    if (!primaryUrl) {
+      setError("At least one Spotify or YouTube link is required to add a song.");
+      return;
+    }
+
     setError("");
     setSubmitting(true);
 
@@ -175,7 +137,7 @@ export default function SongsPage() {
       const response = await api.post("/songs", {
         title,
         artist,
-        url,
+        url: primaryUrl,
         spotifyUrl: spotifyUrl || undefined,
         youtubeUrl: youtubeUrl || undefined,
         youtubeVideoId: youtubeVideoId || undefined,
@@ -188,13 +150,11 @@ export default function SongsPage() {
         // Reset states
         setTitle("");
         setArtist("");
-        setUrl("");
-        setExtraDetails("");
-        setNotes("");
         setSpotifyUrl("");
         setYoutubeUrl("");
         setYoutubeVideoId("");
-        setSearchPerformed(false);
+        setNotes("");
+        setBotQuery("");
         showToast("Song added to playlist! 🎵", "success");
       }
     } catch (err: any) {
@@ -270,15 +230,13 @@ export default function SongsPage() {
         <button
           onClick={() => {
             setError("");
-            setSearchPerformed(false);
+            setTitle("");
+            setArtist("");
             setSpotifyUrl("");
             setYoutubeUrl("");
             setYoutubeVideoId("");
-            setTitle("");
-            setArtist("");
-            setExtraDetails("");
-            setUrl("");
             setNotes("");
+            setBotQuery("");
             setIsModalOpen(true);
           }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-all duration-200 cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98]"
@@ -504,169 +462,102 @@ export default function SongsPage() {
               </button>
 
               <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-4 font-display">
-                <Sparkles className="w-5 h-5 text-primary animate-pulse" /> Song Finder Bot
+                <Music className="w-5 h-5 text-primary" /> Add Song to Playlist
               </h3>
 
-              {/* Toggle Input Mode */}
-              <div className="flex bg-muted/60 p-1 rounded-xl border border-border/50 mb-5 text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddMode("search");
-                    setError("");
-                  }}
-                  className={cn(
-                    "flex-1 py-2 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1.5",
-                    addMode === "search" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Search className="w-3.5 h-3.5" /> Title & Specific Details
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddMode("url");
-                    setError("");
-                  }}
-                  className={cn(
-                    "flex-1 py-2 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1.5",
-                    addMode === "url" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Link className="w-3.5 h-3.5" /> Paste URL (Spotify / YouTube)
-                </button>
+              {/* Bot Helper Header */}
+              <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-4 space-y-3">
+                <span className="text-[10px] font-extrabold text-primary uppercase tracking-widest flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 fill-primary text-primary animate-pulse" /> Song Finder Bot (Optional)
+                </span>
+                <p className="text-xs text-muted-foreground">
+                  Type a song name (include language/artist) OR paste a link, then click "Run Bot" to auto-fill the fields below!
+                </p>
+                <form onSubmit={handleBotSearch} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={botQuery}
+                    onChange={(e) => setBotQuery(e.target.value)}
+                    placeholder="e.g. Vachindamma Telugu, or Spotify/YouTube link..."
+                    className="flex-1 px-3 py-2 rounded-xl text-xs bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent"
+                  />
+                  <button
+                    type="submit"
+                    disabled={botSearching || !botQuery.trim()}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer flex items-center gap-1 shadow-sm active:scale-95 shrink-0"
+                  >
+                    {botSearching ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <>🤖 Run Bot</>
+                    )}
+                  </button>
+                </form>
               </div>
 
-              {/* Bot Loading State */}
-              {botSearching && (
-                <div className="flex flex-col items-center justify-center py-10 bg-muted/20 border border-border/40 rounded-2xl mb-4 gap-2.5">
-                  <div className="relative">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-md filter animate-pulse" />
-                  </div>
-                  <p className="text-xs font-bold text-muted-foreground animate-pulse">
-                    Bot is fetching Spotify & YouTube matching links...
-                  </p>
+              {/* Standard Form Inputs (Always Visible and Editable) */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Song Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Lover"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  />
                 </div>
-              )}
 
-              {/* Bot Results Preview */}
-              {!botSearching && searchPerformed && (
-                <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-4 space-y-3">
-                  <div className="flex items-center justify-between border-b border-primary/15 pb-2">
-                    <span className="text-[10px] font-extrabold text-primary uppercase tracking-widest flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 fill-primary" /> Bot Search Results
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setSearchPerformed(false)}
-                      className="text-[10px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                    >
-                      Clear search
-                    </button>
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-sm text-foreground">{title || "Unknown Title"}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">{artist || "Unknown Artist"}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className={cn(
-                      "p-2 rounded-xl flex items-center gap-1.5 border",
-                      spotifyUrl ? "bg-[#1DB954]/5 border-[#1DB954]/20 text-[#1DB954]" : "bg-muted/40 border-border/40 text-muted-foreground"
-                    )}>
-                      <SpotifyIcon className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{spotifyUrl ? "Spotify Connected" : "Spotify Link Missing"}</span>
-                    </div>
-                    <div className={cn(
-                      "p-2 rounded-xl flex items-center gap-1.5 border",
-                      youtubeUrl ? "bg-rose-500/5 border-rose-500/20 text-rose-500" : "bg-muted/40 border-border/40 text-muted-foreground"
-                    )}>
-                      <YoutubeIcon className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{youtubeUrl ? "YouTube Connected" : "YouTube Link Missing"}</span>
-                    </div>
-                  </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Artist *</label>
+                  <input
+                    type="text"
+                    required
+                    value={artist}
+                    onChange={(e) => setArtist(e.target.value)}
+                    placeholder="e.g. Taylor Swift"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  />
                 </div>
-              )}
 
-              {/* Form Input fields */}
-              <form onSubmit={addMode === "search" && !searchPerformed ? handleManualSearch : handleSubmit} className="space-y-4">
-                
-                {/* 1. Search Mode: Search parameters */}
-                {addMode === "search" && !searchPerformed && (
-                  <div className="space-y-4">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Song Title</label>
-                      <input
-                        type="text"
-                        required
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="e.g. Lover, Vachindamma"
-                        className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Artist (Optional)</label>
-                        <input
-                          type="text"
-                          value={artist}
-                          onChange={(e) => setArtist(e.target.value)}
-                          placeholder="e.g. Taylor Swift"
-                          className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                        />
-                      </div>
-                      
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Specific Details (Optional)</label>
-                        <input
-                          type="text"
-                          value={extraDetails}
-                          onChange={(e) => setExtraDetails(e.target.value)}
-                          placeholder="e.g. Telugu, Sid Sriram"
-                          className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Spotify Track Link</label>
+                  <input
+                    type="url"
+                    value={spotifyUrl}
+                    onChange={(e) => setSpotifyUrl(e.target.value)}
+                    placeholder="e.g. https://open.spotify.com/track/..."
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  />
+                </div>
 
-                {/* 2. URL Mode: Link parameter */}
-                {addMode === "url" && !searchPerformed && (
-                  <div className="space-y-4">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Spotify / YouTube Link</label>
-                      <input
-                        type="url"
-                        required
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        placeholder="Paste Spotify track or YouTube video link"
-                        className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                      />
-                      <p className="text-[10px] text-muted-foreground/80 flex items-center gap-1.5 mt-1 px-1">
-                        <Info className="w-3 h-3 text-primary shrink-0" /> Pasting automatically starts the bot resolving details.
-                      </p>
-                    </div>
-                  </div>
-                )}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">YouTube Link</label>
+                  <input
+                    type="url"
+                    value={youtubeUrl}
+                    onChange={(e) => {
+                      setYoutubeUrl(e.target.value);
+                      const id = e.target.value.includes("youtu.be") 
+                        ? e.target.value.split("/").pop() || "" 
+                        : new URLSearchParams(e.target.value.split("?")[1] || "").get("v") || "";
+                      setYoutubeVideoId(id);
+                    }}
+                    placeholder="e.g. https://www.youtube.com/watch?v=..."
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  />
+                </div>
 
-                {/* 3. Notes (Always shows if resolving details or ready to confirm) */}
-                {searchPerformed && !botSearching && (
-                  <div className="space-y-4">
-                    {/* Notes */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cozy Notes (Optional)</label>
-                      <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Why does this track remind you of us?"
-                        className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                  </div>
-                )}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cozy Notes (Optional)</label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Why does this track remind you of us?"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  />
+                </div>
 
                 {/* Error Banner */}
                 {error && (
@@ -676,43 +567,21 @@ export default function SongsPage() {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex gap-3">
-                  {/* If search hasn't run yet in search mode: search link button */}
-                  {addMode === "search" && !searchPerformed ? (
-                    <button
-                      type="submit"
-                      disabled={botSearching || !title}
-                      className="flex-1 py-3 rounded-xl font-semibold text-sm bg-primary text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      {botSearching ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" /> Bot is searching...
-                        </>
-                      ) : (
-                        <>
-                          <Search className="w-4 h-4" /> Find Song Links with Bot
-                        </>
-                      )}
-                    </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full py-3 rounded-xl font-semibold text-sm bg-emerald-500 hover:bg-emerald-600 text-white active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg mt-2 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Adding...
+                    </>
                   ) : (
-                    /* Confirm submission to DB */
-                    <button
-                      type="submit"
-                      disabled={submitting || botSearching}
-                      className="flex-1 py-3 rounded-xl font-semibold text-sm bg-emerald-500 hover:bg-emerald-600 text-white active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      {submitting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" /> Adding...
-                        </>
-                      ) : (
-                        <>
-                          <Music className="w-4 h-4" /> Add Song to Playlist
-                        </>
-                      )}
-                    </button>
+                    <>
+                      <Music className="w-4 h-4" /> Add Song to Playlist
+                    </>
                   )}
-                </div>
+                </button>
               </form>
             </motion.div>
           </div>

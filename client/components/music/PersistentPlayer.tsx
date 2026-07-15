@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAudioPlayerStore, YTPlayer } from "@/stores/useAudioPlayerStore";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, Square, Volume2, VolumeX, Music, X, Minimize2 } from "lucide-react";
+import { Play, Pause, Square, Volume2, VolumeX, Music, X, Minimize2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 
@@ -26,6 +26,7 @@ export default function PersistentPlayer() {
   } = useAudioPlayerStore();
 
   const [isMinimized, setIsMinimized] = useState(false);
+  const [showVideo, setShowVideo] = useState(true);
   const [muted, setMuted] = useState(false);
   const [prevVolume, setPrevVolume] = useState(volume);
   const [apiLoaded, setApiLoaded] = useState(false);
@@ -157,7 +158,7 @@ export default function PersistentPlayer() {
       <div 
         className={cn(
           "transition-all duration-300 overflow-hidden bg-black rounded-2xl border border-border/40 shadow-2xl z-50",
-          currentSong && !isMinimized
+          currentSong && !isMinimized && showVideo
             ? "fixed bottom-[236px] left-4 right-4 sm:left-auto sm:bottom-[210px] sm:right-6 sm:w-80 aspect-video block"
             : "w-[1px] h-[1px] opacity-0 pointer-events-none fixed -left-[9999px] -top-[9999px]"
         )}
@@ -281,6 +282,22 @@ export default function PersistentPlayer() {
                     ))}
                   </div>
                   
+                  <button
+                    onClick={() => {
+                      playSound("tap");
+                      setShowVideo(!showVideo);
+                    }}
+                    className={cn(
+                      "p-1 rounded-lg transition-all cursor-pointer",
+                      showVideo 
+                        ? "text-primary hover:bg-primary/10" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
+                    )}
+                    title={showVideo ? "Hide Video Preview" : "Show Video Preview"}
+                  >
+                    {showVideo ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  </button>
+
                   <button
                     onClick={() => {
                       playSound("tap");
