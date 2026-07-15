@@ -30,6 +30,7 @@ A beautiful, premium, and highly interactive shared space for couples. Connect w
 * **🎟️ Standing Room Curtains**: A separate, immersive setup interface featuring a dynamic movie projector loader beam, spotlight glows, and interactive snack checklists.
 * **🔌 Love Cinema Sync Extension**: Integrates directly with a custom Manifest V3 browser extension to bypass X-Frame-Options/CSP header blocks, enabling premium movie hosting embeds.
 * **⚡ Multi-Source Selector**: Toggle on-the-fly between **11 high-speed streaming servers** (1HD, VidSrc.to, VidSrc.me, VidSrcMe.ru, VidSrc.xyz, 2Embed, MultiEmbed, Embed.su, AutoEmbed, SmashyStream, Cineby, BFlix) using a fast server-side Wikidata SPARQL IMDB/TMDB-ID mapping & cached client resolution.
+* **📁 Google Drive Co-Watching**: Input any shared Google Drive file link directly in the lobby. The system automatically parses the file ID, generates the embed, and synchronizes playback (play, pause, and seeks) dynamically between partners.
 * **💬 Theater Chat & Fun Actions**: A sliding glassmorphic sidebar chat drawer with floating emoji reactions (❤️, 😂, 😢, 🍿), dimmable ambient lights overlay, and popcorn fight/cuddle triggers.
 
 ### 2. 💌 Letters & Mood Cabinets ("Open When")

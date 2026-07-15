@@ -24,7 +24,9 @@ import {
   Tv,
   Settings,
   Coffee,
-  Info
+  Info,
+  Link2,
+  Play
 } from "lucide-react";
 import api from "@/lib/api";
 import { getSocket } from "@/lib/socket";
@@ -110,6 +112,8 @@ export default function CinemaPage() {
   const [resolvingSource, setResolvingSource] = useState(false);
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [cachedAlternativeLinks, setCachedAlternativeLinks] = useState<Record<string, Record<string, string>>>({});
+  const [gdriveLink, setGdriveLink] = useState("");
+  const [gdriveTitle, setGdriveTitle] = useState("");
 
   // Map of all IMDB-based embed sources (key → url builder fn)
   const altSourceBuilders: Record<string, (imdbId: string, mediaType: string) => string> = {
@@ -132,6 +136,11 @@ export default function CinemaPage() {
 
   useEffect(() => {
     if (session?.watchLink) {
+      // Check Google Drive link
+      if (session.watchLink.includes("drive.google.com")) {
+        setActiveSource("gdrive");
+        return;
+      }
       // Check IMDB-based sources
       const knownImdb = Object.entries(altSourceBuilders).find(([, builder]) => {
         const testUrl = builder("tt0000000", "movie");
@@ -601,6 +610,39 @@ export default function CinemaPage() {
     playSound("chime");
   };
 
+  const handleLoadGDriveLink = (link: string, customTitle?: string) => {
+    if (!socket || !user || !user.relationshipId || !link) return;
+    const relId = getRelationshipId(user.relationshipId);
+
+    // Extract file ID from different formats:
+    // https://drive.google.com/file/d/FILE_ID/view...
+    // https://drive.google.com/open?id=FILE_ID
+    const fileIdMatch = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    const fileId = fileIdMatch ? fileIdMatch[1] : null;
+
+    if (!fileId) {
+      setSourceError("Invalid Google Drive link format. Make sure it contains '/file/d/FILE_ID'.");
+      setTimeout(() => setSourceError(null), 5000);
+      return;
+    }
+
+    const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+    const title = customTitle?.trim() || "Shared Google Drive Video";
+
+    socket.emit("cinema_select_movie", {
+      relationshipId: relId,
+      movieId: `gdrive-${fileId}`,
+      movieTitle: title,
+      movieType: "movie",
+      watchLink: embedUrl,
+    });
+
+    setGdriveLink("");
+    setGdriveTitle("");
+    setActiveSource("gdrive");
+    playSound("chime");
+  };
+
   const handleChangeMovie = () => {
     if (!socket || !user || !user.relationshipId) return;
     const relId = getRelationshipId(user.relationshipId);
@@ -822,6 +864,49 @@ export default function CinemaPage() {
                     isPartnerPresent ? "bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" : "bg-zinc-650"
                   )}
                 />
+              </div>
+            </div>
+
+            {/* Google Drive Link co-watching section */}
+            <div className="mb-8 p-6 rounded-3xl cinema-glass-panel border border-white/5 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#E8587A]/5 blur-3xl pointer-events-none" />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-[#E8587A]/10 flex items-center justify-center text-[#E8587A]">
+                  <Link2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
+                    Watch via Google Drive Link
+                  </h3>
+                  <p className="text-[10px] text-zinc-500">
+                    Paste any shared Google Drive video link to watch it in real-time sync with your partner
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <input
+                  type="text"
+                  placeholder="Enter Title (optional)"
+                  value={gdriveTitle}
+                  onChange={(e) => setGdriveTitle(e.target.value)}
+                  className="px-4 py-3 rounded-2xl text-xs bg-white/[0.01] border border-white/5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#E8587A]/30 transition-all sm:w-1/3"
+                />
+                <div className="flex-1 flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="https://drive.google.com/file/d/FILE_ID/view"
+                    value={gdriveLink}
+                    onChange={(e) => setGdriveLink(e.target.value)}
+                    className="flex-1 px-4 py-3 rounded-2xl text-xs bg-white/[0.01] border border-white/5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#E8587A]/30 transition-all"
+                  />
+                  <button
+                    onClick={() => handleLoadGDriveLink(gdriveLink, gdriveTitle)}
+                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+                  >
+                    <span>Load</span>
+                    <Play className="w-3 h-3 fill-white stroke-none" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1169,7 +1254,11 @@ export default function CinemaPage() {
             >
               {/* Left group: Source/Server select */}
               <div className="flex items-center gap-2 border-r border-white/5 pr-4">
-                {resolvingSource ? (
+                {session?.movieId?.startsWith("gdrive-") ? (
+                  <div className="bg-zinc-900/60 border border-white/5 text-[10px] font-bold rounded-lg px-3 py-1.5 text-zinc-300 flex items-center gap-1.5 select-none">
+                    <span>📁 Google Drive</span>
+                  </div>
+                ) : resolvingSource ? (
                   <div className="flex items-center gap-2 text-xs text-zinc-500 px-3">
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E8587A]" />
                     <span>Resolving...</span>
