@@ -479,11 +479,11 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                     type="url"
                     value={watchLink}
                     onChange={(e) => setWatchLink(e.target.value)}
-                    placeholder="e.g. https://vidsrc.to/embed/movie/tt..."
+                    placeholder="e.g. https://vidsrc.to/embed/movie/tt... or Google Drive URL"
                     className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200"
                   />
                   <p className="text-[10px] text-muted-foreground leading-normal">
-                    Leave blank to let MovieBot search automatically, or paste your own streaming/embed URL.
+                    Leave blank to let MovieBot search automatically, or paste your own streaming/embed URL (including Google Drive links).
                   </p>
                 </div>
 
@@ -631,11 +631,11 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                     required
                     value={editLinkValue}
                     onChange={(e) => setEditLinkValue(e.target.value)}
-                    placeholder="e.g. https://vidsrc.to/embed/movie/tt..."
+                    placeholder="e.g. https://vidsrc.to/embed/movie/tt... or Google Drive URL"
                     className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                   <p className="text-[10px] text-muted-foreground leading-normal">
-                    Enter the streaming link, embed URL, or direct video source link for this movie.
+                    Enter the streaming link, embed URL, or Google Drive link for this movie.
                   </p>
                 </div>
 

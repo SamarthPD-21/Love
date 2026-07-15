@@ -601,12 +601,32 @@ export default function CinemaPage() {
   const handleLoadMovie = (movie: any) => {
     if (!socket || !user || !user.relationshipId) return;
     const relId = getRelationshipId(user.relationshipId);
+    let link = movie.watchLink || "";
+
+    // If watchlist movie contains a Google Drive link, parse it and set correct ID prefix
+    if (link.includes("drive.google.com")) {
+      const fileIdMatch = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      const fileId = fileIdMatch ? fileIdMatch[1] : null;
+      if (fileId) {
+        link = `https://drive.google.com/file/d/${fileId}/preview`;
+        socket.emit("cinema_select_movie", {
+          relationshipId: relId,
+          movieId: `gdrive-${fileId}`,
+          movieTitle: movie.title,
+          movieType: movie.type,
+          watchLink: link,
+        });
+        playSound("chime");
+        return;
+      }
+    }
+
     socket.emit("cinema_select_movie", {
       relationshipId: relId,
       movieId: movie._id,
       movieTitle: movie.title,
       movieType: movie.type,
-      watchLink: movie.watchLink,
+      watchLink: link,
     });
     playSound("chime");
   };
