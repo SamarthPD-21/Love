@@ -132,13 +132,23 @@ export default function CinemaPage() {
 
   useEffect(() => {
     if (session?.watchLink) {
-      const knownSource = Object.entries(altSourceBuilders).find(([, builder]) => {
-        // Quick heuristic: check if domain is in the link
+      // Check IMDB-based sources
+      const knownImdb = Object.entries(altSourceBuilders).find(([, builder]) => {
         const testUrl = builder("tt0000000", "movie");
         const domain = new URL(testUrl).hostname;
         return session.watchLink?.includes(domain);
       });
-      setActiveSource(knownSource ? knownSource[0] : "default");
+      if (knownImdb) {
+        setActiveSource(knownImdb[0]);
+        return;
+      }
+      // Check TMDB-based sources
+      const knownTmdb = Object.entries(tmdbSourceBuilders).find(([, builder]) => {
+        const testUrl = builder("0", "movie");
+        const domain = new URL(testUrl).hostname;
+        return session.watchLink?.includes(domain);
+      });
+      setActiveSource(knownTmdb ? knownTmdb[0] : "default");
     }
   }, [session?.watchLink]);
 
@@ -151,13 +161,21 @@ export default function CinemaPage() {
         setResolvingSource(true);
         const res = await api.get(`/movies/${session.movieId}`);
         if (res.data.success && res.data.data.watchLink) {
-          socket.emit("cinema_select_movie", {
-            relationshipId: getRelationshipId(user.relationshipId),
-            movieId: session.movieId,
-            movieTitle: session.movieTitle,
-            movieType: session.movieType,
-            watchLink: res.data.data.watchLink,
-          });
+          if (session.showStarted) {
+            socket.emit("cinema_change_source", {
+              relationshipId: getRelationshipId(user.relationshipId),
+              watchLink: res.data.data.watchLink,
+              sourceKey: "default",
+            });
+          } else {
+            socket.emit("cinema_select_movie", {
+              relationshipId: getRelationshipId(user.relationshipId),
+              movieId: session.movieId,
+              movieTitle: session.movieTitle,
+              movieType: session.movieType,
+              watchLink: res.data.data.watchLink,
+            });
+          }
         }
       } catch (e) {
         console.error("Failed to restore default source link:", e);
@@ -285,13 +303,22 @@ export default function CinemaPage() {
     }
 
     if (links && links[sourceKey]) {
-      socket.emit("cinema_select_movie", {
-        relationshipId: getRelationshipId(user.relationshipId),
-        movieId: session.movieId,
-        movieTitle: session.movieTitle,
-        movieType: session.movieType,
-        watchLink: links[sourceKey],
-      });
+      // Use cinema_change_source when show is already started to preserve session state
+      if (session.showStarted) {
+        socket.emit("cinema_change_source", {
+          relationshipId: getRelationshipId(user.relationshipId),
+          watchLink: links[sourceKey],
+          sourceKey,
+        });
+      } else {
+        socket.emit("cinema_select_movie", {
+          relationshipId: getRelationshipId(user.relationshipId),
+          movieId: session.movieId,
+          movieTitle: session.movieTitle,
+          movieType: session.movieType,
+          watchLink: links[sourceKey],
+        });
+      }
     } else {
       setSourceError(`Couldn't find "${session.movieTitle}" on external databases. Try a different source.`);
       setTimeout(() => setSourceError(null), 5000);
@@ -360,6 +387,11 @@ export default function CinemaPage() {
 
     socket.on("cinema_server_changed", (data: { server: string }) => {
       document.body.setAttribute("data-love-sync-server", data.server);
+    });
+
+    // Listen to source changes from partner (syncs the dropdown)
+    socket.on("cinema_source_changed", (data: { sourceKey: string; watchLink: string }) => {
+      setActiveSource(data.sourceKey);
     });
 
     // Listen to partner presence changes
@@ -438,6 +470,7 @@ export default function CinemaPage() {
       socket.off("connect", handleConnect);
       socket.off("cinema_session_state");
       socket.off("cinema_server_changed");
+      socket.off("cinema_source_changed");
       socket.off("partner_joined_cinema");
       socket.off("partner_left_cinema");
       socket.off("cinema_chat_received");

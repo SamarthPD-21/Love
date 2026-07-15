@@ -275,6 +275,21 @@ const getRelId = (rel: any): string => {
       }
     });
 
+    // Source change mid-show — only updates watchLink, preserves show state
+    socket.on("cinema_change_source", (payload: { relationshipId: any; watchLink: string; sourceKey: string }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      if (!relationshipId) return;
+
+      const session = activeCinemaSessions.get(relationshipId);
+      if (session) {
+        session.watchLink = payload.watchLink;
+        session.updatedAt = Date.now();
+        // Broadcast to ALL clients in the room (including sender) so everyone syncs
+        io?.to(`cinema:${relationshipId}`).emit("cinema_session_state", session);
+        io?.to(`cinema:${relationshipId}`).emit("cinema_source_changed", { sourceKey: payload.sourceKey, watchLink: payload.watchLink });
+      }
+    });
+
     socket.on("cinema_change_server", (payload: { relationshipId: any; server: string }) => {
       const relationshipId = getRelId(payload.relationshipId);
       if (!relationshipId) return;
