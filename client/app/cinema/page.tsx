@@ -643,33 +643,44 @@ export default function CinemaPage() {
     if (!socket || !user || !user.relationshipId || !link) return;
     const relId = getRelationshipId(user.relationshipId);
 
-    // Extract file ID from different formats:
-    // https://drive.google.com/file/d/FILE_ID/view...
-    // https://drive.google.com/open?id=FILE_ID
-    const fileIdMatch = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    const fileId = fileIdMatch ? fileIdMatch[1] : null;
+    // If it is a Google Drive link, extract file ID and format to preview
+    if (link.includes("drive.google.com")) {
+      const fileIdMatch = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      const fileId = fileIdMatch ? fileIdMatch[1] : null;
 
-    if (!fileId) {
-      setSourceError("Invalid Google Drive link format. Make sure it contains '/file/d/FILE_ID'.");
-      setTimeout(() => setSourceError(null), 5000);
-      return;
+      if (!fileId) {
+        setSourceError("Invalid Google Drive link format. Make sure it contains '/file/d/FILE_ID'.");
+        setTimeout(() => setSourceError(null), 5000);
+        return;
+      }
+
+      const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      const title = customTitle?.trim() || "Shared Google Drive Video";
+
+      socket.emit("cinema_select_movie", {
+        relationshipId: relId,
+        movieId: `gdrive-${fileId}`,
+        movieTitle: title,
+        movieType: "movie",
+        watchLink: embedUrl,
+      });
+    } else {
+      // If it is any other URL, load it directly as a custom stream
+      const title = customTitle?.trim() || link.split("/").pop()?.split("?")[0] || "Custom Stream";
+      
+      socket.emit("cinema_select_movie", {
+        relationshipId: relId,
+        movieId: `custom-${Date.now()}`,
+        movieTitle: decodeURIComponent(title),
+        movieType: "movie",
+        watchLink: link.trim(),
+      });
     }
 
-    const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-    const title = customTitle?.trim() || "Shared Google Drive Video";
-
-    socket.emit("cinema_select_movie", {
-      relationshipId: relId,
-      movieId: `gdrive-${fileId}`,
-      movieTitle: title,
-      movieType: "movie",
-      watchLink: embedUrl,
-    });
-
+    playSound("chime");
     setGdriveLink("");
     setGdriveTitle("");
     setActiveSource("gdrive");
-    playSound("chime");
   };
 
   const handleChangeMovie = () => {
