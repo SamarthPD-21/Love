@@ -60,18 +60,6 @@ export default function PersistentPlayer() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       playerRef.current = new (window as any).YT.Player(containerId, {
-        height: "0",
-        width: "0",
-        videoId: currentSong?.youtubeVideoId || "",
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          disablekb: 1,
-          fs: 0,
-          rel: 0,
-          showinfo: 0,
-          iv_load_policy: 3,
-        },
         events: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onReady: (event: any) => {
@@ -165,11 +153,24 @@ export default function PersistentPlayer() {
 
   return (
     <>
-      {/* Hidden YouTube container */}
+      {/* Global YouTube Player Iframe (always mounted to prevent instance destruction) */}
       <div 
-        id={containerId} 
-        className="pointer-events-none absolute -left-96 -top-96 w-0 h-0 opacity-0 select-none" 
-      />
+        className={cn(
+          "transition-all duration-300 overflow-hidden bg-black rounded-2xl border border-border/40 shadow-2xl z-50",
+          currentSong && !isMinimized
+            ? "fixed bottom-[236px] left-4 right-4 sm:left-auto sm:bottom-[210px] sm:right-6 sm:w-80 aspect-video block"
+            : "w-[1px] h-[1px] opacity-0 pointer-events-none fixed -left-[9999px] -top-[9999px]"
+        )}
+      >
+        <iframe
+          id={containerId}
+          src={`https://www.youtube.com/embed/?enablejsapi=1&origin=${encodeURIComponent(
+            typeof window !== "undefined" ? window.location.origin : ""
+          )}`}
+          allow="autoplay; encrypted-media; fullscreen"
+          className="w-full h-full border-0"
+        />
+      </div>
 
       {/* Floating Player Panel */}
       <AnimatePresence mode="wait">

@@ -4,7 +4,9 @@ export interface ISong extends Document {
   _id: Types.ObjectId;
   title: string;
   artist: string;
-  url: string; // youtube/spotify link
+  url: string; // fallback or primary link
+  spotifyUrl?: string;
+  youtubeUrl?: string;
   notes?: string;
   youtubeVideoId?: string;
   relationshipId: Types.ObjectId;
@@ -27,6 +29,14 @@ const songSchema = new Schema<ISong>({
     type: String,
     required: true,
     trim: true,
+  },
+  spotifyUrl: {
+    type: String,
+    default: "",
+  },
+  youtubeUrl: {
+    type: String,
+    default: "",
   },
   notes: {
     type: String,
