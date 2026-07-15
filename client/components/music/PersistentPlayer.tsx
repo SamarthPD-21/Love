@@ -165,7 +165,7 @@ export default function PersistentPlayer() {
       >
         <iframe
           id={containerId}
-          src={`https://www.youtube.com/embed/?enablejsapi=1&origin=${encodeURIComponent(
+          src={`https://www.youtube-nocookie.com/embed/?enablejsapi=1&origin=${encodeURIComponent(
             typeof window !== "undefined" ? window.location.origin : ""
           )}`}
           allow="autoplay; encrypted-media; fullscreen"

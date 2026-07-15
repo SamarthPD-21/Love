@@ -196,7 +196,7 @@ export default function SongsPage() {
           videoId = urlObj.searchParams.get("v") || "";
         }
         if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
+          return `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
         }
       }
     } catch (e) {}
@@ -273,7 +273,7 @@ export default function SongsPage() {
             let playerHeight = 80;
 
             if (currentPref === "youtube" && hasYoutubeId) {
-              embedSrc = `https://www.youtube.com/embed/${song.youtubeVideoId}?enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
+              embedSrc = `https://www.youtube-nocookie.com/embed/${song.youtubeVideoId}?enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
               playerHeight = 160;
             } else {
               const defaultEmbed = hasSpotifyUrl ? getSpotifyTrackEmbed(song.spotifyUrl) : getEmbedUrl(song.url);
