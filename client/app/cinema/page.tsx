@@ -84,6 +84,8 @@ export default function CinemaPage() {
 
   const [isExtensionActive, setIsExtensionActive] = useState(false);
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const isRespondingToSocketRef = useRef(false);
 
   // New UI specific states
   const [chatOpen, setChatOpen] = useState(false);
@@ -401,6 +403,29 @@ export default function CinemaPage() {
           document.body.removeAttribute("data-love-sync-server");
         }
       }
+    });
+
+    socket.on("cinema_state_changed", (data: { status: "playing" | "paused"; currentTime: number; userId: string }) => {
+      if (data.userId === user?._id) return;
+      
+      const video = videoRef.current;
+      if (!video) return;
+
+      isRespondingToSocketRef.current = true;
+
+      if (Math.abs(video.currentTime - data.currentTime) > 1.5) {
+        video.currentTime = data.currentTime;
+      }
+
+      if (data.status === "playing") {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+
+      setTimeout(() => {
+        isRespondingToSocketRef.current = false;
+      }, 500);
     });
 
     socket.on("cinema_server_changed", (data: { server: string }) => {
@@ -756,12 +781,45 @@ export default function CinemaPage() {
       );
     }
 
+    // Direct event listener props to sync HTML5 video elements without extension dependencies
+    const syncVideoProps = {
+      ref: videoRef,
+      onPlay: () => {
+        if (isRespondingToSocketRef.current || !socket) return;
+        const relId = getRelationshipId(user?.relationshipId || "");
+        socket.emit("cinema_state_change", {
+          relationshipId: relId,
+          status: "playing",
+          currentTime: videoRef.current?.currentTime || 0,
+        });
+      },
+      onPause: () => {
+        if (isRespondingToSocketRef.current || !socket) return;
+        const relId = getRelationshipId(user?.relationshipId || "");
+        socket.emit("cinema_state_change", {
+          relationshipId: relId,
+          status: "paused",
+          currentTime: videoRef.current?.currentTime || 0,
+        });
+      },
+      onSeeked: () => {
+        if (isRespondingToSocketRef.current || !socket) return;
+        const relId = getRelationshipId(user?.relationshipId || "");
+        socket.emit("cinema_state_change", {
+          relationshipId: relId,
+          status: videoRef.current?.paused ? "paused" : "playing",
+          currentTime: videoRef.current?.currentTime || 0,
+        });
+      },
+    };
+
     // If it is a local file co-watching session
     if (session.watchLink === "local") {
       if (localFile) {
         return (
           <video
             src={localFileUrl}
+            {...syncVideoProps}
             className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
             controls
             autoPlay
@@ -810,6 +868,7 @@ export default function CinemaPage() {
       return (
         <video
           src={session.watchLink}
+          {...syncVideoProps}
           className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
           controls
           autoPlay
@@ -825,6 +884,7 @@ export default function CinemaPage() {
       return (
         <video
           src={directUrl}
+          {...syncVideoProps}
           className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
           controls
           autoPlay
