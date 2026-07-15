@@ -812,6 +812,9 @@ export default function CinemaPage() {
           currentTime: videoRef.current?.currentTime || 0,
         });
       },
+      onVolumeChange: (e: any) => {
+        setVideoMuted(e.currentTarget.muted);
+      },
     };
 
     // If it is a local file co-watching session
