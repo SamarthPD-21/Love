@@ -146,15 +146,16 @@ interface WikidataResult {
   results: {
     bindings: Array<{
       imdbID?: { value: string };
+      tmdbID?: { value: string };
       wikidataClass?: { value: string };
     }>;
   };
 }
 
-async function fetchImdbIdFromWikidata(
+async function fetchIdsFromWikidata(
   title: string,
   type: "movie" | "show"
-): Promise<string | null> {
+): Promise<{ imdbId: string | null; tmdbId: string | null }> {
   try {
     // Q11424 = film, Q5398426 = television series
     const typeFilter =
@@ -165,10 +166,11 @@ async function fetchImdbIdFromWikidata(
     // Try case-insensitive label match first, then looser CONTAINS search
     const escapedTitle = title.replace(/"/g, '\\"');
     const sparqlExact = `
-      SELECT ?imdbID WHERE {
+      SELECT ?imdbID ?tmdbID WHERE {
         ${typeFilter}
         ?item wdt:P31 ?class .
         ?item wdt:P345 ?imdbID .
+        OPTIONAL { ?item wdt:P4947 ?tmdbID . }
         ?item rdfs:label ?label .
         FILTER(LCASE(STR(?label)) = LCASE("${escapedTitle}"))
       }
@@ -176,10 +178,11 @@ async function fetchImdbIdFromWikidata(
     `;
 
     const sparqlFuzzy = `
-      SELECT ?imdbID ?label WHERE {
+      SELECT ?imdbID ?tmdbID ?label WHERE {
         ${typeFilter}
         ?item wdt:P31 ?class .
         ?item wdt:P345 ?imdbID .
+        OPTIONAL { ?item wdt:P4947 ?tmdbID . }
         ?item rdfs:label ?label .
         FILTER(CONTAINS(LCASE(STR(?label)), LCASE("${escapedTitle}")))
       }
@@ -194,13 +197,16 @@ async function fetchImdbIdFromWikidata(
 
     // Try exact first
     let res = await fetch(`${endpoint}?query=${encodeURIComponent(sparqlExact)}`, { headers });
+    let imdbId: string | null = null;
+    let tmdbId: string | null = null;
     if (res.ok) {
       const json = (await res.json()) as WikidataResult;
       const bindings = json.results?.bindings ?? [];
       if (bindings.length > 0 && bindings[0].imdbID) {
-        const id = bindings[0].imdbID.value;
-        console.log(`[MovieBot] Wikidata exact match for "${title}": ${id}`);
-        return id;
+        imdbId = bindings[0].imdbID.value;
+        if (bindings[0].tmdbID) tmdbId = bindings[0].tmdbID.value;
+        console.log(`[MovieBot] Wikidata exact match for "${title}": IMDB=${imdbId}, TMDB=${tmdbId}`);
+        return { imdbId, tmdbId };
       }
     }
 
@@ -210,15 +216,16 @@ async function fetchImdbIdFromWikidata(
     const json = (await res.json()) as WikidataResult;
     const bindings = json.results?.bindings ?? [];
     if (bindings.length > 0 && bindings[0].imdbID) {
-      const id = bindings[0].imdbID.value;
-      console.log(`[MovieBot] Wikidata fuzzy match for "${title}": ${id}`);
-      return id;
+      imdbId = bindings[0].imdbID.value;
+      if (bindings[0].tmdbID) tmdbId = bindings[0].tmdbID.value;
+      console.log(`[MovieBot] Wikidata fuzzy match for "${title}": IMDB=${imdbId}, TMDB=${tmdbId}`);
+      return { imdbId, tmdbId };
     }
 
-    return null;
+    return { imdbId: null, tmdbId: null };
   } catch (err) {
-    console.error(`fetchImdbIdFromWikidata error for "${title}":`, err);
-    return null;
+    console.error(`fetchIdsFromWikidata error for "${title}":`, err);
+    return { imdbId: null, tmdbId: null };
   }
 }
 
@@ -226,21 +233,32 @@ async function fetchWatchLinkFromVidSrc(
   title: string,
   type: "movie" | "show"
 ): Promise<string | null> {
-  const imdbId = await fetchImdbIdFromWikidata(title, type);
-  if (!imdbId) return null;
+  const { imdbId, tmdbId } = await fetchIdsFromWikidata(title, type);
+  if (!imdbId && !tmdbId) return null;
 
   const mediaType = type === "movie" ? "movie" : "tv";
 
-  // Try multiple embed sources in order of reliability/speed
-  const embedSources = [
-    { name: "VidSrc.to", url: `https://vidsrc.to/embed/${mediaType}/${imdbId}` },
-    { name: "VidSrcMe.ru", url: `https://vidsrcme.ru/embed/${mediaType}/${imdbId}` },
-    { name: "VidSrc.xyz", url: `https://vidsrc.xyz/embed/${mediaType}/${imdbId}` },
-    { name: "Embed.su", url: `https://embed.su/embed/${mediaType}/${imdbId}` },
-    { name: "AutoEmbed", url: `https://player.autoembed.cc/embed/${mediaType}/${imdbId}` },
-    { name: "2Embed", url: `https://2embed.cc/embed/${imdbId}` },
-    { name: "SmashyStream", url: `https://player.smashy.stream/${mediaType}/${imdbId}` },
-  ];
+  // Build embed sources list: IMDB-based sources + TMDB-based sources
+  const embedSources: Array<{ name: string; url: string }> = [];
+
+  if (imdbId) {
+    embedSources.push(
+      { name: "VidSrc.to", url: `https://vidsrc.to/embed/${mediaType}/${imdbId}` },
+      { name: "VidSrcMe.ru", url: `https://vidsrcme.ru/embed/${mediaType}/${imdbId}` },
+      { name: "VidSrc.xyz", url: `https://vidsrc.xyz/embed/${mediaType}/${imdbId}` },
+      { name: "Embed.su", url: `https://embed.su/embed/${mediaType}/${imdbId}` },
+      { name: "AutoEmbed", url: `https://player.autoembed.cc/embed/${mediaType}/${imdbId}` },
+      { name: "2Embed", url: `https://2embed.cc/embed/${imdbId}` },
+      { name: "SmashyStream", url: `https://player.smashy.stream/${mediaType}/${imdbId}` },
+    );
+  }
+
+  if (tmdbId) {
+    embedSources.push(
+      { name: "Cineby", url: `https://www.cineby.at/${mediaType}/${tmdbId}` },
+      { name: "BFlix", url: `https://bflixs.us/${mediaType}/${tmdbId}` },
+    );
+  }
 
   // Quick HEAD check to find first responding source
   for (const source of embedSources) {
@@ -262,10 +280,13 @@ async function fetchWatchLinkFromVidSrc(
     }
   }
 
-  // Fallback: return vidsrc.to anyway (may work client-side with extension headers)
-  const fallback = embedSources[0].url;
-  console.log(`[MovieBot] No embed source responded via HEAD, using fallback for "${title}": ${fallback}`);
-  return fallback;
+  // Fallback: return first available embed anyway (may work client-side with extension headers)
+  const fallback = embedSources[0]?.url;
+  if (fallback) {
+    console.log(`[MovieBot] No embed source responded via HEAD, using fallback for "${title}": ${fallback}`);
+    return fallback;
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------

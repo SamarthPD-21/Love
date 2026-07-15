@@ -124,6 +124,12 @@ export default function CinemaPage() {
     smashystream: (id, t) => `https://player.smashy.stream/${t}/${id}`,
   };
 
+  // Map of TMDB-based sources (key → url builder fn using TMDB ID)
+  const tmdbSourceBuilders: Record<string, (tmdbId: string, mediaType: string) => string> = {
+    cineby: (id, t) => `https://www.cineby.at/${t}/${id}`,
+    bflix: (id, t) => `https://bflixs.us/${t}/${id}`,
+  };
+
   useEffect(() => {
     if (session?.watchLink) {
       const knownSource = Object.entries(altSourceBuilders).find(([, builder]) => {
@@ -168,6 +174,7 @@ export default function CinemaPage() {
         const escapedTitle = session.movieTitle.replace(/"/g, '\\"');
         const mediaType = session.movieType === "movie" ? "movie" : "tv";
         let imdbId: string | null = null;
+        let tmdbId: string | null = null;
 
         // --- Attempt 1: Wikidata SPARQL (exact match) ---
         const typeFilter =
@@ -176,10 +183,11 @@ export default function CinemaPage() {
             : `VALUES ?class { wd:Q5398426 wd:Q21191270 wd:Q63952888 }`;
 
         const exactQuery = `
-          SELECT ?imdbID WHERE {
+          SELECT ?imdbID ?tmdbID WHERE {
             ${typeFilter}
             ?item wdt:P31 ?class .
             ?item wdt:P345 ?imdbID .
+            OPTIONAL { ?item wdt:P4947 ?tmdbID . }
             ?item rdfs:label ?label .
             FILTER(LCASE(STR(?label)) = LCASE("${escapedTitle}"))
           }
@@ -196,6 +204,7 @@ export default function CinemaPage() {
             const bindings = json.results?.bindings ?? [];
             if (bindings.length > 0 && bindings[0].imdbID) {
               imdbId = bindings[0].imdbID.value;
+              if (bindings[0].tmdbID) tmdbId = bindings[0].tmdbID.value;
             }
           }
         } catch {
@@ -205,10 +214,11 @@ export default function CinemaPage() {
         // --- Attempt 2: Wikidata SPARQL (fuzzy CONTAINS match) ---
         if (!imdbId) {
           const fuzzyQuery = `
-            SELECT ?imdbID WHERE {
+            SELECT ?imdbID ?tmdbID WHERE {
               ${typeFilter}
               ?item wdt:P31 ?class .
               ?item wdt:P345 ?imdbID .
+              OPTIONAL { ?item wdt:P4947 ?tmdbID . }
               ?item rdfs:label ?label .
               FILTER(CONTAINS(LCASE(STR(?label)), LCASE("${escapedTitle}")))
             }
@@ -223,6 +233,7 @@ export default function CinemaPage() {
               const bindings = json.results?.bindings ?? [];
               if (bindings.length > 0 && bindings[0].imdbID) {
                 imdbId = bindings[0].imdbID.value;
+                if (!tmdbId && bindings[0].tmdbID) tmdbId = bindings[0].tmdbID.value;
               }
             }
           } catch {
@@ -247,11 +258,18 @@ export default function CinemaPage() {
           }
         }
 
-        // Build all alternative links from our resolved IMDB ID
-        if (imdbId) {
+        // Build all alternative links from our resolved IMDB ID + TMDB ID
+        if (imdbId || tmdbId) {
           const built: Record<string, string> = {};
-          for (const [key, builder] of Object.entries(altSourceBuilders)) {
-            built[key] = builder(imdbId, mediaType);
+          if (imdbId) {
+            for (const [key, builder] of Object.entries(altSourceBuilders)) {
+              built[key] = builder(imdbId, mediaType);
+            }
+          }
+          if (tmdbId) {
+            for (const [key, builder] of Object.entries(tmdbSourceBuilders)) {
+              built[key] = builder(tmdbId, mediaType);
+            }
           }
           links = built;
           setCachedAlternativeLinks((prev) => ({
@@ -1139,6 +1157,8 @@ export default function CinemaPage() {
                     <option value="embedsu">🎥 Embed.su</option>
                     <option value="autoembed">🤖 AutoEmbed</option>
                     <option value="smashystream">💥 SmashyStream</option>
+                    <option value="cineby">🎬 Cineby</option>
+                    <option value="bflix">🅱️ BFlix</option>
                   </select>
                 )}
 
