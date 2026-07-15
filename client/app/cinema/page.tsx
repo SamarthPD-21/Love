@@ -747,7 +747,7 @@ export default function CinemaPage() {
   const reactions = ["❤️", "😂", "😢", "😱", "🍿", "🎉"];
 
   return (
-    <div className="relative w-full h-screen overflow-hidden cinema-page flex select-none bg-[#05050f]">
+    <div className="relative w-full h-screen overflow-hidden cinema-page cinema-root flex select-none bg-[#05050f]">
       {/* Premium Toast Notification for Source Error */}
       <AnimatePresence>
         {sourceError && (
@@ -868,9 +868,9 @@ export default function CinemaPage() {
             </div>
 
             {/* Google Drive Link co-watching section */}
-            <div className="mb-8 p-6 rounded-3xl cinema-glass-panel border border-white/5 shadow-2xl relative overflow-hidden">
+            <div className="mb-8 p-6 rounded-3xl cinema-glass-panel border border-white/5 shadow-2xl relative flex flex-col gap-4">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#E8587A]/5 blur-3xl pointer-events-none" />
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#E8587A]/10 flex items-center justify-center text-[#E8587A]">
                   <Link2 className="w-4 h-4" />
                 </div>
@@ -878,18 +878,18 @@ export default function CinemaPage() {
                   <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
                     Watch via Google Drive Link
                   </h3>
-                  <p className="text-[10px] text-zinc-500">
+                  <p className="text-[10px] text-zinc-400">
                     Paste any shared Google Drive video link to watch it in real-time sync with your partner
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <input
                   type="text"
                   placeholder="Enter Title (optional)"
                   value={gdriveTitle}
                   onChange={(e) => setGdriveTitle(e.target.value)}
-                  className="px-4 py-3 rounded-2xl text-xs bg-white/[0.01] border border-white/5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#E8587A]/30 transition-all sm:w-1/3"
+                  className="px-4 py-3 rounded-2xl text-xs bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all sm:w-1/3"
                 />
                 <div className="flex-1 flex gap-2">
                   <input
@@ -897,11 +897,11 @@ export default function CinemaPage() {
                     placeholder="https://drive.google.com/file/d/FILE_ID/view"
                     value={gdriveLink}
                     onChange={(e) => setGdriveLink(e.target.value)}
-                    className="flex-1 px-4 py-3 rounded-2xl text-xs bg-white/[0.01] border border-white/5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#E8587A]/30 transition-all"
+                    className="flex-1 px-4 py-3 rounded-2xl text-xs bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all"
                   />
                   <button
                     onClick={() => handleLoadGDriveLink(gdriveLink, gdriveTitle)}
-                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2 flex-shrink-0"
                   >
                     <span>Load</span>
                     <Play className="w-3 h-3 fill-white stroke-none" />
@@ -913,24 +913,24 @@ export default function CinemaPage() {
             {/* Filters and Search */}
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search movies & TV shows..."
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm bg-white/[0.01] border border-white/5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#E8587A]/30 focus:bg-white/[0.02] transition-all"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all"
                 />
               </div>
 
-              <div className="flex bg-white/[0.02] border border-white/5 rounded-2xl p-1.5 self-start sm:self-auto shadow-inner">
+              <div className="flex bg-zinc-900/60 border border-white/10 rounded-2xl p-1.5 self-start sm:self-auto shadow-inner">
                 <button
                   onClick={() => setActiveFilter("watchlist")}
                   className={cn(
                     "px-6 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all",
                     activeFilter === "watchlist"
-                      ? "bg-[#E8587A] text-white shadow-lg"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      ? "bg-[#E8587A] text-white shadow-lg shadow-[#E8587A]/15"
+                      : "text-zinc-500 hover:text-zinc-350"
                   )}
                 >
                   Watchlist
@@ -940,8 +940,8 @@ export default function CinemaPage() {
                   className={cn(
                     "px-6 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all",
                     activeFilter === "watched"
-                      ? "bg-[#E8587A] text-white shadow-lg"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      ? "bg-[#E8587A] text-white shadow-lg shadow-[#E8587A]/15"
+                      : "text-zinc-500 hover:text-zinc-355"
                   )}
                 >
                   Watched History
@@ -982,43 +982,68 @@ export default function CinemaPage() {
                     {filtered.map((movie) => (
                       <div
                         key={movie._id}
-                        className="cinema-lobby-card p-5 flex flex-col justify-between min-h-[160px] cursor-pointer"
+                        className="cinema-lobby-card p-4 flex gap-4 cursor-pointer"
                         onClick={() => handleLoadMovie(movie)}
                       >
-                        <div>
-                          <div className="flex items-center justify-between gap-3 mb-2">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-[#D4A574] bg-[#D4A574]/10 px-2.5 py-1 rounded-md">
-                              {movie.type}
-                            </span>
-                            {movie.rating && (
-                              <div className="flex items-center gap-1 text-[#D4A574]">
-                                <Star className="w-3.5 h-3.5 fill-[#D4A574] stroke-none" />
-                                <span className="text-xs font-black">{movie.rating}</span>
-                              </div>
-                            )}
-                          </div>
-                          <h3 className="text-base font-bold text-white tracking-wide mt-2 line-clamp-2">
-                            {movie.title}
-                          </h3>
+                        {/* Left Side: Poster Image or Fallback */}
+                        <div className="w-20 h-28 rounded-xl overflow-hidden flex-shrink-0 relative bg-zinc-900 shadow-lg border border-white/5">
+                          {movie.posterUrl ? (
+                            <img
+                              src={movie.posterUrl}
+                              alt={movie.title}
+                              className="w-full h-full object-cover transition-transform duration-500 hover:scale-115"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950 flex flex-col items-center justify-center text-zinc-650 p-2 text-center">
+                              <Film className="w-6 h-6 mb-1 text-zinc-700 animate-pulse" />
+                              <span className="text-[8px] font-black uppercase tracking-wider text-zinc-500">No Cover</span>
+                            </div>
+                          )}
+                          
+                          {/* Rating Overlay on Poster */}
+                          {movie.rating && (
+                            <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/75 backdrop-blur-xs text-[#D4A574] text-[9px] font-black">
+                              <Star className="w-2.5 h-2.5 fill-[#D4A574] stroke-none" />
+                              <span>{movie.rating}</span>
+                            </div>
+                          )}
                         </div>
 
-                        <div className="flex items-center justify-between gap-3 mt-4 border-t border-white/5 pt-4">
-                          <span className="text-[10px] font-bold text-zinc-650 flex items-center gap-1">
-                            {movie.watchLink ? (
-                              <>
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                <span>Watch Link Available</span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-                                <span>No watch link</span>
-                              </>
-                            )}
-                          </span>
-                          <button className="px-4 py-2 rounded-xl bg-white/[0.04] hover:bg-[#E8587A] text-white text-xs font-bold transition-all cursor-pointer">
-                            Load 🎬
-                          </button>
+                        {/* Right Side: Details & Load Action */}
+                        <div className="flex-1 flex flex-col justify-between py-0.5">
+                          <div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[8px] font-black uppercase tracking-widest text-[#D4A574] bg-[#D4A574]/10 px-2 py-0.5 rounded">
+                                {movie.type}
+                              </span>
+                              <span className="text-[9px] font-semibold text-zinc-500">
+                                {movie.watchLink ? "Available" : "Sync Only"}
+                              </span>
+                            </div>
+                            <h3 className="text-sm font-extrabold text-white tracking-wide mt-2 line-clamp-2 leading-snug font-serif">
+                              {movie.title}
+                            </h3>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/5">
+                            <span className="text-[9px] font-bold text-zinc-500 flex items-center gap-1">
+                              {movie.watchLink ? (
+                                <>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_#10b981]" />
+                                  <span className="text-zinc-400">Stream Ready</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
+                                  <span className="text-zinc-500">Remote Only</span>
+                                </>
+                              )}
+                            </span>
+                            <button className="px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-[#E8587A] text-white text-[10px] font-bold transition-all cursor-pointer hover:shadow-lg hover:shadow-[#E8587A]/25 active:scale-95">
+                              Load 🎬
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
