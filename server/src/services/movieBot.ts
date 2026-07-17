@@ -16,6 +16,60 @@ function normalizeTitle(title: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Source -1 – vidking.net (scrapes DuckDuckGo for TMDB IDs)
+// ---------------------------------------------------------------------------
+
+export async function fetchWatchLinkFromVidking(
+  title: string,
+  type: "movie" | "show"
+): Promise<string | null> {
+  try {
+    const targetSite = type === "movie" ? "themoviedb.org/movie" : "themoviedb.org/tv";
+    const query = `site:${targetSite} ${title}`;
+    const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+
+    const res = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error(`DDG status: ${res.status}`);
+    }
+
+    const html = await res.text();
+    const regex = type === "movie"
+      ? /themoviedb\.org\/movie\/(\d+)/i
+      : /themoviedb\.org\/tv\/(\d+)/i;
+
+    const decodedHtml = decodeURIComponent(html);
+    const match = regex.exec(decodedHtml);
+
+    if (match) {
+      const tmdbId = match[1];
+      const mediaType = type === "movie" ? "movie" : "tv";
+      const embedUrl = `https://www.vidking.net/embed/${mediaType}/${tmdbId}`;
+
+      const check = await fetch(embedUrl, {
+        method: "HEAD",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        }
+      });
+
+      if (check.ok) {
+        console.log(`[MovieBot] Vidking watchLink resolved for "${title}": ${embedUrl}`);
+        return embedUrl;
+      }
+    }
+  } catch (err) {
+    console.error(`[MovieBot] fetchWatchLinkFromVidking error for "${title}":`, err);
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Source 0 – netmirror.global (scrapes netmirror search API)
 // ---------------------------------------------------------------------------
 
@@ -308,17 +362,23 @@ export async function fetchWatchLink(movieId: string): Promise<void> {
 
     console.log(`[MovieBot] Resolving link for "${movie.title}" (${movie.type})...`);
 
-    // Attempt 1: netmirror.global (fast, uses clean backend API)
-    console.log(`[MovieBot] Trying NetMirror for "${movie.title}"...`);
-    let link = await fetchWatchLinkFromNetMirror(movie.title, movie.type);
+    // Attempt 1: vidking.net (first & default)
+    console.log(`[MovieBot] Trying Vidking for "${movie.title}"...`);
+    let link = await fetchWatchLinkFromVidking(movie.title, movie.type);
 
-    // Attempt 2: 1hd.art (fast, works on residential IPs)
+    // Attempt 2: netmirror.global (fast, uses clean backend API)
+    if (!link) {
+      console.log(`[MovieBot] Trying NetMirror for "${movie.title}"...`);
+      link = await fetchWatchLinkFromNetMirror(movie.title, movie.type);
+    }
+
+    // Attempt 3: 1hd.art (fast, works on residential IPs)
     if (!link) {
       console.log(`[MovieBot] Trying 1hd.art for "${movie.title}"...`);
       link = await fetchWatchLinkFrom1HD(movie.title, movie.type);
     }
 
-    // Attempt 3: Wikidata → VidSrc (always works on Render, no API key needed)
+    // Attempt 4: Wikidata → VidSrc (always works on Render, no API key needed)
     if (!link) {
       console.log(`[MovieBot] 1hd.art blocked, trying Wikidata → VidSrc for "${movie.title}"...`);
       link = await fetchWatchLinkFromVidSrc(movie.title, movie.type);

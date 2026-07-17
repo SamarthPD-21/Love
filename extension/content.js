@@ -102,6 +102,7 @@ if (isAppDomain) {
 // 1.5. Maximize video player to cover full iframe viewport (Dynamic CSS Injection)
 const isPlayerDomain = 
   window.location.host.includes("1hd.art") || 
+  window.location.host.includes("vidking.net") || 
   window.location.host.includes("rabbitstream") || 
   window.location.host.includes("upcloud") || 
   window.location.host.includes("vidcloud") || 
