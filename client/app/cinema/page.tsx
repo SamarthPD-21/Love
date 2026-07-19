@@ -354,8 +354,7 @@ export default function CinemaPage() {
   const [chatSoundEnabled, setChatSoundEnabled] = useState(true);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [iframeError, setIframeError] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [interactionsOpen, setInteractionsOpen] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<"chat" | "settings">("chat");
 
   // Language States
   const [uiLang, setUiLang] = useState<string>(() => {
@@ -1999,6 +1998,26 @@ export default function CinemaPage() {
             <div className="w-full h-full relative flex items-center justify-center bg-black">
               {playerIframe}
 
+              {/* Iframe connection/loading backup link helper */}
+              {session.watchLink && session.watchLink !== "local" && !(
+                session.watchLink.endsWith(".mp4") || 
+                session.watchLink.endsWith(".webm") ||
+                session.watchLink.includes(".mp4?") || 
+                session.watchLink.includes(".webm?")
+              ) && (
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+                  <a
+                    href={session.watchLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/95 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition-all hover:scale-105 active:scale-95 shadow-lg backdrop-blur-xs"
+                  >
+                    <span>{uiLang === "es" ? "¿Problemas al cargar? Abrir en pestaña nueva" : uiLang === "ja" ? "読み込めない場合、新しいタブで開く" : "Having trouble loading? Open in new tab"}</span>
+                    <ExternalLink className="w-3 h-3 text-[#E8587A]" />
+                  </a>
+                </div>
+              )}
+
               {/* Extension Inactive Warning Overlay */}
               {!isExtensionActive && (
                 <div className="absolute top-20 left-6 right-6 sm:left-auto sm:right-6 max-w-sm p-4.5 rounded-2xl bg-zinc-950/95 border border-white/5 text-zinc-400 text-xs font-semibold leading-relaxed flex flex-col gap-2.5 z-30 shadow-2xl backdrop-blur-md">
@@ -2025,285 +2044,86 @@ export default function CinemaPage() {
             {/* Auto-Hiding Control Bar */}
             <div
               className={cn(
-                "cinema-bar-transition cinema-control-glow fixed bottom-6 left-1/2 -translate-x-1/2 cinema-glass-panel p-2 flex items-center justify-between gap-6 z-40 max-w-[95%] w-[270px]",
+                "cinema-bar-transition cinema-control-glow fixed bottom-6 left-1/2 -translate-x-1/2 cinema-glass-panel p-2 flex items-center justify-center gap-3.5 z-40 max-w-[95%] w-[210px]",
                 !controlsVisible && "cinema-bar-hidden cinema-controls-hidden"
               )}
             >
-              {/* Core controls in a single clean row */}
-              <div className="flex items-center gap-3 w-full justify-around">
-                {/* 1. Lights dim toggle */}
-                <button
-                  onClick={handleToggleLights}
-                  className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
-                    dimmed
-                      ? "bg-[#D4A574]/20 border-[#D4A574]/40 text-[#D4A574] shadow-[0_0_10px_rgba(212,165,116,0.2)]"
-                      : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
-                  )}
-                  title="Toggle Ambient Lights"
-                >
-                  <Tv className="w-4 h-4" />
-                </button>
+              {/* 1. Lights dim toggle */}
+              <button
+                onClick={handleToggleLights}
+                className={cn(
+                  "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
+                  dimmed
+                    ? "bg-[#D4A574]/20 border-[#D4A574]/40 text-[#D4A574] shadow-[0_0_10px_rgba(212,165,116,0.2)]"
+                    : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
+                )}
+                title="Toggle Ambient Lights"
+              >
+                <Tv className="w-4 h-4" />
+              </button>
 
-                {/* 2. Audio Mute Toggle */}
-                <button
-                  onClick={() => setVideoMuted(prev => !prev)}
-                  className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
-                    videoMuted
-                      ? "bg-rose-500/20 border-rose-500/40 text-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.2)]"
-                      : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
-                  )}
-                  title={videoMuted ? "Unmute audio" : "Mute audio"}
-                >
-                  {videoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                </button>
+              {/* 2. Audio Mute Toggle */}
+              <button
+                onClick={() => setVideoMuted(prev => !prev)}
+                className={cn(
+                  "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
+                  videoMuted
+                    ? "bg-rose-500/20 border-rose-500/40 text-rose-450 shadow-[0_0_10px_rgba(244,63,94,0.2)]"
+                    : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
+                )}
+                title={videoMuted ? "Unmute audio" : "Mute audio"}
+              >
+                {videoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
 
-                {/* 3. Interactions Popover Toggle */}
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      setInteractionsOpen(!interactionsOpen);
-                      setSettingsOpen(false);
-                    }}
-                    className={cn(
-                      "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
-                      interactionsOpen
-                        ? "bg-[#E8587A]/20 border-[#E8587A]/40 text-[#E8587A] shadow-[0_0_10px_rgba(232,88,122,0.2)]"
-                        : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
-                    )}
-                    title="Date Interactions"
-                  >
-                    <Heart className="w-4 h-4 fill-current" />
-                  </button>
+              {/* 3. Settings Sidebar Tab Toggle */}
+              <button
+                onClick={() => {
+                  if (chatOpen && sidebarTab === "settings") {
+                    setChatOpen(false);
+                  } else {
+                    setChatOpen(true);
+                    setSidebarTab("settings");
+                  }
+                  playSound("tap");
+                }}
+                className={cn(
+                  "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
+                  (chatOpen && sidebarTab === "settings")
+                    ? "bg-zinc-800 border-white/15 text-white"
+                    : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
+                )}
+                title="Theater Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
 
-                  <AnimatePresence>
-                    {interactionsOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                        transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
-                        className="absolute bottom-12 left-1/2 -translate-x-1/2 p-3 rounded-2xl cinema-glass-panel border border-white/5 shadow-2xl flex flex-col gap-2.5 z-50 w-[240px]"
-                      >
-                        <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
-                          <span className="text-[9px] font-black uppercase text-zinc-400 tracking-wider">Date Actions</span>
-                          <button onClick={() => setInteractionsOpen(false)} className="text-zinc-500 hover:text-white"><X className="w-3 h-3" /></button>
-                        </div>
-                        {/* Reaction Emojis */}
-                        <div className="grid grid-cols-6 gap-1 justify-items-center">
-                          {reactions.map((emoji) => (
-                            <button
-                              key={emoji}
-                              onClick={() => {
-                                handleSendReaction(emoji);
-                                setInteractionsOpen(false);
-                              }}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5 text-sm transition-all cursor-pointer active:scale-90"
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 mt-1">
-                          <button
-                            onClick={() => {
-                              handleThrowPopcorn();
-                              setInteractionsOpen(false);
-                            }}
-                            className="bg-white/5 hover:bg-white/10 text-zinc-300 px-2 py-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer active:scale-95 border border-white/5 flex items-center justify-center gap-1"
-                          >
-                            <span>🍿 Popcorn</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleSendCuddle();
-                              setInteractionsOpen(false);
-                            }}
-                            className="bg-[#E8587A]/15 hover:bg-[#E8587A]/25 text-[#E8587A] px-2 py-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer active:scale-95 border border-[#E8587A]/20 flex items-center justify-center gap-1"
-                          >
-                            <span>🤗 Cuddle</span>
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* 4. Settings Popover Toggle */}
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      setSettingsOpen(!settingsOpen);
-                      setInteractionsOpen(false);
-                    }}
-                    className={cn(
-                      "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
-                      settingsOpen
-                        ? "bg-zinc-800 border-white/15 text-white"
-                        : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
-                    )}
-                    title="Theater Settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
-
-                  <AnimatePresence>
-                    {settingsOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                        transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
-                        className="absolute bottom-12 left-1/2 -translate-x-1/2 p-3.5 rounded-2xl cinema-glass-panel border border-white/5 shadow-2xl flex flex-col gap-3 z-50 w-[250px]"
-                      >
-                        <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
-                          <span className="text-[9px] font-black uppercase text-zinc-400 tracking-wider">Settings</span>
-                          <button onClick={() => setSettingsOpen(false)} className="text-zinc-500 hover:text-white"><X className="w-3 h-3" /></button>
-                        </div>
-
-                        {/* Stream options (Source select) */}
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">Source</span>
-                          {session?.movieId?.startsWith("gdrive-") ? (
-                            <div className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 flex items-center justify-between select-none">
-                              <span>📁 Google Drive</span>
-                              <button
-                                onClick={() => setGdrivePlayerMode(prev => prev === "iframe" ? "html5" : "iframe")}
-                                className="text-[8px] font-black uppercase text-[#E8587A] hover:underline"
-                              >
-                                {gdrivePlayerMode === "iframe" ? "Direct" : "Google"}
-                              </button>
-                            </div>
-                          ) : resolvingSource ? (
-                            <div className="flex items-center gap-2 text-xs text-zinc-500 px-3 py-1">
-                              <Loader2 className="w-3 animate-spin text-[#E8587A]" />
-                              <span>Resolving...</span>
-                            </div>
-                          ) : (
-                            <select
-                              value={activeSource}
-                              onChange={(e) => handleSourceChange(e.target.value)}
-                              className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none w-full"
-                            >
-                              <option value="default">🎬 1HD (Default)</option>
-                              <option value="cineby">🌟 Cineby (Recommended)</option>
-                              <option value="bflix">🅱️ BFlix</option>
-                              <option value="vidsrc_to">⚡ VidSrc.to</option>
-                              <option value="vidsrc_me">⚡ VidSrc.me</option>
-                              <option value="vidsrcme_ru">🇷🇺 VidSrcMe.ru</option>
-                              <option value="vidsrc_xyz">⚡ VidSrc.xyz</option>
-                              <option value="two_embed">🎞️ 2Embed</option>
-                              <option value="multiembed">🔗 MultiEmbed</option>
-                              <option value="embedsu">🎥 Embed.su</option>
-                              <option value="autoembed">🤖 AutoEmbed</option>
-                              <option value="smashystream">💥 SmashyStream</option>
-                            </select>
-                          )}
-                        </div>
-
-                        {/* Server selection */}
-                        {activeSource === "default" && !session?.movieId?.startsWith("gdrive-") && (
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">Server</span>
-                            <select
-                              value={session.activeServer || "upcloud"}
-                              onChange={(e) => handleServerChange(e.target.value)}
-                              className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none w-full"
-                            >
-                              <option value="upcloud">UpCloud</option>
-                              <option value="vidmoly">Vidmoly</option>
-                              <option value="videasy">Videasy</option>
-                              <option value="vidcloud">Vidcloud</option>
-                              <option value="vidfast">Vidfast</option>
-                            </select>
-                          </div>
-                        )}
-
-                        {/* Subtitles selector */}
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">{translations[uiLang]?.subtitles || "Subtitles"}</span>
-                          <select
-                            value={subtitleLang}
-                            onChange={(e) => {
-                              setSubtitleLang(e.target.value);
-                              handleLanguageSync(e.target.value, audioLang);
-                              playSound("tap");
-                            }}
-                            className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none w-full"
-                          >
-                            <option value="none">None</option>
-                            <option value="en">🇺🇸 English</option>
-                            <option value="es">🇪🇸 Spanish</option>
-                            <option value="fr">🇫🇷 French</option>
-                            <option value="de">🇩🇪 German</option>
-                            <option value="hi">🇮🇳 Hindi</option>
-                            <option value="ja">🇯🇵 Japanese</option>
-                          </select>
-                        </div>
-
-                        {/* Audio Track Selector */}
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">{translations[uiLang]?.audioTrack || "Audio Track"}</span>
-                          <select
-                            value={audioLang}
-                            onChange={(e) => {
-                              setAudioLang(e.target.value);
-                              handleLanguageSync(subtitleLang, e.target.value);
-                              playSound("tap");
-                            }}
-                            className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none w-full"
-                          >
-                            <option value="original">Original</option>
-                            <option value="en">🇺🇸 English Dub</option>
-                            <option value="es">🇪🇸 Spanish Dub</option>
-                            <option value="fr">🇫🇷 French Dub</option>
-                            <option value="de">🇩🇪 German Dub</option>
-                            <option value="hi">🇮🇳 Hindi Dub</option>
-                            <option value="ja">🇯🇵 Japanese Dub</option>
-                          </select>
-                        </div>
-
-                        {/* UI Language translation dropdown */}
-                        <div className="flex flex-col gap-1 pt-1.5 border-t border-white/5">
-                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">{translations[uiLang]?.language || "UI Language"}</span>
-                          <select
-                            value={uiLang}
-                            onChange={(e) => {
-                              setUiLang(e.target.value);
-                              localStorage.setItem("love-cinema-ui-lang", e.target.value);
-                              playSound("tap");
-                            }}
-                            className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none w-full"
-                          >
-                            {LANGUAGES.map((lang) => (
-                              <option key={lang.code} value={lang.code}>
-                                {lang.flag} {lang.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* 5. Chat Toggle Button */}
-                <button
-                  onClick={toggleChat}
-                  className={cn(
-                    "w-9 h-9 rounded-xl relative flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
-                    chatOpen ? "bg-[#E8587A]/20 border-[#E8587A]/40 text-[#E8587A]" : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
-                  )}
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  {!chatOpen && unreadChatCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-[#E8587A] text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-black shadow">
-                      {unreadChatCount}
-                    </span>
-                  )}
-                </button>
-              </div>
+              {/* 4. Chat Sidebar Tab Toggle */}
+              <button
+                onClick={() => {
+                  if (chatOpen && sidebarTab === "chat") {
+                    setChatOpen(false);
+                  } else {
+                    setChatOpen(true);
+                    setSidebarTab("chat");
+                  }
+                  playSound("tap");
+                }}
+                className={cn(
+                  "w-9 h-9 rounded-xl relative flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
+                  (chatOpen && sidebarTab === "chat")
+                    ? "bg-[#E8587A]/20 border-[#E8587A]/40 text-[#E8587A]"
+                    : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
+                )}
+                title="Theater Chat"
+              >
+                <MessageSquare className="w-4 h-4" />
+                {(!chatOpen || sidebarTab !== "chat") && unreadChatCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-[#E8587A] text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-black shadow">
+                    {unreadChatCount}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         )}
@@ -2323,7 +2143,9 @@ export default function CinemaPage() {
               <MessageSquare className="w-4 h-4 text-[#E8587A]" />
             </div>
             <div>
-              <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">{translations[uiLang]?.theaterChat || "Theater Chat"}</h3>
+              <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
+                {sidebarTab === "chat" ? (translations[uiLang]?.theaterChat || "Theater Chat") : (translations[uiLang]?.settings || "Settings")}
+              </h3>
               {isPartnerPresent && (
                 <span className="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -2333,17 +2155,19 @@ export default function CinemaPage() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            {/* Chat Sound Toggle */}
-            <button
-              onClick={() => setChatSoundEnabled(!chatSoundEnabled)}
-              className={cn(
-                "w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer",
-                chatSoundEnabled ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-rose-400 bg-rose-500/10"
-              )}
-              title={chatSoundEnabled ? "Mute chat sounds" : "Unmute chat sounds"}
-            >
-              {chatSoundEnabled ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
-            </button>
+            {sidebarTab === "chat" && (
+              /* Chat Sound Toggle */
+              <button
+                onClick={() => setChatSoundEnabled(!chatSoundEnabled)}
+                className={cn(
+                  "w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer",
+                  chatSoundEnabled ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-rose-400 bg-rose-500/10"
+                )}
+                title={chatSoundEnabled ? "Mute chat sounds" : "Unmute chat sounds"}
+              >
+                {chatSoundEnabled ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
+              </button>
+            )}
             <button
               onClick={() => { setChatOpen(false); setStickerPickerOpen(false); }}
               className="w-7 h-7 rounded-lg hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-colors cursor-pointer"
@@ -2353,201 +2177,447 @@ export default function CinemaPage() {
           </div>
         </div>
 
-        {/* Chat Messages Log Area */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 cinema-scrollbar">
-          {chatMessages.length === 0 ? (
-            <div className="my-auto flex flex-col items-center text-center p-6 cinema-fade-in">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E8587A]/10 to-[#D4A574]/10 flex items-center justify-center mb-4 border border-white/5">
-                <Heart className="w-7 h-7 text-[#E8587A] animate-pulse" />
-              </div>
-              <p className="text-sm font-extrabold text-zinc-300 font-serif">{translations[uiLang]?.whisper || "Whisper something sweet..."}</p>
-              <p className="text-[10px] text-zinc-600 mt-2 max-w-[200px] leading-relaxed">
-                {uiLang === "es" ? "El chat de tu cita de cine — comparte reacciones, envía pegatinas y susurra dulces palabras 💕" :
-                 uiLang === "fr" ? "Le chat de votre soirée cinéma — partagez des réactions, envoyez des stickers et chuchotez des mots doux 💕" :
-                 uiLang === "de" ? "Dein Kino-Date-Chat — teile Reaktionen, sende Sticker und flüstere süße Worte 💕" :
-                 uiLang === "hi" ? "आपकी सिनेमा डेट चैट — प्रतिक्रियाएं साझा करें, स्टिकर भेजें और कुछ मीठा फुसफुसाएं 💕" :
-                 uiLang === "ja" ? "映画デートのチャット — リアクションを共有し、ステッカーを送り、甘い言葉をささやき合いましょう 💕" :
-                 "Your movie date chat — share reactions, send stickers, and whisper sweet nothings 💕"}
-              </p>
-            </div>
-          ) : (
-            chatMessages.map((msg) => (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 12, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
-                className={cn(
-                  "flex flex-col max-w-[85%] gap-0.5",
-                  msg.isSelf ? "self-end items-end" : "self-start items-start"
-                )}
-              >
-                <div className="flex items-center gap-1.5 px-1">
-                  <span className="text-[9px] font-bold text-zinc-500">{msg.senderName}</span>
-                  <span className="text-[8px] text-zinc-700 flex items-center gap-0.5">
-                    <Clock className="w-2.5 h-2.5" />
-                    {getRelativeTime(msg.createdAt)}
-                  </span>
+        {/* Tab Switcher */}
+        <div className="flex border-b border-white/5 p-1 bg-black/10 shrink-0">
+          <button
+            onClick={() => { setSidebarTab("chat"); playSound("tap"); }}
+            className={cn(
+              "flex-1 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-xl cursor-pointer flex items-center justify-center gap-1.5 border border-transparent",
+              sidebarTab === "chat"
+                ? "bg-white/[0.04] text-[#E8587A] border-white/5 shadow-inner"
+                : "text-zinc-500 hover:text-zinc-300"
+            )}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Chat</span>
+          </button>
+          <button
+            onClick={() => { setSidebarTab("settings"); playSound("tap"); }}
+            className={cn(
+              "flex-1 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-xl cursor-pointer flex items-center justify-center gap-1.5 border border-transparent",
+              sidebarTab === "settings"
+                ? "bg-white/[0.04] text-[#D4A574] border-white/5 shadow-inner"
+                : "text-zinc-500 hover:text-zinc-300"
+            )}
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>{translations[uiLang]?.settings || "Settings"}</span>
+          </button>
+        </div>
+
+        {sidebarTab === "chat" ? (
+          <>
+            {/* Chat Messages Log Area */}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 cinema-scrollbar">
+              {chatMessages.length === 0 ? (
+                <div className="my-auto flex flex-col items-center text-center p-6 cinema-fade-in">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E8587A]/10 to-[#D4A574]/10 flex items-center justify-center mb-4 border border-white/5">
+                    <Heart className="w-7 h-7 text-[#E8587A] animate-pulse" />
+                  </div>
+                  <p className="text-sm font-extrabold text-zinc-300 font-serif">{translations[uiLang]?.whisper || "Whisper something sweet..."}</p>
+                  <p className="text-[10px] text-zinc-600 mt-2 max-w-[200px] leading-relaxed">
+                    {uiLang === "es" ? "El chat de tu cita de cine — comparte reacciones, envía pegatinas y susurra dulces palabras 💕" :
+                     uiLang === "fr" ? "Le chat de votre soirée cinéma — partagez des réactions, envoyez des stickers et chuchotez des mots doux 💕" :
+                     uiLang === "de" ? "Dein Kino-Date-Chat — teile Reaktionen, sende Sticker und flüstere süße Worte 💕" :
+                     uiLang === "hi" ? "आपकी सिनेमा डेट चैट — प्रतिक्रियाएं साझा करें, स्टिकर भेजें और कुछ मीठा फुसफुसाएं 💕" :
+                     uiLang === "ja" ? "映画デートのチャット — リアクションを共有し、ステッカーを送り、甘い言葉をささやき合いましょう 💕" :
+                     "Your movie date chat — share reactions, send stickers, and whisper sweet nothings 💕"}
+                  </p>
                 </div>
-                {msg.type === "sticker" ? (
-                  <div className="cinema-msg-sticker px-2 py-1">
-                    <span className={cn(
-                      "block",
-                      msg.text.length <= 4 ? "text-5xl" : "text-2xl font-medium"
-                    )}>
-                      {msg.text}
-                    </span>
+              ) : (
+                chatMessages.map((msg) => (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
+                    className={cn(
+                      "flex flex-col max-w-[85%] gap-0.5",
+                      msg.isSelf ? "self-end items-end" : "self-start items-start"
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5 px-1">
+                      <span className="text-[9px] font-bold text-zinc-500">{msg.senderName}</span>
+                      <span className="text-[8px] text-zinc-700 flex items-center gap-0.5">
+                        <Clock className="w-2.5 h-2.5" />
+                        {getRelativeTime(msg.createdAt)}
+                      </span>
+                    </div>
+                    {msg.type === "sticker" ? (
+                      <div className="cinema-msg-sticker px-2 py-1">
+                        <span className={cn(
+                          "block",
+                          msg.text.length <= 4 ? "text-5xl" : "text-2xl font-medium"
+                        )}>
+                          {msg.text}
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        className={cn(
+                          "cinema-msg-bubble p-3 rounded-2xl text-xs leading-relaxed break-words",
+                          msg.isSelf
+                            ? "cinema-msg-self rounded-tr-sm"
+                            : "cinema-msg-partner rounded-tl-sm"
+                        )}
+                      >
+                        {msg.text}
+                      </div>
+                    )}
+                  </motion.div>
+                ))
+              )}
+
+              {/* Typing Indicator */}
+              {isPartnerTyping && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className="self-start flex items-center gap-2 px-1"
+                >
+                  <div className="cinema-typing-indicator">
+                    <span /><span /><span />
+                  </div>
+                  <span className="text-[9px] text-zinc-500 font-medium italic">
+                    {uiLang === "es" ? "escribiendo..." : uiLang === "ja" ? "入力中..." : uiLang === "hi" ? "टाइप कर रहे हैं..." : "typing..."}
+                  </span>
+                </motion.div>
+              )}
+
+              <div ref={chatEndRef} />
+            </div>
+            {/* Sticker Picker Panel */}
+            <AnimatePresence>
+              {stickerPickerOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 280, opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+                  className="cinema-sticker-picker overflow-hidden border-t border-white/5 shrink-0"
+                >
+                  {/* Sticker Pack Tabs */}
+                  <div className="flex items-center gap-1 p-2 border-b border-white/5 overflow-x-auto cinema-scrollbar">
+                    {Object.entries(stickerPacks).map(([key, pack]) => (
+                      <button
+                        key={key}
+                        onClick={() => setActiveStickerPack(key)}
+                        className={cn(
+                          "cinema-sticker-pack-tab px-3 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap cursor-pointer transition-all",
+                          activeStickerPack === key
+                            ? "bg-[#E8587A]/15 text-[#E8587A] border border-[#E8587A]/25"
+                            : "text-zinc-500 hover:text-zinc-350 hover:bg-white/5 border border-transparent"
+                        )}
+                      >
+                        <span className="mr-1">{pack.icon}</span>
+                        {pack.label === "Romantic" && uiLang === "es" ? "Romántico" : 
+                         pack.label === "Romantic" && uiLang === "ja" ? "恋愛" :
+                         pack.label === "Reactions" && uiLang === "es" ? "Reacciones" :
+                         pack.label === "Reactions" && uiLang === "ja" ? "リアクション" :
+                         pack.label === "Cozy Vibes" && uiLang === "es" ? "Acogedor" :
+                         pack.label === "Cozy Vibes" && uiLang === "ja" ? "まったり" :
+                         pack.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Sticker Grid */}
+                  <div className="flex-1 overflow-y-auto p-3 cinema-scrollbar" style={{ maxHeight: 230 }}>
+                    <div className="grid grid-cols-5 gap-2">
+                      {stickerPacks[activeStickerPack]?.stickers.map((sticker, i) => (
+                        <button
+                          key={`${activeStickerPack}-${i}`}
+                          onClick={() => handleSendSticker(sticker)}
+                          className="cinema-sticker-item flex items-center justify-center rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 hover:border-[#E8587A]/20 cursor-pointer transition-all active:scale-90"
+                          style={{ aspectRatio: "1" }}
+                          title={sticker}
+                        >
+                          <span className={cn(
+                            sticker.length <= 4 ? "text-2xl" : "text-xs font-medium text-zinc-300"
+                          )}>
+                            {sticker}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Quick Emoji Row */}
+            <div className="cinema-emoji-row flex items-center gap-1 px-4 py-2 border-t border-white/5 overflow-x-auto shrink-0">
+              {quickEmojis.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleSendSticker(emoji)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-lg transition-all cursor-pointer active:scale-90 shrink-0"
+                  title={`Send ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+
+            {/* Chat Send Form — Enhanced */}
+            <form onSubmit={handleSendChat} className="p-3 border-t border-white/5 bg-black/20 flex flex-col gap-2 shrink-0">
+              <div className="flex gap-2 items-end">
+                {/* Sticker Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => setStickerPickerOpen(!stickerPickerOpen)}
+                  className={cn(
+                    "w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0",
+                    stickerPickerOpen
+                      ? "bg-[#D4A574]/15 text-[#D4A574] border border-[#D4A574]/25"
+                      : "bg-white/[0.03] border border-white/5 text-zinc-400 hover:text-white hover:bg-white/5"
+                  )}
+                  title="Open sticker picker"
+                >
+                  <Sticker className="w-4 h-4" />
+                </button>
+
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => {
+                    setChatInput(e.target.value);
+                    handleChatTyping();
+                  }}
+                  placeholder={translations[uiLang]?.typeMessage || "Type a message..."}
+                  className="flex-1 bg-white/[0.02] border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#E8587A]/30 transition-colors"
+                />
+                <button
+                  type="submit"
+                  disabled={!chatInput.trim()}
+                  className={cn(
+                    "w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-md shrink-0",
+                    chatInput.trim()
+                      ? "bg-[#E8587A] hover:bg-[#BE3A6E] text-white shadow-[#BE3A6E]/10"
+                      : "bg-zinc-800 text-zinc-600 cursor-not-allowed shadow-none"
+                  )}
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          /* Settings Tab Content */
+          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5 cinema-scrollbar">
+            {/* Quick Actions Card */}
+            <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-3">
+              <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Quick Actions</span>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleToggleLights}
+                  className={cn(
+                    "flex-1 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5",
+                    dimmed
+                      ? "bg-[#D4A574]/15 border-[#D4A574]/30 text-[#D4A574]"
+                      : "bg-white/[0.02] border-white/5 text-zinc-300 hover:bg-white/[0.04]"
+                  )}
+                >
+                  <Tv className="w-4 h-4" />
+                  <span>{dimmed ? "Brighten Lights" : "Dim Lights"}</span>
+                </button>
+                <button
+                  onClick={() => setVideoMuted(prev => !prev)}
+                  className={cn(
+                    "flex-1 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5",
+                    videoMuted
+                      ? "bg-rose-500/10 border-rose-500/30 text-rose-450"
+                      : "bg-white/[0.02] border-white/5 text-zinc-300 hover:bg-white/[0.04]"
+                  )}
+                >
+                  {videoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  <span>{videoMuted ? "Unmute Audio" : "Mute Audio"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Streaming Config Group */}
+            <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-4">
+              <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Streaming Server & Source</span>
+
+              {/* Source selection */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-zinc-400">Stream Provider Source</label>
+                {session?.movieId?.startsWith("gdrive-") ? (
+                  <div className="bg-zinc-900/60 border border-white/5 text-[10px] font-bold rounded-lg px-2.5 py-2 text-zinc-300 flex items-center justify-between select-none">
+                    <span>📁 Google Drive</span>
+                    <button
+                      onClick={() => setGdrivePlayerMode(prev => prev === "iframe" ? "html5" : "iframe")}
+                      className="text-[8px] font-black uppercase text-[#E8587A] hover:underline"
+                    >
+                      {gdrivePlayerMode === "iframe" ? "Force Direct" : "Use Google Player"}
+                    </button>
+                  </div>
+                ) : resolvingSource ? (
+                  <div className="flex items-center gap-2 text-xs text-zinc-500 py-2">
+                    <Loader2 className="w-3 animate-spin text-[#E8587A]" />
+                    <span>Resolving stream links...</span>
                   </div>
                 ) : (
-                  <div
-                    className={cn(
-                      "cinema-msg-bubble p-3 rounded-2xl text-xs leading-relaxed break-words",
-                      msg.isSelf
-                        ? "cinema-msg-self rounded-tr-sm"
-                        : "cinema-msg-partner rounded-tl-sm"
-                    )}
+                  <select
+                    value={activeSource}
+                    onChange={(e) => handleSourceChange(e.target.value)}
+                    className="bg-zinc-900/60 border border-white/5 text-xs font-bold rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer w-full"
                   >
-                    {msg.text}
-                  </div>
+                    <option value="default">🎬 1HD (Default)</option>
+                    <option value="cineby">🌟 Cineby (Recommended)</option>
+                    <option value="bflix">🅱️ BFlix</option>
+                    <option value="vidsrc_to">⚡ VidSrc.to</option>
+                    <option value="vidsrc_me">⚡ VidSrc.me</option>
+                    <option value="vidsrcme_ru">🇷🇺 VidSrcMe.ru</option>
+                    <option value="vidsrc_xyz">⚡ VidSrc.xyz</option>
+                    <option value="two_embed">🎞️ 2Embed</option>
+                    <option value="multiembed">🔗 MultiEmbed</option>
+                    <option value="embedsu">🎥 Embed.su</option>
+                    <option value="autoembed">🤖 AutoEmbed</option>
+                    <option value="smashystream">💥 SmashyStream</option>
+                  </select>
                 )}
-              </motion.div>
-            ))
-          )}
-
-          {/* Typing Indicator */}
-          {isPartnerTyping && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              className="self-start flex items-center gap-2 px-1"
-            >
-              <div className="cinema-typing-indicator">
-                <span /><span /><span />
               </div>
-              <span className="text-[9px] text-zinc-500 font-medium italic">
-                {uiLang === "es" ? "escribiendo..." : uiLang === "ja" ? "入力中..." : uiLang === "hi" ? "टाइप कर रहे हैं..." : "typing..."}
-              </span>
-            </motion.div>
-          )}
 
-          <div ref={chatEndRef} />
-        </div>
-        {/* Sticker Picker Panel */}
-        <AnimatePresence>
-          {stickerPickerOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 280, opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
-              className="cinema-sticker-picker overflow-hidden border-t border-white/5"
-            >
-              {/* Sticker Pack Tabs */}
-              <div className="flex items-center gap-1 p-2 border-b border-white/5 overflow-x-auto cinema-scrollbar">
-                {Object.entries(stickerPacks).map(([key, pack]) => (
-                  <button
-                    key={key}
-                    onClick={() => setActiveStickerPack(key)}
-                    className={cn(
-                      "cinema-sticker-pack-tab px-3 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap cursor-pointer transition-all",
-                      activeStickerPack === key
-                        ? "bg-[#E8587A]/15 text-[#E8587A] border border-[#E8587A]/25"
-                        : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5 border border-transparent"
-                    )}
+              {/* Server selector (Only if default 1HD active) */}
+              {activeSource === "default" && !session?.movieId?.startsWith("gdrive-") && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-400">Preferred Mirror Server</label>
+                  <select
+                    value={session.activeServer || "upcloud"}
+                    onChange={(e) => handleServerChange(e.target.value)}
+                    className="bg-zinc-900/60 border border-white/5 text-xs font-bold rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none w-full"
                   >
-                    <span className="mr-1">{pack.icon}</span>
-                    {pack.label === "Romantic" && uiLang === "es" ? "Romántico" : 
-                     pack.label === "Romantic" && uiLang === "ja" ? "恋愛" :
-                     pack.label === "Reactions" && uiLang === "es" ? "Reacciones" :
-                     pack.label === "Reactions" && uiLang === "ja" ? "リアクション" :
-                     pack.label === "Cozy Vibes" && uiLang === "es" ? "Acogedor" :
-                     pack.label === "Cozy Vibes" && uiLang === "ja" ? "まったり" :
-                     pack.label}
+                    <option value="upcloud">UpCloud</option>
+                    <option value="vidmoly">Vidmoly</option>
+                    <option value="videasy">Videasy</option>
+                    <option value="vidcloud">Vidcloud</option>
+                    <option value="vidfast">Vidfast</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Subtitles Option */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-zinc-400">{translations[uiLang]?.subtitles || "Subtitles"}</label>
+                <select
+                  value={subtitleLang}
+                  onChange={(e) => {
+                    setSubtitleLang(e.target.value);
+                    handleLanguageSync(e.target.value, audioLang);
+                    playSound("tap");
+                  }}
+                  className="bg-zinc-900/60 border border-white/5 text-xs font-bold rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none w-full"
+                >
+                  <option value="none">None</option>
+                  <option value="en">🇺🇸 English</option>
+                  <option value="es">🇪🇸 Spanish</option>
+                  <option value="fr">🇫🇷 French</option>
+                  <option value="de">🇩🇪 German</option>
+                  <option value="hi">🇮🇳 Hindi</option>
+                  <option value="ja">🇯🇵 Japanese</option>
+                </select>
+              </div>
+
+              {/* Audio Track Option */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-zinc-400">{translations[uiLang]?.audioTrack || "Audio Track"}</label>
+                <select
+                  value={audioLang}
+                  onChange={(e) => {
+                    setAudioLang(e.target.value);
+                    handleLanguageSync(subtitleLang, e.target.value);
+                    playSound("tap");
+                  }}
+                  className="bg-zinc-900/60 border border-white/5 text-xs font-bold rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none w-full"
+                >
+                  <option value="original">Original</option>
+                  <option value="en">🇺🇸 English Dub</option>
+                  <option value="es">🇪🇸 Spanish Dub</option>
+                  <option value="fr">🇫🇷 French Dub</option>
+                  <option value="de">🇩🇪 German Dub</option>
+                  <option value="hi">🇮🇳 Hindi Dub</option>
+                  <option value="ja">🇯🇵 Japanese Dub</option>
+                </select>
+              </div>
+
+              {/* UI Translation Selection */}
+              <div className="flex flex-col gap-1.5 pt-3 border-t border-white/5">
+                <label className="text-[10px] font-bold text-zinc-400">{translations[uiLang]?.language || "UI Language"}</label>
+                <select
+                  value={uiLang}
+                  onChange={(e) => {
+                    setUiLang(e.target.value);
+                    localStorage.setItem("love-cinema-ui-lang", e.target.value);
+                    playSound("tap");
+                  }}
+                  className="bg-zinc-900/60 border border-white/5 text-xs font-bold rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none w-full"
+                >
+                  {LANGUAGES.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.flag} {lang.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* 100% Reliable Embed Connection Fallback Link */}
+            {session.watchLink && (
+              <div className="p-4 rounded-2xl bg-[#E8587A]/5 border border-[#E8587A]/20 flex flex-col gap-2.5">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-[#E8587A] flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase text-[#E8587A] tracking-wider">Embed Fallback</span>
+                    <p className="text-[10px] text-zinc-400 mt-1 leading-relaxed">
+                      If the video fails to load, displays connection errors, or states embedding is blocked:
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={session.watchLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-extrabold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer border border-white/10"
+                >
+                  <span>{translations[uiLang]?.openTab || "Open in New Tab"} ↗</span>
+                </a>
+              </div>
+            )}
+
+            {/* Date Interactions Drawer Card */}
+            <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-3">
+              <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Interactive Date Triggers</span>
+              <div className="grid grid-cols-6 gap-1 justify-items-center">
+                {reactions.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleSendReaction(emoji)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-lg transition-all cursor-pointer active:scale-90"
+                  >
+                    {emoji}
                   </button>
                 ))}
               </div>
-
-              {/* Sticker Grid */}
-              <div className="flex-1 overflow-y-auto p-3 cinema-scrollbar" style={{ maxHeight: 230 }}>
-                <div className="grid grid-cols-5 gap-2">
-                  {stickerPacks[activeStickerPack]?.stickers.map((sticker, i) => (
-                    <button
-                      key={`${activeStickerPack}-${i}`}
-                      onClick={() => handleSendSticker(sticker)}
-                      className="cinema-sticker-item flex items-center justify-center rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 hover:border-[#E8587A]/20 cursor-pointer transition-all active:scale-90"
-                      style={{ aspectRatio: "1" }}
-                      title={sticker}
-                    >
-                      <span className={cn(
-                        sticker.length <= 4 ? "text-2xl" : "text-xs font-medium text-zinc-300"
-                      )}>
-                        {sticker}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 gap-2.5 mt-2">
+                <button
+                  onClick={handleThrowPopcorn}
+                  className="bg-white/5 hover:bg-white/10 text-zinc-300 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-white/5 flex items-center justify-center gap-1.5"
+                >
+                  <span>🍿 {translations[uiLang]?.fight || "Fight"}</span>
+                </button>
+                <button
+                  onClick={handleSendCuddle}
+                  className="bg-[#E8587A]/15 hover:bg-[#E8587A]/25 text-[#E8587A] py-3 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-[#E8587A]/20 flex items-center justify-center gap-1.5"
+                >
+                  <span>🤗 {translations[uiLang]?.cuddle || "Cuddle"}</span>
+                </button>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Quick Emoji Row */}
-        <div className="cinema-emoji-row flex items-center gap-1 px-4 py-2 border-t border-white/5 overflow-x-auto">
-          {quickEmojis.map((emoji) => (
-            <button
-              key={emoji}
-              onClick={() => handleSendSticker(emoji)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-lg transition-all cursor-pointer active:scale-90 shrink-0"
-              title={`Send ${emoji}`}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-
-        {/* Chat Send Form — Enhanced */}
-        <form onSubmit={handleSendChat} className="p-3 border-t border-white/5 bg-black/20 flex flex-col gap-2">
-          <div className="flex gap-2 items-end">
-            {/* Sticker Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setStickerPickerOpen(!stickerPickerOpen)}
-              className={cn(
-                "w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0",
-                stickerPickerOpen
-                  ? "bg-[#D4A574]/15 text-[#D4A574] border border-[#D4A574]/25"
-                  : "bg-white/[0.03] border border-white/5 text-zinc-400 hover:text-white hover:bg-white/5"
-              )}
-              title="Open sticker picker"
-            >
-              <Sticker className="w-4 h-4" />
-            </button>
-
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => {
-                setChatInput(e.target.value);
-                handleChatTyping();
-              }}
-              placeholder={translations[uiLang]?.typeMessage || "Type a message..."}
-              className="flex-1 bg-white/[0.02] border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#E8587A]/30 transition-colors"
-            />
-            <button
-              type="submit"
-              disabled={!chatInput.trim()}
-              className={cn(
-                "w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-md shrink-0",
-                chatInput.trim()
-                  ? "bg-[#E8587A] hover:bg-[#BE3A6E] text-white shadow-[#BE3A6E]/10"
-                  : "bg-zinc-800 text-zinc-600 cursor-not-allowed shadow-none"
-              )}
-            >
-              <Send className="w-4 h-4" />
-            </button>
+            </div>
           </div>
-        </form>
+        )}
       </div>
     </div>
   );
