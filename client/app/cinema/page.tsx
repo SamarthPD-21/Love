@@ -1878,14 +1878,13 @@ export default function CinemaPage() {
         {/* THEATER ACTIVE WATCHING PHASE */}
         {session.movieId && session.showStarted && (
           <div className="w-full h-full relative flex flex-col justify-between items-center z-10 bg-black">
-            {/* Auto-Hiding Header Bar */}
-            <div
-              className={cn(
-                "cinema-bar-transition fixed top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/80 to-transparent flex items-center justify-between px-6 z-40",
-                chatOpen ? "pr-[364px]" : "pr-6",
-                !controlsVisible && "cinema-bar-hidden cinema-header-hidden"
-              )}
-            >
+             {/* Auto-Hiding Header Bar */}
+             <div
+               className={cn(
+                 "cinema-bar-transition absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/80 to-transparent flex items-center justify-between px-6 z-40",
+                 !controlsVisible && "cinema-bar-hidden cinema-header-hidden"
+               )}
+             >
               <div className="flex items-center gap-4">
                 <button
                   onClick={handleChangeMovie}
@@ -1986,7 +1985,7 @@ export default function CinemaPage() {
             {/* Auto-Hiding Control Bar */}
             <div
               className={cn(
-                "cinema-bar-transition cinema-control-glow fixed bottom-6 left-1/2 -translate-x-1/2 cinema-glass-panel p-2 flex items-center justify-center gap-3.5 z-40 max-w-[95%] w-[210px]",
+                "cinema-bar-transition cinema-control-glow absolute bottom-6 left-1/2 -translate-x-1/2 cinema-glass-panel p-2 flex items-center justify-center gap-3.5 z-40 max-w-[95%] w-[210px]",
                 !controlsVisible && "cinema-bar-hidden cinema-controls-hidden"
               )}
             >

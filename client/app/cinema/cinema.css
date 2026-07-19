@@ -548,7 +548,7 @@
 
 /* ─── Control Bar Underglow ─────────────────────────────────────── */
 .cinema-control-glow {
-  position: relative;
+  /* Uses positioning from Tailwind utility classes */
 }
 
 .cinema-control-glow::before {
