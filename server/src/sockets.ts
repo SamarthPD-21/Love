@@ -221,7 +221,7 @@ const getRelId = (rel: any): string => {
       io?.to(`cinema:${relationshipId}`).emit("cinema_countdown_trigger", { userId });
     });
 
-    socket.on("cinema_chat", (payload: { relationshipId: any; text: string; senderName: string }) => {
+    socket.on("cinema_chat", (payload: { relationshipId: any; text: string; senderName: string; type?: string }) => {
       const relationshipId = getRelId(payload.relationshipId);
       const { text, senderName } = payload;
       if (!relationshipId) return;
@@ -231,6 +231,16 @@ const getRelId = (rel: any): string => {
         senderName,
         userId,
         createdAt: new Date().toISOString(),
+        type: payload.type || "text",
+      });
+    });
+
+    socket.on("cinema_typing", (payload: { relationshipId: any; isTyping: boolean }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      if (!relationshipId) return;
+      socket.to(`cinema:${relationshipId}`).emit("cinema_typing_status", {
+        isTyping: payload.isTyping,
+        userId,
       });
     });
 
@@ -353,6 +363,13 @@ const getRelId = (rel: any): string => {
       const { snacks } = payload;
       if (!relationshipId) return;
       socket.to(`cinema:${relationshipId}`).emit("cinema_snacks_synced", { snacks, userId });
+    });
+
+    socket.on("cinema_sync_language", (payload: { relationshipId: any; subtitleLang: string; audioLang: string }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      const { subtitleLang, audioLang } = payload;
+      if (!relationshipId) return;
+      socket.to(`cinema:${relationshipId}`).emit("cinema_language_synced", { subtitleLang, audioLang, userId });
     });
 
     socket.on("extension_url_change", async (payload: { url: string }) => {

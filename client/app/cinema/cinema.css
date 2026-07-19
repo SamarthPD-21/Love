@@ -1,7 +1,19 @@
-/* Cinema Hall Specific Styling System */
+/* ═══════════════════════════════════════════════════════════════════
+   PRIVATE CINEMA HALL — Ultra-Dark Luxury Styling System
+   Design: Deep blacks, warm rose (#E8587A) & gold (#D4A574) accents
+   Glassmorphism · Romantic/Intimate · Premium Easing
+   ═══════════════════════════════════════════════════════════════════ */
 
+/* ─── Design Tokens ─────────────────────────────────────────────── */
+:root {
+  --cinema-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --cinema-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --cinema-ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --cinema-ease-dramatic: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── Root Container ────────────────────────────────────────────── */
 .cinema-root {
-  /* Color Palette overrides for immersive dark environment */
   --cinema-bg: #05050f;
   --cinema-surface: rgba(255, 255, 255, 0.03);
   --cinema-surface-hover: rgba(255, 255, 255, 0.07);
@@ -19,50 +31,106 @@
   position: relative;
 }
 
-/* Ambient glow and stars background */
+/* Animated ambient gradient background */
 .cinema-root::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(232, 88, 122, 0.012) 0%, rgba(212, 165, 116, 0.012) 100%);
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(232, 88, 122, 0.025) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(212, 165, 116, 0.02) 0%, transparent 55%),
+    linear-gradient(160deg, rgba(232, 88, 122, 0.012) 0%, transparent 40%, rgba(212, 165, 116, 0.012) 100%);
+  background-size: 200% 200%;
+  animation: ambient-pulse 20s ease-in-out infinite;
   pointer-events: none;
   z-index: 0;
 }
 
-/* Glassmorphism panel base utility */
+
+/* ─── Glassmorphism Panel ───────────────────────────────────────── */
 .cinema-glass-panel {
   background: var(--cinema-glass);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
   border: 1px solid var(--cinema-glass-border);
   border-radius: 20px;
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 12px 40px 0 rgba(0, 0, 0, 0.55),
+    0 2px 8px 0 rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+  transition: all 0.35s var(--cinema-ease-smooth);
+  position: relative;
+}
+
+/* Subtle noise texture overlay via SVG data-uri */
+.cinema-glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: overlay;
 }
 
 .cinema-glass-panel:hover {
-  border-color: rgba(232, 88, 122, 0.15);
-  box-shadow: 0 16px 48px 0 rgba(232, 88, 122, 0.03);
+  border-color: rgba(232, 88, 122, 0.18);
+  box-shadow:
+    0 16px 52px 0 rgba(232, 88, 122, 0.04),
+    0 4px 12px 0 rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
 }
 
-/* Lobby Movie Card styling */
+
+/* ─── Lobby Movie Card ──────────────────────────────────────────── */
 .cinema-lobby-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 20px;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.45s var(--cinema-ease-spring);
   position: relative;
   overflow: hidden;
 }
 
-.cinema-lobby-card:hover {
-  transform: translateY(-5px) scale(1.015);
-  background: rgba(255, 255, 255, 0.04);
-  border-color: var(--cinema-accent-rose);
-  box-shadow: 0 10px 30px rgba(232, 88, 122, 0.08);
+/* Light-sweep effect on hover */
+.cinema-lobby-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.06) 55%,
+    transparent 70%
+  );
+  transform: translateX(-150%);
+  transition: none;
+  pointer-events: none;
+  z-index: 2;
 }
 
-/* Spotlight glow for headers and lobby titles */
+.cinema-lobby-card:hover::after {
+  animation: light-sweep 0.8s var(--cinema-ease-out) forwards;
+}
+
+.cinema-lobby-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  background: rgba(255, 255, 255, 0.045);
+  border-color: var(--cinema-accent-rose);
+  box-shadow:
+    0 14px 40px rgba(232, 88, 122, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(232, 88, 122, 0.15);
+}
+
+
+/* ─── Spotlight Glow ────────────────────────────────────────────── */
 .cinema-spotlight {
   position: relative;
 }
@@ -73,25 +141,28 @@
   top: -50%;
   left: 50%;
   transform: translateX(-50%);
-  width: 150px;
-  height: 50px;
-  background: radial-gradient(circle, rgba(212, 165, 116, 0.15) 0%, transparent 70%);
-  filter: blur(10px);
+  width: 180px;
+  height: 60px;
+  background: radial-gradient(circle, rgba(212, 165, 116, 0.18) 0%, transparent 70%);
+  filter: blur(14px);
   pointer-events: none;
 }
 
-/* CSS-only movie projector loader beam */
+
+/* ─── Projector Loader ──────────────────────────────────────────── */
 .cinema-projector {
   width: 80px;
   height: 80px;
-  background: #000;
+  background: radial-gradient(circle at 40% 40%, #0a0a14, #000);
   border-radius: 50%;
   position: relative;
   border: 2px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 20px rgba(232, 88, 122, 0.2);
+  box-shadow:
+    inset 0 0 24px rgba(232, 88, 122, 0.2),
+    0 0 40px rgba(232, 88, 122, 0.06);
 }
 
 .cinema-projector::before {
@@ -122,7 +193,8 @@
   }
 }
 
-/* Cinematic curtains background for Setup phase */
+
+/* ─── Cinematic Curtains ────────────────────────────────────────── */
 .cinema-curtains {
   background: linear-gradient(to bottom, #120917 0%, #05050f 100%);
   position: relative;
@@ -145,18 +217,24 @@
   background: linear-gradient(270deg, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
 }
 
-/* Immersive video frame vignette overlay */
+
+/* ─── Video Vignette Overlay ────────────────────────────────────── */
 .cinema-player-vignette {
   position: absolute;
   inset: 0;
-  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.95);
+  box-shadow:
+    inset 0 0 120px rgba(0, 0, 0, 0.95),
+    inset 0 0 40px rgba(0, 0, 0, 0.4);
   pointer-events: none;
   z-index: 10;
 }
 
-/* Auto-hiding control and header bars */
+
+/* ─── Auto-Hiding Bars ──────────────────────────────────────────── */
 .cinema-bar-transition {
-  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  transition:
+    opacity 0.45s var(--cinema-ease-out),
+    transform 0.45s var(--cinema-ease-out);
 }
 
 .cinema-bar-hidden {
@@ -172,26 +250,83 @@
   transform: translateY(20px) translateX(-50%);
 }
 
-/* Collapsible sidebar chat drawer */
+
+/* ─── Chat Drawer (Redesigned) ──────────────────────────────────── */
 .cinema-chat-drawer {
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 340px;
+  width: 360px;
   height: 100%;
-  border-left: 1px solid var(--cinema-glass-border);
+  background: linear-gradient(
+    180deg,
+    rgba(14, 10, 24, 0.92) 0%,
+    rgba(8, 6, 16, 0.96) 100%
+  );
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 0;
   z-index: 45;
   transform: translateX(100%);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.5s var(--cinema-ease-smooth);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Gradient top accent border (rose → gold) */
+.cinema-chat-drawer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cinema-accent-rose), var(--cinema-accent-gold));
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 1;
 }
 
 .cinema-chat-drawer.open {
   transform: translateX(0);
+  transition: transform 0.55s var(--cinema-ease-spring);
 }
 
-/* Ready Room user status circle indicator */
+.cinema-chat-drawer.open::before {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .cinema-chat-drawer {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: auto;
+    max-height: 60vh;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 24px 24px 0 0;
+    transform: translateX(0) translateY(100%);
+    transition: transform 0.5s var(--cinema-ease-smooth);
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .cinema-chat-drawer.open {
+    transform: translateX(0) translateY(0);
+    transition: transform 0.55s var(--cinema-ease-spring);
+  }
+
+  .cinema-chat-drawer::before {
+    height: 3px;
+    border-radius: 24px 24px 0 0;
+  }
+}
+
+
+/* ─── Ready Room Orb ────────────────────────────────────────────── */
 .cinema-ready-orb {
   width: 80px;
   height: 80px;
@@ -201,14 +336,17 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  transition: all 0.5s ease;
+  transition: all 0.5s var(--cinema-ease-smooth);
   background: rgba(255, 255, 255, 0.02);
 }
 
 .cinema-ready-orb.ready {
   border-color: #10b981;
   background: rgba(16, 185, 129, 0.1);
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.25);
+  box-shadow:
+    0 0 30px rgba(16, 185, 129, 0.25),
+    0 0 60px rgba(16, 185, 129, 0.08);
+  animation: breathing 2.5s ease-in-out infinite;
 }
 
 .cinema-ready-orb.ready::after {
@@ -226,13 +364,14 @@
   justify-content: center;
   font-size: 14px;
   font-weight: bold;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
-/* Floating custom scrollbar for cinema UI elements */
+
+/* ─── Custom Scrollbar ──────────────────────────────────────────── */
 .cinema-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .cinema-scrollbar::-webkit-scrollbar-track {
@@ -240,15 +379,23 @@
 }
 
 .cinema-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  transition: background 0.2s ease;
 }
 
 .cinema-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(232, 88, 122, 0.4);
+  background: rgba(232, 88, 122, 0.45);
 }
 
-/* Animation keyframes for Floating particles */
+/* Firefox scrollbar */
+.cinema-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+
+/* ─── Floating Particles ────────────────────────────────────────── */
 @keyframes float-up {
   0% {
     transform: translateY(100%) scale(0.6) rotate(0deg);
@@ -266,14 +413,670 @@
   }
 }
 
-/* Interactive reaction floating custom items */
 .cinema-floating-particle {
-  animation: float-up 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: float-up 3s var(--cinema-ease-out) forwards;
   pointer-events: none;
 }
 
-/* Spotlight reflection overlay */
+
+/* ─── Spotlight Floor Reflection ────────────────────────────────── */
 .cinema-spotlight-floor {
-  background: radial-gradient(ellipse at bottom, rgba(232, 88, 122, 0.08) 0%, transparent 60%);
+  background: radial-gradient(
+    ellipse at bottom,
+    rgba(232, 88, 122, 0.08) 0%,
+    transparent 60%
+  );
   pointer-events: none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   NEW ADDITIONS — Premium Features
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Star Field ────────────────────────────────────────────────── */
+.cinema-star-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cinema-star-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* 24 stars at varied positions and sizes */
+  box-shadow:
+    120px  60px   0 0.5px rgba(255,255,255,0.7),
+    240px  140px  0 0.3px rgba(255,255,255,0.5),
+    80px   300px  0 0.6px rgba(255,255,255,0.6),
+    450px  80px   0 0.4px rgba(255,255,255,0.4),
+    600px  220px  0 0.5px rgba(255,255,255,0.8),
+    750px  50px   0 0.3px rgba(255,255,255,0.5),
+    300px  400px  0 0.7px rgba(255,255,255,0.6),
+    900px  300px  0 0.4px rgba(255,255,255,0.7),
+    1050px 120px  0 0.5px rgba(255,255,255,0.4),
+    150px  550px  0 0.6px rgba(255,255,255,0.8),
+    500px  450px  0 0.3px rgba(255,255,255,0.5),
+    700px  600px  0 0.5px rgba(255,255,255,0.7),
+    1200px 200px  0 0.4px rgba(255,255,255,0.6),
+    350px  250px  0 0.3px rgba(255,255,255,0.4),
+    850px  500px  0 0.7px rgba(255,255,255,0.9),
+    1000px 450px  0 0.4px rgba(255,255,255,0.5),
+    200px  180px  0 0.5px rgba(255,255,255,0.6),
+    550px  350px  0 0.3px rgba(255,255,255,0.4),
+    1100px 550px  0 0.6px rgba(255,255,255,0.7),
+    400px  600px  0 0.4px rgba(255,255,255,0.5),
+    50px   450px  0 0.3px rgba(255,255,255,0.6),
+    950px  100px  0 0.5px rgba(255,255,255,0.8),
+    650px  480px  0 0.4px rgba(255,255,255,0.5),
+    1300px 350px  0 0.6px rgba(255,255,255,0.7);
+  animation: twinkle 6s ease-in-out infinite;
+}
+
+.cinema-star-field::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Second layer — offset and different timing */
+  box-shadow:
+    170px  90px   0 0.4px rgba(255,255,255,0.5),
+    310px  200px  0 0.6px rgba(255,255,255,0.7),
+    50px   380px  0 0.3px rgba(255,255,255,0.4),
+    520px  140px  0 0.5px rgba(255,255,255,0.6),
+    780px  420px  0 0.4px rgba(255,255,255,0.5),
+    1150px 280px  0 0.6px rgba(255,255,255,0.8),
+    420px  520px  0 0.3px rgba(255,255,255,0.4),
+    680px  160px  0 0.5px rgba(255,255,255,0.7),
+    260px  480px  0 0.4px rgba(255,255,255,0.5),
+    980px  380px  0 0.7px rgba(255,255,255,0.9),
+    110px  240px  0 0.3px rgba(255,255,255,0.4),
+    830px  560px  0 0.5px rgba(255,255,255,0.6);
+  animation: twinkle 8s ease-in-out 3s infinite;
+}
+
+
+/* ─── Ambient Glow Behind Player ────────────────────────────────── */
+.cinema-ambient-glow {
+  position: absolute;
+  inset: -10%;
+  background: radial-gradient(
+    ellipse 50% 40% at 50% 50%,
+    rgba(232, 88, 122, 0.06) 0%,
+    rgba(212, 165, 116, 0.03) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: ambient-pulse 8s ease-in-out infinite;
+  filter: blur(40px);
+}
+
+
+/* ─── Entrance Curtain Reveal ───────────────────────────────────── */
+.cinema-entrance-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.cinema-entrance-reveal::before,
+.cinema-entrance-reveal::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background: linear-gradient(180deg, #120917 0%, #0a0710 50%, #05050f 100%);
+  animation: curtain-reveal 1.4s var(--cinema-ease-dramatic) 0.3s forwards;
+}
+
+.cinema-entrance-reveal::before {
+  left: 0;
+  transform-origin: left center;
+}
+
+.cinema-entrance-reveal::after {
+  right: 0;
+  transform-origin: right center;
+  animation-name: curtain-reveal-right;
+}
+
+
+/* ─── Control Bar Underglow ─────────────────────────────────────── */
+.cinema-control-glow {
+  position: relative;
+}
+
+.cinema-control-glow::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse 60% 120% at 50% 100%,
+    rgba(232, 88, 122, 0.12) 0%,
+    rgba(212, 165, 116, 0.06) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(20px);
+  border-radius: 50%;
+}
+
+
+/* ─── Chat Message Bubbles ──────────────────────────────────────── */
+.cinema-msg-bubble {
+  max-width: 82%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  position: relative;
+  word-wrap: break-word;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: cinema-fade-in-anim 0.25s var(--cinema-ease-out);
+}
+
+.cinema-msg-self {
+  background: linear-gradient(
+    135deg,
+    rgba(232, 88, 122, 0.85) 0%,
+    rgba(232, 88, 122, 0.7) 100%
+  );
+  color: #fff;
+  border-bottom-right-radius: 6px;
+  margin-left: auto;
+  box-shadow:
+    0 2px 12px rgba(232, 88, 122, 0.2),
+    0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.cinema-msg-partner {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--cinema-text);
+  border-bottom-left-radius: 6px;
+  margin-right: auto;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.cinema-msg-sticker {
+  background: transparent;
+  padding: 4px;
+  box-shadow: none;
+  border: none;
+  font-size: 3rem;
+  line-height: 1;
+  animation: sticker-bounce 0.5s var(--cinema-ease-spring);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+
+/* ─── Typing Indicator ──────────────────────────────────────────── */
+.cinema-typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 18px;
+  border-bottom-left-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cinema-typing-indicator span {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(240, 234, 244, 0.4);
+  animation: typing-bounce 1.4s ease-in-out infinite;
+}
+
+.cinema-typing-indicator span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.cinema-typing-indicator span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+
+/* ─── Sticker Picker ────────────────────────────────────────────── */
+.cinema-sticker-picker {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  max-height: 0;
+  overflow: hidden;
+  background: rgba(12, 10, 22, 0.94);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px 16px 0 0;
+  transition:
+    max-height 0.4s var(--cinema-ease-out),
+    opacity 0.3s ease;
+  opacity: 0;
+  z-index: 10;
+}
+
+.cinema-sticker-picker.open {
+  max-height: 280px;
+  opacity: 1;
+  overflow-y: auto;
+}
+
+.cinema-sticker-picker .sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 8px;
+  padding: 12px;
+}
+
+.cinema-sticker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.2s var(--cinema-ease-spring);
+  user-select: none;
+}
+
+.cinema-sticker-item:hover {
+  transform: scale(1.2);
+  background: rgba(232, 88, 122, 0.1);
+  box-shadow: 0 4px 16px rgba(232, 88, 122, 0.1);
+}
+
+.cinema-sticker-item:active {
+  transform: scale(0.9);
+}
+
+
+/* ─── Sticker Pack Tabs ─────────────────────────────────────────── */
+.cinema-sticker-pack-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  color: var(--cinema-text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.cinema-sticker-pack-tab:hover {
+  color: var(--cinema-text);
+}
+
+.cinema-sticker-pack-tab.active {
+  color: var(--cinema-accent-rose);
+  border-bottom-color: var(--cinema-accent-rose);
+}
+
+
+/* ─── Emoji Reaction Row ────────────────────────────────────────── */
+.cinema-emoji-row {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cinema-emoji-row::-webkit-scrollbar {
+  display: none;
+}
+
+.cinema-emoji-row button {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s var(--cinema-ease-spring);
+}
+
+.cinema-emoji-row button:hover {
+  transform: scale(1.3);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cinema-emoji-row button:active {
+  transform: scale(0.9);
+}
+
+
+/* ─── Chat Header ───────────────────────────────────────────────── */
+.cinema-chat-header {
+  padding: 16px 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(232, 88, 122, 0.06) 0%,
+    transparent 100%
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+.cinema-chat-header::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(232, 88, 122, 0.2),
+    rgba(212, 165, 116, 0.2),
+    transparent
+  );
+}
+
+
+/* ─── LIVE Badge ────────────────────────────────────────────────── */
+.cinema-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fff;
+  background: rgba(232, 88, 122, 0.85);
+  border-radius: 100px;
+  box-shadow: 0 0 12px rgba(232, 88, 122, 0.3);
+}
+
+.cinema-live-badge::before {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+
+
+/* ─── Mood Ambient Glows ────────────────────────────────────────── */
+.cinema-mood-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 1.5s ease;
+  opacity: 0.5;
+  filter: blur(60px);
+}
+
+.cinema-mood-glow.romantic {
+  background: radial-gradient(ellipse at 50% 80%, rgba(232, 88, 122, 0.08), transparent 60%);
+}
+
+.cinema-mood-glow.warm {
+  background: radial-gradient(ellipse at 50% 80%, rgba(212, 165, 116, 0.08), transparent 60%);
+}
+
+.cinema-mood-glow.cool {
+  background: radial-gradient(ellipse at 50% 80%, rgba(88, 166, 232, 0.06), transparent 60%);
+}
+
+.cinema-mood-glow.intense {
+  background: radial-gradient(ellipse at 50% 80%, rgba(180, 60, 60, 0.08), transparent 60%);
+}
+
+
+/* ─── Utility: Fade In ──────────────────────────────────────────── */
+.cinema-fade-in {
+  animation: cinema-fade-in-anim 0.5s var(--cinema-ease-out) both;
+}
+
+/* ─── Utility: Slide Up ─────────────────────────────────────────── */
+.cinema-slide-up {
+  animation: cinema-slide-up-anim 0.5s var(--cinema-ease-out) both;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   KEYFRAME ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ambient-pulse {
+  0%, 100% {
+    opacity: 1;
+    background-position: 0% 50%;
+  }
+  50% {
+    opacity: 0.7;
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-6px);
+    opacity: 0.9;
+  }
+}
+
+@keyframes sticker-bounce {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  70% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes light-sweep {
+  0% {
+    transform: translateX(-150%);
+  }
+  100% {
+    transform: translateX(150%);
+  }
+}
+
+@keyframes curtain-reveal {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes curtain-reveal-right {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes live-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+  }
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0);
+  }
+}
+
+@keyframes breathing {
+  0%, 100% {
+    box-shadow:
+      0 0 25px rgba(16, 185, 129, 0.25),
+      0 0 50px rgba(16, 185, 129, 0.08);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 35px rgba(16, 185, 129, 0.35),
+      0 0 70px rgba(16, 185, 129, 0.12);
+    transform: scale(1.04);
+  }
+}
+
+@keyframes cinema-fade-in-anim {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cinema-slide-up-anim {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE REFINEMENTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .cinema-glass-panel {
+    border-radius: 16px;
+  }
+
+  .cinema-lobby-card {
+    border-radius: 16px;
+  }
+
+  .cinema-lobby-card:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+
+  .cinema-msg-bubble {
+    max-width: 88%;
+    font-size: 0.825rem;
+  }
+
+  .cinema-sticker-picker.open {
+    max-height: 220px;
+  }
+
+  .cinema-sticker-item {
+    width: 48px;
+    height: 48px;
+    font-size: 1.6rem;
+  }
+
+  .cinema-control-glow::before {
+    left: 5%;
+    right: 5%;
+  }
+}
+
+@media (max-width: 380px) {
+  .cinema-msg-bubble {
+    max-width: 92%;
+    padding: 8px 12px;
+  }
+
+  .cinema-sticker-picker .sticker-grid {
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  }
+}
+
+/* ─── Prefers Reduced Motion ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .cinema-star-field::before,
+  .cinema-star-field::after {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .cinema-root::before {
+    animation: none;
+  }
+
+  .cinema-ambient-glow {
+    animation: none;
+  }
+
+  .cinema-ready-orb.ready {
+    animation: none;
+  }
+
+  .cinema-live-badge::before {
+    animation: none;
+  }
+
+  .cinema-floating-particle {
+    animation: none;
+    display: none;
+  }
+
+  .cinema-entrance-reveal::before,
+  .cinema-entrance-reveal::after {
+    animation: none;
+    opacity: 0;
+  }
+
+  .cinema-lobby-card:hover::after {
+    animation: none;
+  }
 }

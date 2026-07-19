@@ -26,7 +26,12 @@ import {
   Coffee,
   Info,
   Link2,
-  Play
+  Play,
+  Sticker,
+  SmilePlus,
+  Clock,
+  BellOff,
+  Bell
 } from "lucide-react";
 import api from "@/lib/api";
 import { getSocket } from "@/lib/socket";
@@ -53,6 +58,7 @@ interface ChatMessage {
   text: string;
   isSelf: boolean;
   createdAt: string;
+  type?: "text" | "sticker";
 }
 
 interface FloatingParticle {
@@ -61,6 +67,252 @@ interface FloatingParticle {
   left: number;
   delay?: number;
 }
+
+const LANGUAGES = [
+  { code: "en", name: "English", flag: "🇺🇸" },
+  { code: "es", name: "Español", flag: "🇪🇸" },
+  { code: "fr", name: "Français", flag: "🇫🇷" },
+  { code: "de", name: "Deutsch", flag: "🇩🇪" },
+  { code: "hi", name: "हिन्दी", flag: "🇮🇳" },
+  { code: "ja", name: "日本語", flag: "🇯🇵" },
+];
+
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    lobby: "Cinema Lobby",
+    exit: "Exit Cinema Hall",
+    waiting: "Waiting for partner...",
+    partnerLobby: "Partner in Lobby",
+    partnerHall: "Partner in Hall",
+    chooseDifferent: "Choose Different Movie",
+    readyWatch: "I am Ready to Watch 🍿",
+    readyWaiting: "Ready! Waiting",
+    theaterSetup: "Theater Setup",
+    dateSnacks: "Configure Date Snacks",
+    syncLocal: "Syncing Local Video Playback",
+    gdriveTitle: "Watch via Google Drive Link",
+    localTitle: "Watch a Local File (Zero Buffering)",
+    searchPlaceholder: "Search movies & TV shows...",
+    watchlist: "Watchlist",
+    history: "Watched History",
+    streamReady: "Stream Ready",
+    remoteOnly: "Remote Only",
+    coWatching: "Co-Watching",
+    soloViewing: "Solo Viewing",
+    syncOffline: "Sync Offline",
+    active: "Active",
+    theaterChat: "Theater Chat",
+    typeMessage: "Type a message...",
+    whisper: "Whisper something sweet...",
+    noMessages: "No messages yet",
+    lights: "💡 Lights",
+    audio: "🔊 Audio",
+    fight: "🍿 Fight",
+    cuddle: "🤗 Cuddle",
+    stickers: "Stickers",
+    openTab: "Open in New Tab",
+    tryAgain: "Try Again",
+    embedError: "This source doesn't support embedding",
+    language: "Language",
+    subtitles: "Subtitles",
+    audioTrack: "Audio Track"
+  },
+  es: {
+    lobby: "Vestíbulo del Cine",
+    exit: "Salir de la Sala de Cine",
+    waiting: "Esperando al compañero...",
+    partnerLobby: "Compañero en el Vestíbulo",
+    partnerHall: "Compañero en la Sala",
+    chooseDifferent: "Elegir otra Película",
+    readyWatch: "¡Estoy Listo para Ver! 🍿",
+    readyWaiting: "¡Listo! Esperando",
+    theaterSetup: "Configuración de la Sala",
+    dateSnacks: "Configurar Snacks para la Cita",
+    syncLocal: "Sincronizando Reproducción Local",
+    gdriveTitle: "Ver vía Enlace de Google Drive",
+    localTitle: "Ver Archivo Local (Sin Buffering)",
+    searchPlaceholder: "Buscar películas y series...",
+    watchlist: "Lista de Seguimiento",
+    history: "Historial de Visto",
+    streamReady: "Transmisión Lista",
+    remoteOnly: "Solo Remoto",
+    coWatching: "Co-reproducción",
+    soloViewing: "Viendo Solo",
+    syncOffline: "Sincronización Desconectada",
+    active: "Activo",
+    theaterChat: "Chat de la Sala",
+    typeMessage: "Escribe un mensaje...",
+    whisper: "Susurra algo dulce...",
+    noMessages: "Sin mensajes aún",
+    lights: "💡 Luces",
+    audio: "🔊 Audio",
+    fight: "🍿 Pelea",
+    cuddle: "🤗 Abrazo",
+    stickers: "Pegatinas",
+    openTab: "Abrir en Nueva Pestaña",
+    tryAgain: "Intentar de Nuevo",
+    embedError: "Esta fuente no admite incrustación",
+    language: "Idioma",
+    subtitles: "Subtítulos",
+    audioTrack: "Pista de Audio"
+  },
+  fr: {
+    lobby: "Hall du Cinéma",
+    exit: "Quitter la Salle de Cinéma",
+    waiting: "En attente du partenaire...",
+    partnerLobby: "Partenaire dans le Hall",
+    partnerHall: "Partenaire dans la Salle",
+    chooseDifferent: "Choisir un autre Film",
+    readyWatch: "Je suis Prêt à Regarder 🍿",
+    readyWaiting: "Prêt ! En attente",
+    theaterSetup: "Configuration de la Salle",
+    dateSnacks: "Configurer les Snacks",
+    syncLocal: "Lecture Vidéo Locale Synchronisée",
+    gdriveTitle: "Regarder via Google Drive",
+    localTitle: "Regarder un Fichier Local (Sans Buffering)",
+    searchPlaceholder: "Rechercher des films et séries...",
+    watchlist: "Liste de Suivi",
+    history: "Historique",
+    streamReady: "Prêt à Diffuser",
+    remoteOnly: "À distance uniquement",
+    coWatching: "Co-Lecture",
+    soloViewing: "Visionnage Solo",
+    syncOffline: "Sync Hors ligne",
+    active: "Actif",
+    theaterChat: "Chat de la Salle",
+    typeMessage: "Écrire un message...",
+    whisper: "Chuchoter quelque chose de doux...",
+    noMessages: "Aucun message pour l'instant",
+    lights: "💡 Lumières",
+    audio: "🔊 Audio",
+    fight: "🍿 Bataille",
+    cuddle: "🤗 Câlin",
+    stickers: "Stickers",
+    openTab: "Ouvrir dans un Nouvel Onglet",
+    tryAgain: "Réessayer",
+    embedError: "Cette source ne prend pas en charge l'intégration",
+    language: "Langue",
+    subtitles: "Sous-titres",
+    audioTrack: "Piste Audio"
+  },
+  de: {
+    lobby: "Kino-Lobby",
+    exit: "Kinosaal verlassen",
+    waiting: "Warten auf Partner...",
+    partnerLobby: "Partner in der Lobby",
+    partnerHall: "Partner im Saal",
+    chooseDifferent: "Anderen Film wählen",
+    readyWatch: "Ich bin bereit zum Anschauen 🍿",
+    readyWaiting: "Bereit! Warten",
+    theaterSetup: "Kino-Einrichtung",
+    dateSnacks: "Date-Snacks konfigurieren",
+    syncLocal: "Lokale Videowiedergabe synchronisieren",
+    gdriveTitle: "Über Google Drive ansehen",
+    localTitle: "Lokale Datei ansehen (Kein Puffern)",
+    searchPlaceholder: "Filme & Serien suchen...",
+    watchlist: "Merkliste",
+    history: "Verlauf",
+    streamReady: "Stream bereit",
+    remoteOnly: "Nur Remote",
+    coWatching: "Zusammen ansehen",
+    soloViewing: "Einzelwiedergabe",
+    syncOffline: "Sync offline",
+    active: "Aktiv",
+    theaterChat: "Kino-Chat",
+    typeMessage: "Nachricht schreiben...",
+    whisper: "Flüstere etwas Süßes...",
+    noMessages: "Noch keine Nachrichten",
+    lights: "💡 Licht",
+    audio: "🔊 Audio",
+    fight: "🍿 Kampf",
+    cuddle: "🤗 Kuscheln",
+    stickers: "Sticker",
+    openTab: "In neuem Tab öffnen",
+    tryAgain: "Erneut versuchen",
+    embedError: "Diese Quelle unterstützt keine Einbettung",
+    language: "Sprache",
+    subtitles: "Untertitel",
+    audioTrack: "Tonspur"
+  },
+  hi: {
+    lobby: "सिनेमा लॉबी",
+    exit: "सिनेमा हॉल से बाहर निकलें",
+    waiting: "साथी की प्रतीक्षा कर रहे हैं...",
+    partnerLobby: "साथी लॉबी में है",
+    partnerHall: "साथी हॉल में है",
+    chooseDifferent: "दूसरी फिल्म चुनें",
+    readyWatch: "मैं देखने के लिए तैयार हूँ 🍿",
+    readyWaiting: "तैयार! प्रतीक्षा जारी",
+    theaterSetup: "थिएटर सेटअप",
+    dateSnacks: "डेट स्नैक्स सेट करें",
+    syncLocal: "लोकल वीडियो प्लेबैक सिंक करें",
+    gdriveTitle: "गूगल ड्राइव लिंक से देखें",
+    localTitle: "लोकल फ़ाइल देखें (बिना बफरिंग)",
+    searchPlaceholder: "फिल्में और टीवी शोज़ खोजें...",
+    watchlist: "वॉचलिस्ट",
+    history: "देखा गया इतिहास",
+    streamReady: "स्ट्रीम तैयार",
+    remoteOnly: "केवल रिमोट",
+    coWatching: "साथ में देखना",
+    soloViewing: "अकेले देखना",
+    syncOffline: "सिंक ऑफलाइन",
+    active: "सक्रिय",
+    theaterChat: "थिएटर चैट",
+    typeMessage: "संदेश टाइप करें...",
+    whisper: "कुछ मीठा फुसफुसाएं...",
+    noMessages: "कोई संदेश नहीं",
+    lights: "💡 लाइट्स",
+    audio: "🔊 ऑडियो",
+    fight: "🍿 फाइट",
+    cuddle: "🤗 गले लगाना",
+    stickers: "स्टिकर",
+    openTab: "नए टैब में खोलें",
+    tryAgain: "पुनः प्रयास करें",
+    embedError: "यह स्रोत एम्बेडिंग का समर्थन नहीं करता है",
+    language: "भाषा",
+    subtitles: "सबटाइटल्स",
+    audioTrack: "ऑडियो ट्रैक"
+  },
+  ja: {
+    lobby: "シネマロビー",
+    exit: "シアターを退室する",
+    waiting: "パートナーを待っています...",
+    partnerLobby: "パートナーがロビーにいます",
+    partnerHall: "パートナーがシアターにいます",
+    chooseDifferent: "別の映画を選ぶ",
+    readyWatch: "視聴の準備完了 🍿",
+    readyWaiting: "準備完了！待機中",
+    theaterSetup: "シアター設定",
+    dateSnacks: "デートのスナックを設定",
+    syncLocal: "ローカル動画の同期再生",
+    gdriveTitle: "Googleドライブ経由で視聴",
+    localTitle: "ローカルファイルを再生 (バッファなし)",
+    searchPlaceholder: "映画やドラマを検索...",
+    watchlist: "ウォッチリスト",
+    history: "視聴履歴",
+    streamReady: "配信準備完了",
+    remoteOnly: "リモートのみ",
+    coWatching: "同時視聴中",
+    soloViewing: "ソロ視聴中",
+    syncOffline: "オフライン同期",
+    active: "アクティブ",
+    theaterChat: "シアターチャット",
+    typeMessage: "メッセージを入力...",
+    whisper: "甘い言葉をささやいて...",
+    noMessages: "メッセージはまだありません",
+    lights: "💡 照明",
+    audio: "🔊 音声",
+    fight: "🍿 投げ合い",
+    cuddle: "🤗 ハグ",
+    stickers: "ステッカー",
+    openTab: "新しいタブで開く",
+    tryAgain: "再試行",
+    embedError: "このソースは埋め込みに対応していません",
+    language: "言語",
+    subtitles: "字幕",
+    audioTrack: "音声トラック"
+  }
+};
 
 export default function CinemaPage() {
   const router = useRouter();
@@ -94,6 +346,73 @@ export default function CinemaPage() {
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const socket = getSocket();
+
+  // Chat Enhancement States
+  const [stickerPickerOpen, setStickerPickerOpen] = useState(false);
+  const [activeStickerPack, setActiveStickerPack] = useState<string>("romantic");
+  const [isPartnerTyping, setIsPartnerTyping] = useState(false);
+  const [chatSoundEnabled, setChatSoundEnabled] = useState(true);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [iframeError, setIframeError] = useState(false);
+
+  // Language States
+  const [uiLang, setUiLang] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("love-cinema-ui-lang") || "en";
+    }
+    return "en";
+  });
+  const [subtitleLang, setSubtitleLang] = useState<string>("en");
+  const [audioLang, setAudioLang] = useState<string>("original");
+
+  // Sticker Packs Data
+  const stickerPacks: Record<string, { label: string; icon: string; stickers: string[] }> = {
+    romantic: {
+      label: "Romantic",
+      icon: "💕",
+      stickers: ["💏", "💑", "💝", "💗", "🫶", "🥰", "😘", "💐", "🌹", "🫂", "💋", "💞", "💓", "💘", "😍", "🥺", "🤗", "💌", "👩‍❤️‍👨", "💟"],
+    },
+    reactions: {
+      label: "Reactions",
+      icon: "🤣",
+      stickers: ["🤣", "😭", "🤯", "🥵", "💀", "👏", "🙈", "🫠", "🤤", "😈", "🫣", "😤", "🥶", "🤡", "👀", "🫡", "😎", "🤩", "😬", "🫢"],
+    },
+    cozy: {
+      label: "Cozy Vibes",
+      icon: "🧸",
+      stickers: ["🧸", "🕯️", "🌙", "☕", "🍿", "🎬", "🛋️", "🫕", "🧁", "🎶", "🌸", "🦋", "🍰", "🎀", "🫧", "✨", "🌻", "🍫", "🥂", "🎠"],
+    },
+    kaomoji: {
+      label: "Kaomoji",
+      icon: "ʕ•ᴥ•ʔ",
+      stickers: [
+        "(づ￣ ³￣)づ",
+        "♡(ˆ‿ˆ)",
+        "(っ˘з(˘⌣˘ )",
+        "₍ᐢ..ᐢ₎♡",
+        "(⁄ ⁄•⁄ω⁄•⁄ ⁄)",
+        "(*≧ω≦)",
+        "(´,,•ω•,,)♡",
+        "( ˘ ³˘)♥",
+        "ʕ•ᴥ•ʔ",
+        "(◕‿◕✿)",
+        "( ˶ˆᗜˆ˵ )",
+        "(ᵔᴥᵔ)",
+        "♡( ◡‿◡ )",
+        "( ⸝⸝´꒳`⸝⸝)",
+        "٩(◕‿◕｡)۶",
+        "(✿◠‿◠)",
+        "꒰ ˶• ༝ •˶꒱",
+        "( ⓛ ω ⓛ *)",
+        "ε(´•₎ •`)з",
+        "(ノ´ヮ`)ノ*: ・゚✧",
+      ],
+    },
+  };
+
+  // Quick emoji row for chat
+  const quickEmojis = ["💖", "😂", "🔥", "😍", "👀", "😭", "🥺", "🫶"];
+
 
   // Extension polling check
   useEffect(() => {
@@ -450,7 +769,7 @@ export default function CinemaPage() {
     });
 
     // Listen to chat messages
-    socket.on("cinema_chat_received", (msg: { text: string; senderName: string; createdAt: string }) => {
+    socket.on("cinema_chat_received", (msg: { text: string; senderName: string; createdAt: string; type?: "text" | "sticker" }) => {
       setChatMessages((prev) => [
         ...prev,
         {
@@ -459,13 +778,25 @@ export default function CinemaPage() {
           text: msg.text,
           isSelf: false,
           createdAt: msg.createdAt,
+          type: msg.type || "text",
         },
       ]);
-      playSound("notification");
+      if (chatSoundEnabled) playSound("notification");
+      setIsPartnerTyping(false);
 
       // Increment unread count if chat drawer is closed
       if (!chatOpen) {
         setUnreadChatCount((prev) => prev + 1);
+      }
+    });
+
+    // Listen to typing indicator
+    socket.on("cinema_typing_status", (data: { isTyping: boolean }) => {
+      setIsPartnerTyping(data.isTyping);
+      // Auto-clear typing after 4s if no stop event received
+      if (data.isTyping) {
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => setIsPartnerTyping(false), 4000);
       }
     });
 
@@ -501,6 +832,13 @@ export default function CinemaPage() {
       playSound("tap");
     });
 
+    // Listen to synced subtitles/audio
+    socket.on("cinema_language_synced", (data: { subtitleLang: string; audioLang: string }) => {
+      setSubtitleLang(data.subtitleLang);
+      setAudioLang(data.audioLang);
+      playSound("chime");
+    });
+
     // Listen to show starting
     socket.on("cinema_show_started", () => {
       setSession((prev) => {
@@ -518,13 +856,16 @@ export default function CinemaPage() {
       socket.off("partner_joined_cinema");
       socket.off("partner_left_cinema");
       socket.off("cinema_chat_received");
+      socket.off("cinema_typing_status");
       socket.off("cinema_reaction_received");
       socket.off("cinema_dim_lights_changed");
       socket.off("cinema_popcorn_thrown");
       socket.off("cinema_cuddle_received");
       socket.off("cinema_snacks_synced");
+      socket.off("cinema_language_synced");
       socket.off("cinema_show_started");
       socket.emit("leave_cinema", { relationshipId: relId });
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
   }, [user?.relationshipId, chatOpen]);
 
@@ -738,6 +1079,16 @@ export default function CinemaPage() {
     playSound("tap");
   };
 
+  const handleLanguageSync = (sub: string, aud: string) => {
+    if (!socket || !user || !user.relationshipId) return;
+    const relId = getRelationshipId(user.relationshipId);
+    socket.emit("cinema_sync_language", {
+      relationshipId: relId,
+      subtitleLang: sub,
+      audioLang: aud,
+    });
+  };
+
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim() || !socket || !user || !user.relationshipId) return;
@@ -749,6 +1100,7 @@ export default function CinemaPage() {
       text: chatInput,
       isSelf: true,
       createdAt: new Date().toISOString(),
+      type: "text",
     };
 
     setChatMessages((prev) => [...prev, newMsg]);
@@ -756,10 +1108,57 @@ export default function CinemaPage() {
       relationshipId: relId,
       text: chatInput,
       senderName: user.name.split(" ")[0],
+      type: "text",
     });
 
+    // Stop typing indicator
+    socket.emit("cinema_typing", { relationshipId: relId, isTyping: false });
     setChatInput("");
+    setStickerPickerOpen(false);
     playSound("tap");
+  };
+
+  const handleSendSticker = (stickerText: string) => {
+    if (!socket || !user || !user.relationshipId) return;
+    const relId = getRelationshipId(user.relationshipId);
+
+    const newMsg: ChatMessage = {
+      id: Math.random().toString(),
+      senderName: user.name.split(" ")[0],
+      text: stickerText,
+      isSelf: true,
+      createdAt: new Date().toISOString(),
+      type: "sticker",
+    };
+
+    setChatMessages((prev) => [...prev, newMsg]);
+    socket.emit("cinema_chat", {
+      relationshipId: relId,
+      text: stickerText,
+      senderName: user.name.split(" ")[0],
+      type: "sticker",
+    });
+
+    setStickerPickerOpen(false);
+    playSound("pop");
+  };
+
+  const handleChatTyping = () => {
+    if (!socket || !user || !user.relationshipId) return;
+    const relId = getRelationshipId(user.relationshipId);
+    socket.emit("cinema_typing", { relationshipId: relId, isTyping: true });
+  };
+
+  // Relative time formatter for chat timestamps
+  const getRelativeTime = (dateStr: string) => {
+    const now = Date.now();
+    const then = new Date(dateStr).getTime();
+    const diff = Math.floor((now - then) / 1000);
+    if (diff < 10) return "just now";
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   const toggleChat = () => {
@@ -901,14 +1300,51 @@ export default function CinemaPage() {
     }
 
     return (
-      <iframe
-        src={session.watchLink}
-        className="w-full h-full border-0"
-        allow="autoplay; encrypted-media; fullscreen"
-        allowFullScreen
-      />
+      <div className="w-full h-full relative">
+        <iframe
+          src={session.watchLink}
+          className="w-full h-full border-0"
+          allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
+          allowFullScreen
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          onLoad={() => setIframeError(false)}
+        />
+        {/* Fallback overlay for when iframe refuses to embed */}
+        {iframeError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#05050f]/95 z-20 text-center p-8">
+            <div className="cinema-glass-panel p-8 max-w-md border border-white/5">
+              <Info className="w-10 h-10 text-[#E8587A] mx-auto mb-4" />
+              <h3 className="text-lg font-extrabold text-white font-serif tracking-wide mb-2">
+                This source doesn&apos;t support embedding
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed mb-6">
+                Some streaming providers block playback inside embedded frames. You can open it directly in a new tab instead, or try switching to a different source.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <a
+                  href={session.watchLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open in New Tab</span>
+                </a>
+                <button
+                  onClick={() => setIframeError(false)}
+                  className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-zinc-300 text-xs font-bold hover:bg-white/10 transition-all cursor-pointer"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     );
-  }, [session?.watchLink, session?.movieId, session?.movieTitle, gdrivePlayerMode, localFile, localFileUrl]);
+  }, [session?.watchLink, session?.movieId, session?.movieTitle, gdrivePlayerMode, localFile, localFileUrl, iframeError]);
 
   // Loading Screen Layout
   if (!session) {
@@ -923,6 +1359,7 @@ export default function CinemaPage() {
         <p className="text-xs text-zinc-500 font-bold tracking-widest uppercase">
           Initializing Private Theater
         </p>
+        <div className="cinema-star-field" />
       </div>
     );
   }
@@ -933,6 +1370,8 @@ export default function CinemaPage() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden cinema-page cinema-root flex select-none bg-[#05050f]">
+      {/* Star Field Background */}
+      <div className="cinema-star-field" />
       {/* Premium Toast Notification for Source Error */}
       <AnimatePresence>
         {sourceError && (
@@ -1029,26 +1468,57 @@ export default function CinemaPage() {
                   className="flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors mb-3 cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Exit Cinema Hall</span>
+                  <span>{translations[uiLang]?.exit || "Exit Cinema Hall"}</span>
                 </button>
                 <h1 className="text-3xl font-extrabold text-white tracking-wide font-serif cinema-spotlight">
-                  Cinema Lobby
+                  {translations[uiLang]?.lobby || "Cinema Lobby"}
                 </h1>
-                <p className="text-xs text-zinc-500 mt-1">Select a movie from your shared list to watch together</p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {uiLang === "en" ? "Select a movie from your shared list to watch together" : 
+                   uiLang === "es" ? "Selecciona una película de tu lista compartida para verla juntos" :
+                   uiLang === "fr" ? "Sélectionnez un film de votre liste partagée pour le regarder ensemble" :
+                   uiLang === "de" ? "Wähle einen Film aus deiner geteilten Liste aus, um ihn zusammen anzusehen" :
+                   uiLang === "hi" ? "साथ में देखने के लिए अपनी साझा सूची से एक फिल्म चुनें" :
+                   "共同視聴するために共有リストから映画を選択します"}
+                </p>
               </div>
 
-              {/* Status Badge */}
-              <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/[0.02] border border-white/5 shadow-inner">
-                <Users className="w-4 h-4 text-[#E8587A]" />
-                <span className="text-xs font-bold text-zinc-300">
-                  {isPartnerPresent ? "Partner in Lobby" : "Waiting for partner..."}
-                </span>
-                <span
-                  className={cn(
-                    "w-2 h-2 rounded-full",
-                    isPartnerPresent ? "bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" : "bg-zinc-650"
-                  )}
-                />
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Language Selector */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white/[0.02] border border-white/5 shadow-inner">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{translations[uiLang]?.language || "Language"}:</span>
+                  <select
+                    value={uiLang}
+                    onChange={(e) => {
+                      setUiLang(e.target.value);
+                      localStorage.setItem("love-cinema-ui-lang", e.target.value);
+                      playSound("tap");
+                    }}
+                    className="bg-zinc-900/60 border border-white/5 text-[10px] font-bold rounded-lg px-2.5 py-1 text-zinc-305 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
+                  >
+                    {LANGUAGES.map((lang) => (
+                      <option key={lang.code} value={lang.code}>
+                        {lang.flag} {lang.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status Badge */}
+                <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/[0.02] border border-white/5 shadow-inner">
+                  <Users className="w-4 h-4 text-[#E8587A]" />
+                  <span className="text-xs font-bold text-zinc-300">
+                    {isPartnerPresent
+                      ? (translations[uiLang]?.partnerLobby || "Partner in Lobby")
+                      : (translations[uiLang]?.waiting || "Waiting for partner...")}
+                  </span>
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full",
+                      isPartnerPresent ? "bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" : "bg-zinc-650"
+                    )}
+                  />
+                </div>
               </div>
             </div>
 
@@ -1063,17 +1533,22 @@ export default function CinemaPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
-                      Watch via Google Drive Link
+                      {translations[uiLang]?.gdriveTitle || "Watch via Google Drive Link"}
                     </h3>
                     <p className="text-[10px] text-zinc-400">
-                      Paste any shared Google Drive video link to watch it in real-time sync with your partner
+                      {uiLang === "en" ? "Paste any shared Google Drive video link to watch it in real-time sync with your partner" :
+                       uiLang === "es" ? "Pega cualquier enlace de video compartido de Google Drive para verlo en sincronización con tu pareja" :
+                       uiLang === "fr" ? "Collez n'importe quel lien vidéo Google Drive partagé pour le regarder en synchronisation avec votre partenaire" :
+                       uiLang === "de" ? "Füge einen geteilten Google Drive-Videolink ein, um ihn mit deinem Partner synchronisiert anzusehen" :
+                       uiLang === "hi" ? "अपने साथी के साथ वास्तविक समय में सिंक करके देखने के लिए कोई भी साझा Google ड्राइव वीडियो लिंक पेस्ट करें" :
+                       "共有されたGoogleドライブの動画リンクを貼り付けて、パートナーとリアルタイムで同期して視聴します"}
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 w-full">
                   <input
                     type="text"
-                    placeholder="Enter Title (optional)"
+                    placeholder={uiLang === "hi" ? "शीर्षक दर्ज करें (वैकल्पिक)" : uiLang === "es" ? "Ingresar título (opcional)" : uiLang === "ja" ? "タイトルを入力 (任意)" : "Enter Title (optional)"}
                     value={gdriveTitle}
                     onChange={(e) => setGdriveTitle(e.target.value)}
                     className="px-4 py-3 rounded-2xl text-xs bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all sm:w-1/3"
@@ -1090,7 +1565,7 @@ export default function CinemaPage() {
                       onClick={() => handleLoadGDriveLink(gdriveLink, gdriveTitle)}
                       className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2 flex-shrink-0"
                     >
-                      <span>Load</span>
+                      <span>{uiLang === "hi" ? "लोड करें" : uiLang === "ja" ? "読み込む" : uiLang === "es" ? "Cargar" : "Load"}</span>
                       <Play className="w-3 h-3 fill-white stroke-none" />
                     </button>
                   </div>
@@ -1106,16 +1581,21 @@ export default function CinemaPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
-                      Watch a Local File (Zero Buffering)
+                      {translations[uiLang]?.localTitle || "Watch a Local File (Zero Buffering)"}
                     </h3>
                     <p className="text-[10px] text-zinc-400">
-                      Play a video file (MP4/MKV) from your PC. Partner loads their copy of the file for 100% sync!
+                      {uiLang === "en" ? "Play a video file (MP4/MKV) from your PC. Partner loads their copy of the file for 100% sync!" :
+                       uiLang === "es" ? "Reproduce un archivo de video (MP4/MKV) desde tu PC. ¡El compañero carga su copia para una sincronización del 100%!" :
+                       uiLang === "fr" ? "Lisez un fichier vidéo (MP4/MKV) depuis votre PC. Le partenaire charge sa copie pour une synchronisation à 100% !" :
+                       uiLang === "de" ? "Spiele eine Videodatei (MP4/MKV) von deinem PC ab. Der Partner lädt seine Kopie für eine 100%ige Synchronisierung!" :
+                       uiLang === "hi" ? "अपने पीसी से एक वीडियो फ़ाइल (MP4/MKV) चलाएं। 100% सिंक के लिए साथी फ़ाइल की अपनी प्रति लोड करता है!" :
+                       "PCから動画ファイル(MP4/MKV)を再生します。パートナーも同じファイルを読み込むことで100%同期再生されます！"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 w-full">
                   <label className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#D4A574] to-[#E8587A] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2 flex-shrink-0">
-                    <span>Choose Video File</span>
+                    <span>{uiLang === "es" ? "Elegir archivo" : uiLang === "fr" ? "Choisir un fichier" : uiLang === "de" ? "Datei auswählen" : uiLang === "hi" ? "फ़ाइल चुनें" : uiLang === "ja" ? "ファイルを選択" : "Choose Video File"}</span>
                     <input
                       type="file"
                       accept="video/*"
@@ -1140,10 +1620,12 @@ export default function CinemaPage() {
                   </label>
                   {localFile ? (
                     <span className="text-xs text-zinc-400 truncate max-w-[200px]" title={localFile.name}>
-                      Selected: {localFile.name}
+                      {uiLang === "es" ? "Seleccionado" : uiLang === "ja" ? "選択済み" : "Selected"}: {localFile.name}
                     </span>
                   ) : (
-                    <span className="text-[10px] text-zinc-500 italic">No file chosen</span>
+                    <span className="text-[10px] text-zinc-500 italic">
+                      {uiLang === "es" ? "Ningún archivo seleccionado" : uiLang === "ja" ? "ファイル未選択" : uiLang === "hi" ? "कोई फ़ाइल नहीं चुनी गई" : "No file chosen"}
+                    </span>
                   )}
                 </div>
               </div>
@@ -1157,7 +1639,7 @@ export default function CinemaPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search movies & TV shows..."
+                  placeholder={translations[uiLang]?.searchPlaceholder || "Search movies & TV shows..."}
                   className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all"
                 />
               </div>
@@ -1172,7 +1654,7 @@ export default function CinemaPage() {
                       : "text-zinc-500 hover:text-zinc-350"
                   )}
                 >
-                  Watchlist
+                  {translations[uiLang]?.watchlist || "Watchlist"}
                 </button>
                 <button
                   onClick={() => setActiveFilter("watched")}
@@ -1183,7 +1665,7 @@ export default function CinemaPage() {
                       : "text-zinc-500 hover:text-zinc-355"
                   )}
                 >
-                  Watched History
+                  {translations[uiLang]?.history || "Watched History"}
                 </button>
               </div>
             </div>
@@ -1303,13 +1785,15 @@ export default function CinemaPage() {
                 className="flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Choose Different Movie</span>
+                <span>{translations[uiLang]?.chooseDifferent || "Choose Different Movie"}</span>
               </button>
 
               <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/[0.02] border border-white/5 text-zinc-400">
                 <Users className="w-4 h-4 text-[#E8587A]" />
                 <span className="text-xs font-bold">
-                  {isPartnerPresent ? "Partner in Hall" : "Waiting for partner..."}
+                  {isPartnerPresent
+                    ? (translations[uiLang]?.partnerHall || "Partner in Hall")
+                    : (translations[uiLang]?.waiting || "Waiting for partner...")}
                 </span>
                 <span
                   className={cn(
@@ -1324,15 +1808,25 @@ export default function CinemaPage() {
             <div className="my-auto text-center flex flex-col items-center max-w-xl px-4">
               <Film className="w-16 h-16 text-[#D4A574] animate-pulse mb-6" />
               <span className="text-[10px] font-black tracking-widest text-[#E8587A] uppercase bg-[#E8587A]/10 px-3 py-1 rounded-full">
-                Theater Setup
+                {translations[uiLang]?.theaterSetup || "Theater Setup"}
               </span>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-wide mt-4 mb-3 font-serif cinema-spotlight leading-tight">
                 {session.movieTitle}
               </h2>
               <p className="text-xs sm:text-sm text-zinc-500 leading-relaxed max-w-md">
                 {!isPartnerPresent
-                  ? "Waiting for your partner to enter. Get cozy, prepare the drinks, and set the snacks! 🍿"
-                  : "Both watching seats are filled! Confirm readiness to open the screen curtains. 🎬"}
+                  ? (uiLang === "es" ? "Esperando a que tu pareja entre. ¡Ponte cómodo, prepara las bebidas y los snacks! 🍿" :
+                     uiLang === "fr" ? "En attente de l'entrée de votre partenaire. Installez-vous confortablement, préparez les boissons et les snacks ! 🍿" :
+                     uiLang === "de" ? "Warte darauf, dass dein Partner eintritt. Mach es dir gemütlich, bereite die Getränke vor und stelle die Snacks bereit! 🍿" :
+                     uiLang === "hi" ? "आपके साथी के प्रवेश करने की प्रतीक्षा की जा रही है। सहज हो जाएं, पेय तैयार करें और स्नैक्स सेट करें! 🍿" :
+                     uiLang === "ja" ? "パートナーが入室するのを待っています。快適にして、飲み物を準備し、スナックをセットしましょう！ 🍿" :
+                     "Waiting for your partner to enter. Get cozy, prepare the drinks, and set the snacks! 🍿")
+                  : (uiLang === "es" ? "¡Ambos asientos están ocupados! Confirma que estás listo para abrir las cortinas. 🎬" :
+                     uiLang === "fr" ? "Les deux places sont occupées ! Confirmez que vous êtes prêt pour ouvrir les rideaux. 🎬" :
+                     uiLang === "de" ? "Beide Plätze sind besetzt! Bestätige die Bereitschaft, um die Vorhänge zu öffnen. 🎬" :
+                     uiLang === "hi" ? "दोनों सीटें भरी हुई हैं! पर्दे खोलने के लिए तत्परता की पुष्टि करें। 🎬" :
+                     uiLang === "ja" ? "両方の席が埋まりました！準備完了を確認してカーテンを開けましょう。 🎬" :
+                     "Both watching seats are filled! Confirm readiness to open the screen curtains. 🎬")}
               </p>
 
               {/* Ready Status Circles */}
@@ -1342,7 +1836,9 @@ export default function CinemaPage() {
                   <div className={cn("cinema-ready-orb", isSelfReady && "ready")}>
                     <Users className="w-6 h-6 text-zinc-500" />
                   </div>
-                  <span className="text-xs font-extrabold text-zinc-400">You</span>
+                  <span className="text-xs font-extrabold text-zinc-400">
+                    {uiLang === "es" ? "Tú" : uiLang === "fr" ? "Toi" : uiLang === "de" ? "Du" : uiLang === "hi" ? "आप" : uiLang === "ja" ? "あなた" : "You"}
+                  </span>
                 </div>
 
                 {/* Partner Status */}
@@ -1355,7 +1851,9 @@ export default function CinemaPage() {
                   >
                     <Users className="w-6 h-6 text-zinc-500" />
                   </div>
-                  <span className="text-xs font-extrabold text-zinc-400">Partner</span>
+                  <span className="text-xs font-extrabold text-zinc-400">
+                    {uiLang === "es" ? "Pareja" : uiLang === "fr" ? "Partenaire" : uiLang === "de" ? "Partner" : uiLang === "hi" ? "साथी" : uiLang === "ja" ? "パートナー" : "Partner"}
+                  </span>
                 </div>
               </div>
 
@@ -1373,8 +1871,8 @@ export default function CinemaPage() {
                   <Check className="w-4 h-4" />
                   <span>
                     {isSelfReady
-                      ? `Ready! Waiting (${readyCount}/2)`
-                      : "I am Ready to Watch 🍿"}
+                      ? `${translations[uiLang]?.readyWaiting || "Ready! Waiting"} (${readyCount}/2)`
+                      : (translations[uiLang]?.readyWatch || "I am Ready to Watch 🍿")}
                   </span>
                 </button>
               </div>
@@ -1384,7 +1882,9 @@ export default function CinemaPage() {
             <div className="cinema-glass-panel p-5 max-w-md w-full border border-white/5">
               <div className="flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
                 <Coffee className="w-4 h-4 text-[#D4A574]" />
-                <h4 className="text-xs font-black uppercase text-zinc-400 tracking-wider">Configure Date Snacks</h4>
+                <h4 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
+                  {translations[uiLang]?.dateSnacks || "Configure Date Snacks"}
+                </h4>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {[
@@ -1444,11 +1944,18 @@ export default function CinemaPage() {
 
               {/* Status and Toggle Controls */}
               <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-xs text-zinc-300">
-                  <Users className="w-3.5 h-3.5 text-[#E8587A]" />
-                  <span>Co-Watching</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                </div>
+                {isPartnerPresent ? (
+                  <div className="hidden sm:flex cinema-live-badge items-center gap-2 px-3 py-1.5 rounded-xl bg-[#E8587A]/10 border border-[#E8587A]/20 text-xs text-[#E8587A] font-bold">
+                    <span className="w-2 h-2 rounded-full bg-[#E8587A] animate-pulse shadow-[0_0_8px_#E8587A]" />
+                    <span>{translations[uiLang]?.active?.toUpperCase() || "LIVE"}</span>
+                    <Users className="w-3.5 h-3.5" />
+                  </div>
+                ) : (
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-xs text-zinc-500">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>{translations[uiLang]?.soloViewing || "Solo Viewing"}</span>
+                  </div>
+                )}
 
                 {/* Extension status indicator */}
                 <div
@@ -1461,7 +1968,11 @@ export default function CinemaPage() {
                   title={isExtensionActive ? "Browser sync active" : "Sync extension not active"}
                 >
                   <Sparkles className="w-3 h-3" />
-                  <span className="hidden xs:inline">{isExtensionActive ? "Active" : "Sync Offline"}</span>
+                  <span className="hidden xs:inline">
+                    {isExtensionActive
+                      ? (translations[uiLang]?.active || "Active")
+                      : (translations[uiLang]?.syncOffline || "Sync Offline")}
+                  </span>
                 </div>
 
                 {/* Chat Toggle Button */}
@@ -1512,7 +2023,7 @@ export default function CinemaPage() {
             {/* Auto-Hiding Control Bar */}
             <div
               className={cn(
-                "cinema-bar-transition fixed bottom-6 left-1/2 -translate-x-1/2 cinema-glass-panel p-3 flex flex-wrap items-center gap-4 z-40 max-w-[90%] md:max-w-max",
+                "cinema-bar-transition cinema-control-glow fixed bottom-6 left-1/2 -translate-x-1/2 cinema-glass-panel p-3 flex flex-wrap items-center gap-4 z-40 max-w-[90%] md:max-w-max",
                 !controlsVisible && "cinema-bar-hidden cinema-controls-hidden"
               )}
             >
@@ -1534,6 +2045,8 @@ export default function CinemaPage() {
                     className="bg-zinc-900/60 border border-white/5 text-[10px] font-bold rounded-lg px-2 py-1.5 text-zinc-300 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
                   >
                     <option value="default">🎬 1HD (Default)</option>
+                    <option value="cineby">🌟 Cineby (Recommended)</option>
+                    <option value="bflix">🅱️ BFlix</option>
                     <option value="vidsrc_to">⚡ VidSrc.to</option>
                     <option value="vidsrc_me">⚡ VidSrc.me</option>
                     <option value="vidsrcme_ru">🇷🇺 VidSrcMe.ru</option>
@@ -1543,8 +2056,6 @@ export default function CinemaPage() {
                     <option value="embedsu">🎥 Embed.su</option>
                     <option value="autoembed">🤖 AutoEmbed</option>
                     <option value="smashystream">💥 SmashyStream</option>
-                    <option value="cineby">🎬 Cineby</option>
-                    <option value="bflix">🅱️ BFlix</option>
                   </select>
                 )}
 
@@ -1575,7 +2086,7 @@ export default function CinemaPage() {
                   )}
                   title="Dim/brighten the ambient background"
                 >
-                  💡 Lights
+                  {translations[uiLang]?.lights || "💡 Lights"}
                 </button>
 
                 <button
@@ -1588,7 +2099,7 @@ export default function CinemaPage() {
                   )}
                   title={videoMuted ? "Unmute audio" : "Mute audio"}
                 >
-                  {videoMuted ? "🔇 Muted" : "🔊 Audio"}
+                  {videoMuted ? `🔇 Muted` : (translations[uiLang]?.audio || "🔊 Audio")}
                 </button>
 
                 {session.movieId?.startsWith("gdrive-") && (
@@ -1605,15 +2116,79 @@ export default function CinemaPage() {
                   onClick={handleThrowPopcorn}
                   className="bg-white/5 border border-white/5 hover:bg-white/10 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer active:scale-95"
                 >
-                  🍿 Fight
+                  {translations[uiLang]?.fight || "🍿 Fight"}
                 </button>
 
                 <button
                   onClick={handleSendCuddle}
                   className="bg-[#E8587A]/10 border border-[#E8587A]/25 hover:bg-[#E8587A]/20 text-[#E8587A] px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer active:scale-95"
                 >
-                  🤗 Cuddle
+                  {translations[uiLang]?.cuddle || "🤗 Cuddle"}
                 </button>
+              </div>
+
+              {/* Language Options: Subtitles, Audio, and UI Language */}
+              <div className="flex items-center gap-2 border-r border-white/5 pr-4">
+                {/* Subtitles Option */}
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-wider">{translations[uiLang]?.subtitles || "Subtitles"}:</span>
+                  <select
+                    value={subtitleLang}
+                    onChange={(e) => {
+                      setSubtitleLang(e.target.value);
+                      handleLanguageSync(e.target.value, audioLang);
+                      playSound("tap");
+                    }}
+                    className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-1.5 py-1 text-zinc-300 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
+                  >
+                    <option value="none">None</option>
+                    <option value="en">🇺🇸 English</option>
+                    <option value="es">🇪🇸 Spanish</option>
+                    <option value="fr">🇫🇷 French</option>
+                    <option value="de">🇩🇪 German</option>
+                    <option value="hi">🇮🇳 Hindi</option>
+                    <option value="ja">🇯🇵 Japanese</option>
+                  </select>
+                </div>
+
+                {/* Audio Track Option */}
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-wider">{translations[uiLang]?.audioTrack || "Audio"}:</span>
+                  <select
+                    value={audioLang}
+                    onChange={(e) => {
+                      setAudioLang(e.target.value);
+                      handleLanguageSync(subtitleLang, e.target.value);
+                      playSound("tap");
+                    }}
+                    className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-1.5 py-1 text-zinc-300 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
+                  >
+                    <option value="original">Original</option>
+                    <option value="en">🇺🇸 English Dub</option>
+                    <option value="es">🇪🇸 Spanish Dub</option>
+                    <option value="fr">🇫🇷 French Dub</option>
+                    <option value="de">🇩🇪 German Dub</option>
+                    <option value="hi">🇮🇳 Hindi Dub</option>
+                    <option value="ja">🇯🇵 Japanese Dub</option>
+                  </select>
+                </div>
+
+                {/* Quick UI Lang Switcher */}
+                <select
+                  value={uiLang}
+                  onChange={(e) => {
+                    setUiLang(e.target.value);
+                    localStorage.setItem("love-cinema-ui-lang", e.target.value);
+                    playSound("tap");
+                  }}
+                  className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
+                >
+                  {LANGUAGES.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.flag} {lang.code.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Right group: Reaction emoji buttons */}
@@ -1636,67 +2211,238 @@ export default function CinemaPage() {
       {/* ========================================================
           SIDEBAR CHAT DRAWER PANEL (Slides in from right)
           ======================================================== */}
-      <div className={cn("cinema-chat-drawer cinema-glass-panel flex flex-col", (chatOpen && session?.showStarted) && "open")}>
-        {/* Chat Drawer Header */}
-        <div className="p-4 border-b border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-[#E8587A]" />
-            <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">Theater Chat</h3>
+      <div className={cn("cinema-chat-drawer flex flex-col", (chatOpen && session?.showStarted) && "open")}>
+        {/* Chat Drawer Header — Premium Gradient */}
+        <div className="cinema-chat-header p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#E8587A]/15 flex items-center justify-center">
+              <MessageSquare className="w-4 h-4 text-[#E8587A]" />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">{translations[uiLang]?.theaterChat || "Theater Chat"}</h3>
+              {isPartnerPresent && (
+                <span className="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {uiLang === "es" ? "Pareja en línea" : uiLang === "ja" ? "パートナーオンライン" : uiLang === "hi" ? "साथी ऑनलाइन है" : "Partner online"}
+                </span>
+              )}
+            </div>
           </div>
-          <button
-            onClick={() => setChatOpen(false)}
-            className="w-7 h-7 rounded-lg hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            {/* Chat Sound Toggle */}
+            <button
+              onClick={() => setChatSoundEnabled(!chatSoundEnabled)}
+              className={cn(
+                "w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer",
+                chatSoundEnabled ? "text-zinc-400 hover:text-white hover:bg-white/5" : "text-rose-400 bg-rose-500/10"
+              )}
+              title={chatSoundEnabled ? "Mute chat sounds" : "Unmute chat sounds"}
+            >
+              {chatSoundEnabled ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
+            </button>
+            <button
+              onClick={() => { setChatOpen(false); setStickerPickerOpen(false); }}
+              className="w-7 h-7 rounded-lg hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Chat Messages Log Area */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3.5 cinema-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 cinema-scrollbar">
           {chatMessages.length === 0 ? (
-            <div className="my-auto flex flex-col items-center text-center p-4">
-              <Smile className="w-8 h-8 text-zinc-800 mb-2 animate-bounce" />
-              <p className="text-xs font-bold text-zinc-500">No messages yet</p>
-              <p className="text-[10px] text-zinc-700 mt-1 max-w-[180px]">Send a message to start chatting during your movie date!</p>
+            <div className="my-auto flex flex-col items-center text-center p-6 cinema-fade-in">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E8587A]/10 to-[#D4A574]/10 flex items-center justify-center mb-4 border border-white/5">
+                <Heart className="w-7 h-7 text-[#E8587A] animate-pulse" />
+              </div>
+              <p className="text-sm font-extrabold text-zinc-300 font-serif">{translations[uiLang]?.whisper || "Whisper something sweet..."}</p>
+              <p className="text-[10px] text-zinc-600 mt-2 max-w-[200px] leading-relaxed">
+                {uiLang === "es" ? "El chat de tu cita de cine — comparte reacciones, envía pegatinas y susurra dulces palabras 💕" :
+                 uiLang === "fr" ? "Le chat de votre soirée cinéma — partagez des réactions, envoyez des stickers et chuchotez des mots doux 💕" :
+                 uiLang === "de" ? "Dein Kino-Date-Chat — teile Reaktionen, sende Sticker und flüstere süße Worte 💕" :
+                 uiLang === "hi" ? "आपकी सिनेमा डेट चैट — प्रतिक्रियाएं साझा करें, स्टिकर भेजें और कुछ मीठा फुसफुसाएं 💕" :
+                 uiLang === "ja" ? "映画デートのチャット — リアクションを共有し、ステッカーを送り、甘い言葉をささやき合いましょう 💕" :
+                 "Your movie date chat — share reactions, send stickers, and whisper sweet nothings 💕"}
+              </p>
             </div>
           ) : (
             chatMessages.map((msg) => (
-              <div
+              <motion.div
                 key={msg.id}
-                className={cn("flex flex-col max-w-[85%] gap-1", msg.isSelf ? "self-end items-end" : "self-start items-start")}
+                initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
+                className={cn(
+                  "flex flex-col max-w-[85%] gap-0.5",
+                  msg.isSelf ? "self-end items-end" : "self-start items-start"
+                )}
               >
-                <span className="text-[9px] font-bold text-zinc-500 px-1">{msg.senderName}</span>
-                <div
-                  className={cn(
-                    "p-3 rounded-2xl text-xs leading-relaxed break-words",
-                    msg.isSelf
-                      ? "bg-gradient-to-br from-[#E8587A] to-[#BE3A6E] text-white rounded-tr-none shadow-md shadow-[#BE3A6E]/5"
-                      : "bg-white/5 border border-white/5 text-zinc-200 rounded-tl-none"
-                  )}
-                >
-                  {msg.text}
+                <div className="flex items-center gap-1.5 px-1">
+                  <span className="text-[9px] font-bold text-zinc-500">{msg.senderName}</span>
+                  <span className="text-[8px] text-zinc-700 flex items-center gap-0.5">
+                    <Clock className="w-2.5 h-2.5" />
+                    {getRelativeTime(msg.createdAt)}
+                  </span>
                 </div>
-              </div>
+                {msg.type === "sticker" ? (
+                  <div className="cinema-msg-sticker px-2 py-1">
+                    <span className={cn(
+                      "block",
+                      msg.text.length <= 4 ? "text-5xl" : "text-2xl font-medium"
+                    )}>
+                      {msg.text}
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    className={cn(
+                      "cinema-msg-bubble p-3 rounded-2xl text-xs leading-relaxed break-words",
+                      msg.isSelf
+                        ? "cinema-msg-self rounded-tr-sm"
+                        : "cinema-msg-partner rounded-tl-sm"
+                    )}
+                  >
+                    {msg.text}
+                  </div>
+                )}
+              </motion.div>
             ))
           )}
+
+          {/* Typing Indicator */}
+          {isPartnerTyping && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className="self-start flex items-center gap-2 px-1"
+            >
+              <div className="cinema-typing-indicator">
+                <span /><span /><span />
+              </div>
+              <span className="text-[9px] text-zinc-500 font-medium italic">
+                {uiLang === "es" ? "escribiendo..." : uiLang === "ja" ? "入力中..." : uiLang === "hi" ? "टाइप कर रहे हैं..." : "typing..."}
+              </span>
+            </motion.div>
+          )}
+
           <div ref={chatEndRef} />
         </div>
+        {/* Sticker Picker Panel */}
+        <AnimatePresence>
+          {stickerPickerOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 280, opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+              className="cinema-sticker-picker overflow-hidden border-t border-white/5"
+            >
+              {/* Sticker Pack Tabs */}
+              <div className="flex items-center gap-1 p-2 border-b border-white/5 overflow-x-auto cinema-scrollbar">
+                {Object.entries(stickerPacks).map(([key, pack]) => (
+                  <button
+                    key={key}
+                    onClick={() => setActiveStickerPack(key)}
+                    className={cn(
+                      "cinema-sticker-pack-tab px-3 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap cursor-pointer transition-all",
+                      activeStickerPack === key
+                        ? "bg-[#E8587A]/15 text-[#E8587A] border border-[#E8587A]/25"
+                        : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5 border border-transparent"
+                    )}
+                  >
+                    <span className="mr-1">{pack.icon}</span>
+                    {pack.label === "Romantic" && uiLang === "es" ? "Romántico" : 
+                     pack.label === "Romantic" && uiLang === "ja" ? "恋愛" :
+                     pack.label === "Reactions" && uiLang === "es" ? "Reacciones" :
+                     pack.label === "Reactions" && uiLang === "ja" ? "リアクション" :
+                     pack.label === "Cozy Vibes" && uiLang === "es" ? "Acogedor" :
+                     pack.label === "Cozy Vibes" && uiLang === "ja" ? "まったり" :
+                     pack.label}
+                  </button>
+                ))}
+              </div>
 
-        {/* Chat Send Form */}
-        <form onSubmit={handleSendChat} className="p-4 border-t border-white/5 bg-black/20 flex gap-2">
-          <input
-            type="text"
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 bg-white/[0.02] border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#E8587A]/30 transition-colors"
-          />
-          <button
-            type="submit"
-            className="w-9 h-9 rounded-xl bg-[#E8587A] hover:bg-[#BE3A6E] text-white flex items-center justify-center cursor-pointer transition-colors active:scale-95 shadow-md shadow-[#BE3A6E]/10 shrink-0"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+              {/* Sticker Grid */}
+              <div className="flex-1 overflow-y-auto p-3 cinema-scrollbar" style={{ maxHeight: 230 }}>
+                <div className="grid grid-cols-5 gap-2">
+                  {stickerPacks[activeStickerPack]?.stickers.map((sticker, i) => (
+                    <button
+                      key={`${activeStickerPack}-${i}`}
+                      onClick={() => handleSendSticker(sticker)}
+                      className="cinema-sticker-item flex items-center justify-center rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 hover:border-[#E8587A]/20 cursor-pointer transition-all active:scale-90"
+                      style={{ aspectRatio: "1" }}
+                      title={sticker}
+                    >
+                      <span className={cn(
+                        sticker.length <= 4 ? "text-2xl" : "text-xs font-medium text-zinc-300"
+                      )}>
+                        {sticker}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Quick Emoji Row */}
+        <div className="cinema-emoji-row flex items-center gap-1 px-4 py-2 border-t border-white/5 overflow-x-auto">
+          {quickEmojis.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => handleSendSticker(emoji)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-lg transition-all cursor-pointer active:scale-90 shrink-0"
+              title={`Send ${emoji}`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+
+        {/* Chat Send Form — Enhanced */}
+        <form onSubmit={handleSendChat} className="p-3 border-t border-white/5 bg-black/20 flex flex-col gap-2">
+          <div className="flex gap-2 items-end">
+            {/* Sticker Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setStickerPickerOpen(!stickerPickerOpen)}
+              className={cn(
+                "w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0",
+                stickerPickerOpen
+                  ? "bg-[#D4A574]/15 text-[#D4A574] border border-[#D4A574]/25"
+                  : "bg-white/[0.03] border border-white/5 text-zinc-400 hover:text-white hover:bg-white/5"
+              )}
+              title="Open sticker picker"
+            >
+              <Sticker className="w-4 h-4" />
+            </button>
+
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => {
+                setChatInput(e.target.value);
+                handleChatTyping();
+              }}
+              placeholder={translations[uiLang]?.typeMessage || "Type a message..."}
+              className="flex-1 bg-white/[0.02] border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#E8587A]/30 transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={!chatInput.trim()}
+              className={cn(
+                "w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-md shrink-0",
+                chatInput.trim()
+                  ? "bg-[#E8587A] hover:bg-[#BE3A6E] text-white shadow-[#BE3A6E]/10"
+                  : "bg-zinc-800 text-zinc-600 cursor-not-allowed shadow-none"
+              )}
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
         </form>
       </div>
     </div>
