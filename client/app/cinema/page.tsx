@@ -354,6 +354,8 @@ export default function CinemaPage() {
   const [chatSoundEnabled, setChatSoundEnabled] = useState(true);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [iframeError, setIframeError] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [interactionsOpen, setInteractionsOpen] = useState(false);
 
   // Language States
   const [uiLang, setUiLang] = useState<string>(() => {
@@ -1454,7 +1456,7 @@ export default function CinemaPage() {
       <div
         className={cn(
           "flex-1 h-full flex flex-col relative transition-all duration-500 ease-out",
-          (chatOpen && session?.showStarted) ? "mr-[340px]" : "mr-0"
+          (chatOpen && session?.showStarted) ? "sm:mr-[360px] mr-0" : "mr-0"
         )}
       >
         {/* LOBBY PHASE */}
@@ -1718,7 +1720,7 @@ export default function CinemaPage() {
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950 flex flex-col items-center justify-center text-zinc-650 p-2 text-center">
                               <Film className="w-6 h-6 mb-1 text-zinc-700 animate-pulse" />
-                              <span className="text-[8px] font-black uppercase tracking-wider text-zinc-500">No Cover</span>
+                              <span className="text-[8px] font-black uppercase tracking-wider text-zinc-500">{uiLang === "es" ? "Sin portada" : uiLang === "ja" ? "カバーなし" : "No Cover"}</span>
                             </div>
                           )}
                           
@@ -1739,7 +1741,7 @@ export default function CinemaPage() {
                                 {movie.type}
                               </span>
                               <span className="text-[9px] font-semibold text-zinc-500">
-                                {movie.watchLink ? "Available" : "Sync Only"}
+                                {movie.watchLink ? (uiLang === "es" ? "Disponible" : uiLang === "ja" ? "再生可能" : "Available") : (uiLang === "es" ? "Sinc. Solo" : "Sync Only")}
                               </span>
                             </div>
                             <h3 className="text-sm font-extrabold text-white tracking-wide mt-2 line-clamp-2 leading-snug font-serif">
@@ -1752,17 +1754,17 @@ export default function CinemaPage() {
                               {movie.watchLink ? (
                                 <>
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_#10b981]" />
-                                  <span className="text-zinc-400">Stream Ready</span>
+                                  <span className="text-zinc-400">{translations[uiLang]?.streamReady || "Stream Ready"}</span>
                                 </>
                               ) : (
                                 <>
                                   <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-                                  <span className="text-zinc-500">Remote Only</span>
+                                  <span className="text-zinc-500">{translations[uiLang]?.remoteOnly || "Remote Only"}</span>
                                 </>
                               )}
                             </span>
                             <button className="px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-[#E8587A] text-white text-[10px] font-bold transition-all cursor-pointer hover:shadow-lg hover:shadow-[#E8587A]/25 active:scale-95">
-                              Load 🎬
+                              {uiLang === "es" ? "Cargar 🎬" : uiLang === "fr" ? "Lancer 🎬" : uiLang === "de" ? "Laden 🎬" : uiLang === "hi" ? "लोड 🎬" : uiLang === "ja" ? "読み込む 🎬" : "Load 🎬"}
                             </button>
                           </div>
                         </div>
@@ -2023,185 +2025,284 @@ export default function CinemaPage() {
             {/* Auto-Hiding Control Bar */}
             <div
               className={cn(
-                "cinema-bar-transition cinema-control-glow fixed bottom-6 left-1/2 -translate-x-1/2 cinema-glass-panel p-3 flex flex-wrap items-center gap-4 z-40 max-w-[90%] md:max-w-max",
+                "cinema-bar-transition cinema-control-glow fixed bottom-6 left-1/2 -translate-x-1/2 cinema-glass-panel p-2 flex items-center justify-between gap-6 z-40 max-w-[95%] w-[270px]",
                 !controlsVisible && "cinema-bar-hidden cinema-controls-hidden"
               )}
             >
-              {/* Left group: Source/Server select */}
-              <div className="flex items-center gap-2 border-r border-white/5 pr-4">
-                {session?.movieId?.startsWith("gdrive-") ? (
-                  <div className="bg-zinc-900/60 border border-white/5 text-[10px] font-bold rounded-lg px-3 py-1.5 text-zinc-300 flex items-center gap-1.5 select-none">
-                    <span>📁 Google Drive</span>
-                  </div>
-                ) : resolvingSource ? (
-                  <div className="flex items-center gap-2 text-xs text-zinc-500 px-3">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E8587A]" />
-                    <span>Resolving...</span>
-                  </div>
-                ) : (
-                  <select
-                    value={activeSource}
-                    onChange={(e) => handleSourceChange(e.target.value)}
-                    className="bg-zinc-900/60 border border-white/5 text-[10px] font-bold rounded-lg px-2 py-1.5 text-zinc-300 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
-                  >
-                    <option value="default">🎬 1HD (Default)</option>
-                    <option value="cineby">🌟 Cineby (Recommended)</option>
-                    <option value="bflix">🅱️ BFlix</option>
-                    <option value="vidsrc_to">⚡ VidSrc.to</option>
-                    <option value="vidsrc_me">⚡ VidSrc.me</option>
-                    <option value="vidsrcme_ru">🇷🇺 VidSrcMe.ru</option>
-                    <option value="vidsrc_xyz">⚡ VidSrc.xyz</option>
-                    <option value="two_embed">🎞️ 2Embed</option>
-                    <option value="multiembed">🔗 MultiEmbed</option>
-                    <option value="embedsu">🎥 Embed.su</option>
-                    <option value="autoembed">🤖 AutoEmbed</option>
-                    <option value="smashystream">💥 SmashyStream</option>
-                  </select>
-                )}
-
-                {activeSource === "default" && (
-                  <select
-                    value={session.activeServer || "upcloud"}
-                    onChange={(e) => handleServerChange(e.target.value)}
-                    className="bg-zinc-900/60 border border-white/5 text-[10px] font-bold rounded-lg px-2 py-1.5 text-zinc-300 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
-                  >
-                    <option value="upcloud">UpCloud</option>
-                    <option value="vidmoly">Vidmoly</option>
-                    <option value="videasy">Videasy</option>
-                    <option value="vidcloud">Vidcloud</option>
-                    <option value="vidfast">Vidfast</option>
-                  </select>
-                )}
-              </div>
-
-              {/* Center group: Fun triggers */}
-              <div className="flex items-center gap-2 border-r border-white/5 pr-4">
+              {/* Core controls in a single clean row */}
+              <div className="flex items-center gap-3 w-full justify-around">
+                {/* 1. Lights dim toggle */}
                 <button
                   onClick={handleToggleLights}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer active:scale-95 border",
+                    "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
                     dimmed
-                      ? "bg-[#D4A574]/20 border-[#D4A574]/40 text-[#D4A574]"
-                      : "bg-white/5 border-white/5 text-zinc-400 hover:text-white"
+                      ? "bg-[#D4A574]/20 border-[#D4A574]/40 text-[#D4A574] shadow-[0_0_10px_rgba(212,165,116,0.2)]"
+                      : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
                   )}
-                  title="Dim/brighten the ambient background"
+                  title="Toggle Ambient Lights"
                 >
-                  {translations[uiLang]?.lights || "💡 Lights"}
+                  <Tv className="w-4 h-4" />
                 </button>
 
+                {/* 2. Audio Mute Toggle */}
                 <button
                   onClick={() => setVideoMuted(prev => !prev)}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer active:scale-95 border",
+                    "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
                     videoMuted
-                      ? "bg-rose-500/20 border-rose-500/40 text-rose-500"
-                      : "bg-white/5 border-white/5 text-zinc-400 hover:text-white"
+                      ? "bg-rose-500/20 border-rose-500/40 text-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.2)]"
+                      : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
                   )}
                   title={videoMuted ? "Unmute audio" : "Mute audio"}
                 >
-                  {videoMuted ? `🔇 Muted` : (translations[uiLang]?.audio || "🔊 Audio")}
+                  {videoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                 </button>
 
-                {session.movieId?.startsWith("gdrive-") && (
+                {/* 3. Interactions Popover Toggle */}
+                <div className="relative">
                   <button
-                    onClick={() => setGdrivePlayerMode(prev => prev === "iframe" ? "html5" : "iframe")}
-                    className="bg-[#E8587A]/10 border border-[#E8587A]/25 hover:bg-[#E8587A]/20 text-[#E8587A] px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer active:scale-95 flex items-center gap-1"
-                    title="Toggle between Google's default web preview and raw direct file stream"
-                  >
-                    <span>{gdrivePlayerMode === "iframe" ? "⚡ Force Direct Stream" : "📁 Switch to Google Player"}</span>
-                  </button>
-                )}
-
-                <button
-                  onClick={handleThrowPopcorn}
-                  className="bg-white/5 border border-white/5 hover:bg-white/10 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer active:scale-95"
-                >
-                  {translations[uiLang]?.fight || "🍿 Fight"}
-                </button>
-
-                <button
-                  onClick={handleSendCuddle}
-                  className="bg-[#E8587A]/10 border border-[#E8587A]/25 hover:bg-[#E8587A]/20 text-[#E8587A] px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer active:scale-95"
-                >
-                  {translations[uiLang]?.cuddle || "🤗 Cuddle"}
-                </button>
-              </div>
-
-              {/* Language Options: Subtitles, Audio, and UI Language */}
-              <div className="flex items-center gap-2 border-r border-white/5 pr-4">
-                {/* Subtitles Option */}
-                <div className="flex items-center gap-1">
-                  <span className="text-[9px] text-zinc-500 uppercase tracking-wider">{translations[uiLang]?.subtitles || "Subtitles"}:</span>
-                  <select
-                    value={subtitleLang}
-                    onChange={(e) => {
-                      setSubtitleLang(e.target.value);
-                      handleLanguageSync(e.target.value, audioLang);
-                      playSound("tap");
+                    onClick={() => {
+                      setInteractionsOpen(!interactionsOpen);
+                      setSettingsOpen(false);
                     }}
-                    className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-1.5 py-1 text-zinc-300 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
+                    className={cn(
+                      "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
+                      interactionsOpen
+                        ? "bg-[#E8587A]/20 border-[#E8587A]/40 text-[#E8587A] shadow-[0_0_10px_rgba(232,88,122,0.2)]"
+                        : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
+                    )}
+                    title="Date Interactions"
                   >
-                    <option value="none">None</option>
-                    <option value="en">🇺🇸 English</option>
-                    <option value="es">🇪🇸 Spanish</option>
-                    <option value="fr">🇫🇷 French</option>
-                    <option value="de">🇩🇪 German</option>
-                    <option value="hi">🇮🇳 Hindi</option>
-                    <option value="ja">🇯🇵 Japanese</option>
-                  </select>
+                    <Heart className="w-4 h-4 fill-current" />
+                  </button>
+
+                  <AnimatePresence>
+                    {interactionsOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                        transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
+                        className="absolute bottom-12 left-1/2 -translate-x-1/2 p-3 rounded-2xl cinema-glass-panel border border-white/5 shadow-2xl flex flex-col gap-2.5 z-50 w-[240px]"
+                      >
+                        <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
+                          <span className="text-[9px] font-black uppercase text-zinc-400 tracking-wider">Date Actions</span>
+                          <button onClick={() => setInteractionsOpen(false)} className="text-zinc-500 hover:text-white"><X className="w-3 h-3" /></button>
+                        </div>
+                        {/* Reaction Emojis */}
+                        <div className="grid grid-cols-6 gap-1 justify-items-center">
+                          {reactions.map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => {
+                                handleSendReaction(emoji);
+                                setInteractionsOpen(false);
+                              }}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5 text-sm transition-all cursor-pointer active:scale-90"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 mt-1">
+                          <button
+                            onClick={() => {
+                              handleThrowPopcorn();
+                              setInteractionsOpen(false);
+                            }}
+                            className="bg-white/5 hover:bg-white/10 text-zinc-300 px-2 py-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer active:scale-95 border border-white/5 flex items-center justify-center gap-1"
+                          >
+                            <span>🍿 Popcorn</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleSendCuddle();
+                              setInteractionsOpen(false);
+                            }}
+                            className="bg-[#E8587A]/15 hover:bg-[#E8587A]/25 text-[#E8587A] px-2 py-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer active:scale-95 border border-[#E8587A]/20 flex items-center justify-center gap-1"
+                          >
+                            <span>🤗 Cuddle</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
-                {/* Audio Track Option */}
-                <div className="flex items-center gap-1">
-                  <span className="text-[9px] text-zinc-500 uppercase tracking-wider">{translations[uiLang]?.audioTrack || "Audio"}:</span>
-                  <select
-                    value={audioLang}
-                    onChange={(e) => {
-                      setAudioLang(e.target.value);
-                      handleLanguageSync(subtitleLang, e.target.value);
-                      playSound("tap");
+                {/* 4. Settings Popover Toggle */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setSettingsOpen(!settingsOpen);
+                      setInteractionsOpen(false);
                     }}
-                    className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-1.5 py-1 text-zinc-300 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
+                    className={cn(
+                      "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
+                      settingsOpen
+                        ? "bg-zinc-800 border-white/15 text-white"
+                        : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
+                    )}
+                    title="Theater Settings"
                   >
-                    <option value="original">Original</option>
-                    <option value="en">🇺🇸 English Dub</option>
-                    <option value="es">🇪🇸 Spanish Dub</option>
-                    <option value="fr">🇫🇷 French Dub</option>
-                    <option value="de">🇩🇪 German Dub</option>
-                    <option value="hi">🇮🇳 Hindi Dub</option>
-                    <option value="ja">🇯🇵 Japanese Dub</option>
-                  </select>
+                    <Settings className="w-4 h-4" />
+                  </button>
+
+                  <AnimatePresence>
+                    {settingsOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                        transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
+                        className="absolute bottom-12 left-1/2 -translate-x-1/2 p-3.5 rounded-2xl cinema-glass-panel border border-white/5 shadow-2xl flex flex-col gap-3 z-50 w-[250px]"
+                      >
+                        <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
+                          <span className="text-[9px] font-black uppercase text-zinc-400 tracking-wider">Settings</span>
+                          <button onClick={() => setSettingsOpen(false)} className="text-zinc-500 hover:text-white"><X className="w-3 h-3" /></button>
+                        </div>
+
+                        {/* Stream options (Source select) */}
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">Source</span>
+                          {session?.movieId?.startsWith("gdrive-") ? (
+                            <div className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 flex items-center justify-between select-none">
+                              <span>📁 Google Drive</span>
+                              <button
+                                onClick={() => setGdrivePlayerMode(prev => prev === "iframe" ? "html5" : "iframe")}
+                                className="text-[8px] font-black uppercase text-[#E8587A] hover:underline"
+                              >
+                                {gdrivePlayerMode === "iframe" ? "Direct" : "Google"}
+                              </button>
+                            </div>
+                          ) : resolvingSource ? (
+                            <div className="flex items-center gap-2 text-xs text-zinc-500 px-3 py-1">
+                              <Loader2 className="w-3 animate-spin text-[#E8587A]" />
+                              <span>Resolving...</span>
+                            </div>
+                          ) : (
+                            <select
+                              value={activeSource}
+                              onChange={(e) => handleSourceChange(e.target.value)}
+                              className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none w-full"
+                            >
+                              <option value="default">🎬 1HD (Default)</option>
+                              <option value="cineby">🌟 Cineby (Recommended)</option>
+                              <option value="bflix">🅱️ BFlix</option>
+                              <option value="vidsrc_to">⚡ VidSrc.to</option>
+                              <option value="vidsrc_me">⚡ VidSrc.me</option>
+                              <option value="vidsrcme_ru">🇷🇺 VidSrcMe.ru</option>
+                              <option value="vidsrc_xyz">⚡ VidSrc.xyz</option>
+                              <option value="two_embed">🎞️ 2Embed</option>
+                              <option value="multiembed">🔗 MultiEmbed</option>
+                              <option value="embedsu">🎥 Embed.su</option>
+                              <option value="autoembed">🤖 AutoEmbed</option>
+                              <option value="smashystream">💥 SmashyStream</option>
+                            </select>
+                          )}
+                        </div>
+
+                        {/* Server selection */}
+                        {activeSource === "default" && !session?.movieId?.startsWith("gdrive-") && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">Server</span>
+                            <select
+                              value={session.activeServer || "upcloud"}
+                              onChange={(e) => handleServerChange(e.target.value)}
+                              className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none w-full"
+                            >
+                              <option value="upcloud">UpCloud</option>
+                              <option value="vidmoly">Vidmoly</option>
+                              <option value="videasy">Videasy</option>
+                              <option value="vidcloud">Vidcloud</option>
+                              <option value="vidfast">Vidfast</option>
+                            </select>
+                          </div>
+                        )}
+
+                        {/* Subtitles selector */}
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">{translations[uiLang]?.subtitles || "Subtitles"}</span>
+                          <select
+                            value={subtitleLang}
+                            onChange={(e) => {
+                              setSubtitleLang(e.target.value);
+                              handleLanguageSync(e.target.value, audioLang);
+                              playSound("tap");
+                            }}
+                            className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none w-full"
+                          >
+                            <option value="none">None</option>
+                            <option value="en">🇺🇸 English</option>
+                            <option value="es">🇪🇸 Spanish</option>
+                            <option value="fr">🇫🇷 French</option>
+                            <option value="de">🇩🇪 German</option>
+                            <option value="hi">🇮🇳 Hindi</option>
+                            <option value="ja">🇯🇵 Japanese</option>
+                          </select>
+                        </div>
+
+                        {/* Audio Track Selector */}
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">{translations[uiLang]?.audioTrack || "Audio Track"}</span>
+                          <select
+                            value={audioLang}
+                            onChange={(e) => {
+                              setAudioLang(e.target.value);
+                              handleLanguageSync(subtitleLang, e.target.value);
+                              playSound("tap");
+                            }}
+                            className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none w-full"
+                          >
+                            <option value="original">Original</option>
+                            <option value="en">🇺🇸 English Dub</option>
+                            <option value="es">🇪🇸 Spanish Dub</option>
+                            <option value="fr">🇫🇷 French Dub</option>
+                            <option value="de">🇩🇪 German Dub</option>
+                            <option value="hi">🇮🇳 Hindi Dub</option>
+                            <option value="ja">🇯🇵 Japanese Dub</option>
+                          </select>
+                        </div>
+
+                        {/* UI Language translation dropdown */}
+                        <div className="flex flex-col gap-1 pt-1.5 border-t border-white/5">
+                          <span className="text-[8px] text-zinc-500 uppercase font-black tracking-wider">{translations[uiLang]?.language || "UI Language"}</span>
+                          <select
+                            value={uiLang}
+                            onChange={(e) => {
+                              setUiLang(e.target.value);
+                              localStorage.setItem("love-cinema-ui-lang", e.target.value);
+                              playSound("tap");
+                            }}
+                            className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none w-full"
+                          >
+                            {LANGUAGES.map((lang) => (
+                              <option key={lang.code} value={lang.code}>
+                                {lang.flag} {lang.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
-                {/* Quick UI Lang Switcher */}
-                <select
-                  value={uiLang}
-                  onChange={(e) => {
-                    setUiLang(e.target.value);
-                    localStorage.setItem("love-cinema-ui-lang", e.target.value);
-                    playSound("tap");
-                  }}
-                  className="bg-zinc-900/60 border border-white/5 text-[9px] font-bold rounded-lg px-2 py-1 text-zinc-300 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
+                {/* 5. Chat Toggle Button */}
+                <button
+                  onClick={toggleChat}
+                  className={cn(
+                    "w-9 h-9 rounded-xl relative flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
+                    chatOpen ? "bg-[#E8587A]/20 border-[#E8587A]/40 text-[#E8587A]" : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
+                  )}
                 >
-                  {LANGUAGES.map((lang) => (
-                    <option key={lang.code} value={lang.code}>
-                      {lang.flag} {lang.code.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Right group: Reaction emoji buttons */}
-              <div className="flex items-center gap-1.5">
-                {reactions.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => handleSendReaction(emoji)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5 text-sm transition-all cursor-pointer active:scale-90"
-                  >
-                    {emoji}
-                  </button>
-                ))}
+                  <MessageSquare className="w-4 h-4" />
+                  {!chatOpen && unreadChatCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-[#E8587A] text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-black shadow">
+                      {unreadChatCount}
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
           </div>
@@ -2212,8 +2313,11 @@ export default function CinemaPage() {
           SIDEBAR CHAT DRAWER PANEL (Slides in from right)
           ======================================================== */}
       <div className={cn("cinema-chat-drawer flex flex-col", (chatOpen && session?.showStarted) && "open")}>
+        {/* Mobile Swipe Handle bar */}
+        <div className="w-12 h-1 bg-white/20 rounded-full mx-auto my-2 sm:hidden shrink-0" />
+
         {/* Chat Drawer Header — Premium Gradient */}
-        <div className="cinema-chat-header p-4 flex items-center justify-between">
+        <div className="cinema-chat-header p-4 pt-2 sm:pt-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#E8587A]/15 flex items-center justify-center">
               <MessageSquare className="w-4 h-4 text-[#E8587A]" />
