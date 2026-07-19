@@ -4,7 +4,7 @@
 # Whitelist the directories and files we want to track
 !/client/
 !/server/
-!/extension/
+/extension/
 !/.gitignore
 !/README.md
 !/CHROMEWEBSTORE.md
