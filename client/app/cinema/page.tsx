@@ -353,7 +353,6 @@ export default function CinemaPage() {
   const [isPartnerTyping, setIsPartnerTyping] = useState(false);
   const [chatSoundEnabled, setChatSoundEnabled] = useState(true);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [iframeError, setIframeError] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<"chat" | "settings">("chat");
 
   // Language States
@@ -1301,51 +1300,14 @@ export default function CinemaPage() {
     }
 
     return (
-      <div className="w-full h-full relative">
-        <iframe
-          src={session.watchLink}
-          className="w-full h-full border-0"
-          allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
-          allowFullScreen
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
-          referrerPolicy="no-referrer"
-          loading="lazy"
-          onLoad={() => setIframeError(false)}
-        />
-        {/* Fallback overlay for when iframe refuses to embed */}
-        {iframeError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#05050f]/95 z-20 text-center p-8">
-            <div className="cinema-glass-panel p-8 max-w-md border border-white/5">
-              <Info className="w-10 h-10 text-[#E8587A] mx-auto mb-4" />
-              <h3 className="text-lg font-extrabold text-white font-serif tracking-wide mb-2">
-                This source doesn&apos;t support embedding
-              </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed mb-6">
-                Some streaming providers block playback inside embedded frames. You can open it directly in a new tab instead, or try switching to a different source.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <a
-                  href={session.watchLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Open in New Tab</span>
-                </a>
-                <button
-                  onClick={() => setIframeError(false)}
-                  className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-zinc-300 text-xs font-bold hover:bg-white/10 transition-all cursor-pointer"
-                >
-                  Try Again
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      <iframe
+        src={session.watchLink}
+        className="w-full h-full border-0 animate-fade-in"
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+      />
     );
-  }, [session?.watchLink, session?.movieId, session?.movieTitle, gdrivePlayerMode, localFile, localFileUrl, iframeError]);
+  }, [session?.watchLink, session?.movieId, session?.movieTitle, gdrivePlayerMode, localFile, localFileUrl]);
 
   // Loading Screen Layout
   if (!session) {
@@ -1997,26 +1959,6 @@ export default function CinemaPage() {
             {/* Video Player Display Container */}
             <div className="w-full h-full relative flex items-center justify-center bg-black">
               {playerIframe}
-
-              {/* Iframe connection/loading backup link helper */}
-              {session.watchLink && session.watchLink !== "local" && !(
-                session.watchLink.endsWith(".mp4") || 
-                session.watchLink.endsWith(".webm") ||
-                session.watchLink.includes(".mp4?") || 
-                session.watchLink.includes(".webm?")
-              ) && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
-                  <a
-                    href={session.watchLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/95 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition-all hover:scale-105 active:scale-95 shadow-lg backdrop-blur-xs"
-                  >
-                    <span>{uiLang === "es" ? "¿Problemas al cargar? Abrir en pestaña nueva" : uiLang === "ja" ? "読み込めない場合、新しいタブで開く" : "Having trouble loading? Open in new tab"}</span>
-                    <ExternalLink className="w-3 h-3 text-[#E8587A]" />
-                  </a>
-                </div>
-              )}
 
               {/* Extension Inactive Warning Overlay */}
               {!isExtensionActive && (
