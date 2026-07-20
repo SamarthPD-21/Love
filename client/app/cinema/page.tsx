@@ -32,7 +32,9 @@ import {
   Clock,
   BellOff,
   Bell,
-  ScanSearch
+  ScanSearch,
+  Maximize,
+  Maximize2
 } from "lucide-react";
 import api from "@/lib/api";
 import { getSocket } from "@/lib/socket";
@@ -463,6 +465,20 @@ export default function CinemaPage() {
     if (iframe?.contentWindow) {
       iframe.contentWindow.postMessage({ type: "LOVE_SYNC_CLICK_CONTROL", category, index }, "*");
       playSound("tap");
+    }
+  };
+
+  // Aspect ratio fill state
+  const [videoFitMode, setVideoFitMode] = useState<"contain" | "cover" | "fill">("cover");
+
+  const handleToggleAspectMode = () => {
+    const nextMode = videoFitMode === "contain" ? "cover" : videoFitMode === "cover" ? "fill" : "contain";
+    setVideoFitMode(nextMode);
+    playSound("tap");
+
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.postMessage({ type: "LOVE_SYNC_SET_ASPECT_RATIO", mode: nextMode }, "*");
     }
   };
 
@@ -1272,7 +1288,10 @@ export default function CinemaPage() {
             src={localFileUrl}
             {...syncVideoProps}
             muted={videoMuted}
-            className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
+            className={cn(
+              "w-full h-full border border-white/5 shadow-2xl bg-black transition-all",
+              videoFitMode === "cover" ? "object-cover" : videoFitMode === "fill" ? "object-fill" : "object-contain"
+            )}
             controls
             autoPlay
             playsInline
@@ -1322,7 +1341,10 @@ export default function CinemaPage() {
           src={session.watchLink}
           {...syncVideoProps}
           muted={videoMuted}
-          className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
+          className={cn(
+            "w-full h-full border border-white/5 shadow-2xl bg-black transition-all",
+            videoFitMode === "cover" ? "object-cover" : videoFitMode === "fill" ? "object-fill" : "object-contain"
+          )}
           controls
           autoPlay
           playsInline
@@ -1339,7 +1361,10 @@ export default function CinemaPage() {
           src={directUrl}
           {...syncVideoProps}
           muted={videoMuted}
-          className="w-full h-full object-contain max-h-[85vh] rounded-2xl border border-white/5 shadow-2xl bg-black"
+          className={cn(
+            "w-full h-full border border-white/5 shadow-2xl bg-black transition-all",
+            videoFitMode === "cover" ? "object-cover" : videoFitMode === "fill" ? "object-fill" : "object-contain"
+          )}
           controls
           autoPlay
           playsInline
@@ -1355,7 +1380,7 @@ export default function CinemaPage() {
         allowFullScreen
       />
     );
-  }, [session?.watchLink, session?.movieId, session?.movieTitle, gdrivePlayerMode, localFile, localFileUrl]);
+  }, [session?.watchLink, session?.movieId, session?.movieTitle, gdrivePlayerMode, localFile, localFileUrl, videoMuted, videoFitMode]);
 
   // Loading Screen Layout
   if (!session) {
@@ -2033,7 +2058,7 @@ export default function CinemaPage() {
             {/* Auto-Hiding Control Bar */}
             <div
               className={cn(
-                "cinema-bar-transition cinema-control-glow absolute bottom-6 left-1/2 -translate-x-1/2 cinema-glass-panel p-2 flex items-center justify-center gap-3.5 z-40 max-w-[95%] w-[210px]",
+                "cinema-bar-transition cinema-control-glow absolute bottom-6 left-1/2 -translate-x-1/2 cinema-glass-panel p-2 flex items-center justify-center gap-3.5 z-40 max-w-[95%] w-[260px]",
                 !controlsVisible && "cinema-bar-hidden cinema-controls-hidden"
               )}
             >
@@ -2065,7 +2090,21 @@ export default function CinemaPage() {
                 {videoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
 
-              {/* 3. Settings Sidebar Tab Toggle */}
+              {/* 3. Screen Fill / Aspect Ratio Toggle */}
+              <button
+                onClick={handleToggleAspectMode}
+                className={cn(
+                  "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
+                  videoFitMode !== "contain"
+                    ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                    : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
+                )}
+                title={`Aspect Mode: ${videoFitMode === "cover" ? "Cover (Full Screen Fill)" : videoFitMode === "fill" ? "Fill (Stretch)" : "Fit (Original 16:9)"}`}
+              >
+                <Maximize className="w-4 h-4" />
+              </button>
+
+              {/* 4. Settings Sidebar Tab Toggle */}
               <button
                 onClick={() => {
                   if (chatOpen && sidebarTab === "settings") {
@@ -2422,6 +2461,18 @@ export default function CinemaPage() {
                 >
                   {videoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                   <span>{videoMuted ? "Unmute Audio" : "Mute Audio"}</span>
+                </button>
+                <button
+                  onClick={handleToggleAspectMode}
+                  className={cn(
+                    "flex-1 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5",
+                    videoFitMode !== "contain"
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                      : "bg-white/[0.02] border-white/5 text-zinc-300 hover:bg-white/[0.04]"
+                  )}
+                >
+                  <Maximize className="w-4 h-4" />
+                  <span>{videoFitMode === "cover" ? "Fill Screen" : videoFitMode === "fill" ? "Stretch" : "Fit 16:9"}</span>
                 </button>
               </div>
             </div>
