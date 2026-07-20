@@ -443,7 +443,7 @@ export default function CinemaPage() {
   }, [localFile]);
 
   // Map of all IMDB-based embed sources (key → url builder fn)
-  const altSourceBuilders: Record<string, (imdbId: string, mediaType: string) => string> = {
+  const altSourceBuilders: Record<string, (imdbId: string, mediaType: string, title?: string) => string> = {
     vidsrc_to: (id, t) => `https://vidsrc.to/embed/${t}/${id}`,
     vidsrc_me: (id, t) => `https://vidsrc.me/embed/${t}/${id}`,
     vidsrc_xyz: (id, t) => `https://vidsrc.xyz/embed/${t}/${id}`,
@@ -453,10 +453,11 @@ export default function CinemaPage() {
     embedsu: (id, t) => `https://embed.su/embed/${t}/${id}`,
     autoembed: (id, t) => `https://player.autoembed.cc/embed/${t}/${id}`,
     smashystream: (id, t) => `https://player.smashy.stream/${t}/${id}`,
+    miruro: (id, t, title) => `https://www.miruro.ru/search?query=${encodeURIComponent(title || "")}`,
   };
 
   // Map of TMDB-based sources (key → url builder fn using TMDB ID)
-  const tmdbSourceBuilders: Record<string, (tmdbId: string, mediaType: string) => string> = {
+  const tmdbSourceBuilders: Record<string, (tmdbId: string, mediaType: string, title?: string) => string> = {
     cineby: (id, t) => `https://www.cineby.at/${t}/${id}`,
     bflix: (id, t) => `https://bflixs.us/${t}/${id}`,
   };
@@ -617,12 +618,12 @@ export default function CinemaPage() {
           const built: Record<string, string> = {};
           if (imdbId) {
             for (const [key, builder] of Object.entries(altSourceBuilders)) {
-              built[key] = builder(imdbId, mediaType);
+              built[key] = builder(imdbId, mediaType, session.movieTitle);
             }
           }
           if (tmdbId) {
             for (const [key, builder] of Object.entries(tmdbSourceBuilders)) {
-              built[key] = builder(tmdbId, mediaType);
+              built[key] = builder(tmdbId, mediaType, session.movieTitle);
             }
           }
           links = built;
@@ -2408,6 +2409,7 @@ export default function CinemaPage() {
                   >
                     <option value="default">🎬 1HD (Default)</option>
                     <option value="cineby">🌟 Cineby (Recommended)</option>
+                    <option value="miruro">🌸 Miruro (Anime)</option>
                     <option value="bflix">🅱️ BFlix</option>
                     <option value="vidsrc_to">⚡ VidSrc.to</option>
                     <option value="vidsrc_me">⚡ VidSrc.me</option>
