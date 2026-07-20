@@ -31,7 +31,8 @@ import {
   SmilePlus,
   Clock,
   BellOff,
-  Bell
+  Bell,
+  ScanSearch
 } from "lucide-react";
 import api from "@/lib/api";
 import { getSocket } from "@/lib/socket";
@@ -66,6 +67,19 @@ interface FloatingParticle {
   emoji: string;
   left: number;
   delay?: number;
+}
+
+interface DetectedControlItem {
+  label: string;
+  active: boolean;
+  index: number;
+}
+
+interface DetectedControls {
+  servers: DetectedControlItem[];
+  languages: DetectedControlItem[];
+  episodes: DetectedControlItem[];
+  quality: DetectedControlItem[];
 }
 
 const LANGUAGES = [
@@ -365,6 +379,9 @@ export default function CinemaPage() {
   const [subtitleLang, setSubtitleLang] = useState<string>("en");
   const [audioLang, setAudioLang] = useState<string>("original");
 
+  // Cinema Sync Controls from extension (via postMessage)
+  const [detectedControls, setDetectedControls] = useState<DetectedControls | null>(null);
+
   // Sticker Packs Data
   const stickerPacks: Record<string, { label: string; icon: string; stickers: string[] }> = {
     romantic: {
@@ -427,6 +444,36 @@ export default function CinemaPage() {
       timeoutsRef.current.forEach(clearTimeout);
     };
   }, []);
+
+  // Listen for Cinema Sync Controls data from the extension (via postMessage from iframe)
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === "LOVE_SYNC_CONTROLS_DATA") {
+        setDetectedControls(event.data.controls);
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  // Send a click command to the extension inside the iframe
+  const sendControlClick = (category: string, index: number) => {
+    // Find the iframe element and post message to it
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.postMessage({ type: "LOVE_SYNC_CLICK_CONTROL", category, index }, "*");
+      playSound("tap");
+    }
+  };
+
+  // Request a rescan from the extension
+  const requestControlRescan = () => {
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement | null;
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.postMessage({ type: "LOVE_SYNC_RESCAN_CONTROLS" }, "*");
+      playSound("tap");
+    }
+  };
 
   // Player Source switching states
   const [activeSource, setActiveSource] = useState<string>("default");
@@ -2378,6 +2425,78 @@ export default function CinemaPage() {
                 </button>
               </div>
             </div>
+
+            {/* ═══ Cinema Sync Controls (from Extension) ═══ */}
+            {isExtensionActive && detectedControls && (() => {
+              const totalControls = (detectedControls.servers?.length || 0) + (detectedControls.languages?.length || 0) + (detectedControls.episodes?.length || 0) + (detectedControls.quality?.length || 0);
+              if (totalControls === 0) return null;
+              return (
+                <div className="p-4 rounded-2xl bg-gradient-to-b from-emerald-500/[0.04] to-transparent border border-emerald-500/15 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                      <span className="text-[9px] font-black uppercase text-emerald-400/80 tracking-wider">Cinema Sync Controls</span>
+                    </div>
+                    <button
+                      onClick={requestControlRescan}
+                      className="flex items-center gap-1 text-[9px] font-bold text-zinc-500 hover:text-emerald-400 transition-colors cursor-pointer"
+                      title="Rescan page for controls"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      <span>Rescan</span>
+                    </button>
+                  </div>
+                  {detectedControls.servers.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">{"\uD83D\uDDA5"} Servers</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {detectedControls.servers.map((ctrl) => (
+                          <button key={`srv-${ctrl.index}`} onClick={() => sendControlClick("servers", ctrl.index)} className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer active:scale-95", ctrl.active ? "bg-[#E8587A]/15 border-[#E8587A]/40 text-[#E8587A] shadow-[0_0_8px_rgba(232,88,122,0.15)]" : "bg-white/[0.03] border-white/8 text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200")}>
+                            {ctrl.active && <span className="mr-1 text-[7px]">●</span>}{ctrl.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {detectedControls.languages.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">{"\uD83C\uDF10"} Audio</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {detectedControls.languages.map((ctrl) => (
+                          <button key={`lang-${ctrl.index}`} onClick={() => sendControlClick("languages", ctrl.index)} className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer active:scale-95", ctrl.active ? "bg-[#E8587A]/15 border-[#E8587A]/40 text-[#E8587A] shadow-[0_0_8px_rgba(232,88,122,0.15)]" : "bg-white/[0.03] border-white/8 text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200")}>
+                            {ctrl.active && <span className="mr-1 text-[7px]">●</span>}{ctrl.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {detectedControls.episodes.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">{"\uD83D\uDCFA"} Episodes</span>
+                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto cinema-scrollbar">
+                        {detectedControls.episodes.map((ctrl) => (
+                          <button key={`ep-${ctrl.index}`} onClick={() => sendControlClick("episodes", ctrl.index)} className={cn("px-2 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer active:scale-95", ctrl.active ? "bg-[#E8587A]/15 border-[#E8587A]/40 text-[#E8587A] shadow-[0_0_8px_rgba(232,88,122,0.15)]" : "bg-white/[0.03] border-white/8 text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200")}>
+                            {ctrl.active && <span className="mr-1 text-[7px]">●</span>}{ctrl.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {detectedControls.quality.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">{"\u2699"} Quality</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {detectedControls.quality.map((ctrl) => (
+                          <button key={`q-${ctrl.index}`} onClick={() => sendControlClick("quality", ctrl.index)} className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer active:scale-95", ctrl.active ? "bg-[#E8587A]/15 border-[#E8587A]/40 text-[#E8587A] shadow-[0_0_8px_rgba(232,88,122,0.15)]" : "bg-white/[0.03] border-white/8 text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200")}>
+                            {ctrl.active && <span className="mr-1 text-[7px]">●</span>}{ctrl.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Streaming Config Group */}
             <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-4">

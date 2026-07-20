@@ -383,7 +383,7 @@ const getRelId = (rel: any): string => {
       }
     });
 
-    socket.on("extension_video_control", async (payload: { action: string; time: number }) => {
+    socket.on("extension_video_control", async (payload: { action: string; time: number; language?: string }) => {
       try {
         console.log("Server: Received extension_video_control:", payload, "from userId:", userId);
         const user = await User.findById(userId);
@@ -392,6 +392,7 @@ const getRelId = (rel: any): string => {
           emitToUser(user.partnerId.toString(), "extension_video_controlled", {
             action: payload.action,
             time: payload.time,
+            language: payload.language,
           });
         }
       } catch (err) {
