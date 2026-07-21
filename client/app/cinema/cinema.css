@@ -257,7 +257,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 380px;
+  width: 420px;
   height: 100%;
   background: linear-gradient(
     180deg,
@@ -590,13 +590,15 @@
 
 /* ─── Chat Message Bubbles ──────────────────────────────────────── */
 .cinema-msg-bubble {
-  max-width: 82%;
-  padding: 10px 14px;
+  max-width: 100%;
+  width: fit-content;
+  padding: 9px 14px;
   border-radius: 18px;
   font-size: 0.8125rem;
-  line-height: 1.55;
+  line-height: 1.5;
   position: relative;
-  word-wrap: break-word;
+  word-break: normal;
+  overflow-wrap: break-word;
   animation: cinema-fade-in-anim 0.25s var(--cinema-ease-out);
   letter-spacing: 0.01em;
 }
@@ -1401,3 +1403,30 @@
   background: rgba(232, 88, 122, 0.16);
   box-shadow: 0 4px 16px rgba(232, 88, 122, 0.1);
 }
+
+/* ─── Cinema Action Toast Notification ───────────────────────────── */
+.cinema-action-toast {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 30px;
+  background: rgba(10, 7, 20, 0.92);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(232, 88, 122, 0.3);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(232, 88, 122, 0.15);
+  pointer-events: none;
+}
+

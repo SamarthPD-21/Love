@@ -21,7 +21,10 @@ export type SoundType =
   | "whoosh"
   | "heartbeat"
   | "chime"
-  | "notification";
+  | "notification"
+  | "play"
+  | "pause"
+  | "seek";
 
 export function useSoundEffects() {
   const { isMuted } = useSoundStore();
@@ -71,6 +74,61 @@ export function useSoundEffects() {
 
           osc.start(now);
           osc.stop(now + 0.09);
+          break;
+        }
+
+        case "play": {
+          // Soft ascending warm tone for video playback start
+          const playNote = (freq: number, start: number, duration: number) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, start);
+            osc.frequency.exponentialRampToValueAtTime(freq * 1.15, start + duration);
+            gain.gain.setValueAtTime(0.06, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + duration + 0.01);
+          };
+          playNote(349.23, now, 0.12);
+          playNote(523.25, now + 0.06, 0.18);
+          break;
+        }
+
+        case "pause": {
+          // Gentle descending tone for video pause
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.exponentialRampToValueAtTime(220, now + 0.14);
+          gain.gain.setValueAtTime(0.07, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.15);
+          break;
+        }
+
+        case "seek": {
+          // Double tick for timeline skip/seek
+          const tick = (freq: number, start: number) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, start);
+            gain.gain.setValueAtTime(0.08, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.04);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + 0.05);
+          };
+          tick(650, now);
+          tick(850, now + 0.06);
           break;
         }
 
@@ -166,29 +224,22 @@ export function useSoundEffects() {
         }
 
         case "notification": {
-          const osc1 = ctx.createOscillator();
-          const osc2 = ctx.createOscillator();
-          const gain = ctx.createGain();
-
-          osc1.type = "sine";
-          osc1.frequency.setValueAtTime(587.33, now);
-          osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.15);
-
-          osc2.type = "sine";
-          osc2.frequency.setValueAtTime(783.99, now);
-          osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.15);
-
-          gain.gain.setValueAtTime(0.08, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-
-          osc1.connect(gain);
-          osc2.connect(gain);
-          gain.connect(ctx.destination);
-
-          osc1.start(now);
-          osc2.start(now);
-          osc1.stop(now + 0.35);
-          osc2.stop(now + 0.35);
+          // Warm 3-note harmonic chime
+          const playSoftNote = (freq: number, start: number) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, start);
+            gain.gain.setValueAtTime(0.06, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + 0.4);
+          };
+          playSoftNote(523.25, now);       // C5
+          playSoftNote(659.25, now + 0.08); // E5
+          playSoftNote(783.99, now + 0.16); // G5
           break;
         }
       }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -41,6 +41,15 @@ import { getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { cn, getRelationshipId } from "@/lib/utils";
+
+function formatTime(seconds: number): string {
+  if (!seconds || isNaN(seconds)) return "00:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  const formattedMins = String(mins).padStart(2, "0");
+  const formattedSecs = String(secs).padStart(2, "0");
+  return `${formattedMins}:${formattedSecs}`;
+}
 
 interface CinemaSession {
   movieId: string;
@@ -341,7 +350,7 @@ export default function CinemaPage() {
   const [chatInput, setChatInput] = useState("");
   const [floatingParticles, setFloatingParticles] = useState<FloatingParticle[]>([]);
   const [isPartnerPresent, setIsPartnerPresent] = useState(false);
-  const [dimmed, setDimmed] = useState(false);
+  const [actionToast, setActionToast] = useState<{ message: string; icon: string } | null>(null);
   const [cuddleAlert, setCuddleAlert] = useState<{ visible: boolean; sender: string } | null>(null);
   const [snacks, setSnacks] = useState<Record<string, boolean>>({
     popcorn: false,
@@ -358,6 +367,16 @@ export default function CinemaPage() {
   // New UI specific states
   const [chatOpen, setChatOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  const showActionToast = useCallback((message: string, icon = "🎬") => {
+    setActionToast({ message, icon });
+  }, []);
+
+  useEffect(() => {
+    if (!actionToast) return;
+    const timer = setTimeout(() => setActionToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [actionToast]);
   const [controlsVisible, setControlsVisible] = useState(true);
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -797,14 +816,23 @@ export default function CinemaPage() {
 
       isRespondingToSocketRef.current = true;
 
+      const partnerName = "Partner";
+      const formattedTime = formatTime(data.currentTime);
+
       if (Math.abs(video.currentTime - data.currentTime) > 1.5) {
         video.currentTime = data.currentTime;
+        playSound("seek");
+        showActionToast(`${partnerName} skipped to ${formattedTime}`, "⏩");
       }
 
       if (data.status === "playing") {
         video.play().catch(() => {});
+        playSound("play");
+        showActionToast(`${partnerName} resumed playback`, "▶️");
       } else {
         video.pause();
+        playSound("pause");
+        showActionToast(`${partnerName} paused the movie`, "⏸️");
       }
 
       setTimeout(() => {
@@ -814,11 +842,15 @@ export default function CinemaPage() {
 
     socket.on("cinema_server_changed", (data: { server: string }) => {
       document.body.setAttribute("data-love-sync-server", data.server);
+      playSound("chime");
+      showActionToast(`Server switched to ${data.server}`, "🖥️");
     });
 
     // Listen to source changes from partner (syncs the dropdown)
     socket.on("cinema_source_changed", (data: { sourceKey: string; watchLink: string }) => {
       setActiveSource(data.sourceKey);
+      playSound("chime");
+      showActionToast("Stream source updated", "🎬");
     });
 
     // Listen to partner presence changes
@@ -870,12 +902,6 @@ export default function CinemaPage() {
       playSound("pop");
     });
 
-    // Listen to dim lights changes
-    socket.on("cinema_dim_lights_changed", (data: { dimmed: boolean }) => {
-      setDimmed(data.dimmed);
-      playSound("tap");
-    });
-
     // Listen to popcorn throwing
     socket.on("cinema_popcorn_thrown", () => {
       triggerPopcornFight();
@@ -922,7 +948,6 @@ export default function CinemaPage() {
       socket.off("cinema_chat_received");
       socket.off("cinema_typing_status");
       socket.off("cinema_reaction_received");
-      socket.off("cinema_dim_lights_changed");
       socket.off("cinema_popcorn_thrown");
       socket.off("cinema_cuddle_received");
       socket.off("cinema_snacks_synced");
@@ -1016,17 +1041,8 @@ export default function CinemaPage() {
     playSound("success");
     socket.emit("cinema_send_cuddle", {
       relationshipId: relId,
-      senderName: user.name.split(" ")[0],
+      senderName: user.name || "Partner",
     });
-  };
-
-  const handleToggleLights = () => {
-    if (!socket || !user || !user.relationshipId) return;
-    const relId = getRelationshipId(user.relationshipId);
-    const newDim = !dimmed;
-    setDimmed(newDim);
-    playSound("tap");
-    socket.emit("cinema_dim_lights", { relationshipId: relId, dimmed: newDim });
   };
 
   const handleToggleReady = () => {
@@ -1256,6 +1272,8 @@ export default function CinemaPage() {
           status: "playing",
           currentTime: videoRef.current?.currentTime || 0,
         });
+        playSound("play");
+        showActionToast("Resumed playback", "▶️");
       },
       onPause: () => {
         if (isRespondingToSocketRef.current || !socket) return;
@@ -1265,6 +1283,8 @@ export default function CinemaPage() {
           status: "paused",
           currentTime: videoRef.current?.currentTime || 0,
         });
+        playSound("pause");
+        showActionToast("Paused playback", "⏸️");
       },
       onSeeked: () => {
         if (isRespondingToSocketRef.current || !socket) return;
@@ -1274,6 +1294,9 @@ export default function CinemaPage() {
           status: videoRef.current?.paused ? "paused" : "playing",
           currentTime: videoRef.current?.currentTime || 0,
         });
+        playSound("seek");
+        const formattedTime = formatTime(videoRef.current?.currentTime || 0);
+        showActionToast(`Skipped to ${formattedTime}`, "⏩");
       },
       onVolumeChange: (e: any) => {
         setVideoMuted(e.currentTarget.muted);
@@ -1434,13 +1457,21 @@ export default function CinemaPage() {
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Lights Dimming Overlay */}
-      <div
-        className={cn(
-          "fixed inset-0 bg-black/90 transition-all duration-1000 pointer-events-none z-50",
-          dimmed ? "opacity-100" : "opacity-0"
+      {/* Cinema Action Toast Banner Overlay */}
+      <AnimatePresence>
+        {actionToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
+            className="cinema-action-toast"
+          >
+            <span>{actionToast.icon}</span>
+            <span>{actionToast.message}</span>
+          </motion.div>
         )}
-      />
+      </AnimatePresence>
 
       {/* Floating Particles Layer */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-[55]">
@@ -2062,21 +2093,7 @@ export default function CinemaPage() {
                 !controlsVisible && "cinema-bar-hidden cinema-controls-hidden"
               )}
             >
-              {/* 1. Lights dim toggle */}
-              <button
-                onClick={handleToggleLights}
-                className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border",
-                  dimmed
-                    ? "bg-[#D4A574]/20 border-[#D4A574]/40 text-[#D4A574] shadow-[0_0_10px_rgba(212,165,116,0.2)]"
-                    : "bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
-                )}
-                title="Toggle Ambient Lights"
-              >
-                <Tv className="w-4 h-4" />
-              </button>
-
-              {/* 2. Audio Mute Toggle */}
+              {/* 1. Audio Mute Toggle */}
               <button
                 onClick={() => setVideoMuted(prev => !prev)}
                 className={cn(
@@ -2256,7 +2273,7 @@ export default function CinemaPage() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
                     className={cn(
-                      "flex flex-col max-w-[85%] gap-0.5",
+                      "flex flex-col max-w-[92%] w-fit gap-0.5",
                       msg.isSelf ? "self-end items-end" : "self-start items-start"
                     )}
                   >
@@ -2370,18 +2387,37 @@ export default function CinemaPage() {
               )}
             </AnimatePresence>
 
-            {/* Quick Emoji Row */}
-            <div className="cinema-emoji-row flex items-center gap-1 px-4 py-2 border-t border-white/5 overflow-x-auto shrink-0">
-              {quickEmojis.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleSendSticker(emoji)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-lg transition-all cursor-pointer active:scale-90 shrink-0"
-                  title={`Send ${emoji}`}
-                >
-                  {emoji}
-                </button>
-              ))}
+            {/* Interactive Date Triggers & Quick Emojis inside Chat */}
+            <div className="flex flex-col border-t border-white/5 bg-black/20 shrink-0">
+              <div className="px-3 pt-2 pb-1 flex items-center justify-between">
+                <span className="text-[9px] font-extrabold uppercase text-zinc-500 tracking-wider">Date Actions</span>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={handleThrowPopcorn}
+                    className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 text-[10px] font-bold border border-white/5 transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+                  >
+                    <span>🍿 {translations[uiLang]?.fight || "Fight"}</span>
+                  </button>
+                  <button
+                    onClick={handleSendCuddle}
+                    className="px-2 py-0.5 rounded-lg bg-[#E8587A]/15 hover:bg-[#E8587A]/25 text-[#E8587A] text-[10px] font-bold border border-[#E8587A]/20 transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+                  >
+                    <span>🤗 {translations[uiLang]?.cuddle || "Cuddle"}</span>
+                  </button>
+                </div>
+              </div>
+              <div className="cinema-emoji-row flex items-center gap-1 px-3 py-1.5 overflow-x-auto">
+                {reactions.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleSendReaction(emoji)}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5 text-base transition-all cursor-pointer active:scale-90 shrink-0"
+                    title={`Send ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Chat Send Form — Enhanced */}
@@ -2430,17 +2466,6 @@ export default function CinemaPage() {
               <span className="cinema-settings-label">Quick Actions</span>
               <div className="flex gap-2">
                 <button
-                  onClick={handleToggleLights}
-                  className={cn(
-                    "cinema-action-btn",
-                    dimmed && "active"
-                  )}
-                  style={dimmed ? { '--cinema-accent-rose': '#D4A574', background: 'rgba(212, 165, 116, 0.1)', borderColor: 'rgba(212, 165, 116, 0.25)', color: '#D4A574', boxShadow: '0 0 20px rgba(212, 165, 116, 0.08)' } as React.CSSProperties : undefined}
-                >
-                  <Tv className="action-icon w-5 h-5" />
-                  <span>{dimmed ? "Brighten" : "Dim Lights"}</span>
-                </button>
-                <button
                   onClick={() => setVideoMuted(prev => !prev)}
                   className={cn(
                     "cinema-action-btn",
@@ -2449,7 +2474,7 @@ export default function CinemaPage() {
                   style={videoMuted ? { background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.25)', color: '#f87171', boxShadow: '0 0 20px rgba(239, 68, 68, 0.08)' } as React.CSSProperties : undefined}
                 >
                   {videoMuted ? <VolumeX className="action-icon w-5 h-5" /> : <Volume2 className="action-icon w-5 h-5" />}
-                  <span>{videoMuted ? "Unmute" : "Mute"}</span>
+                  <span>{videoMuted ? "Unmute Audio" : "Mute Audio"}</span>
                 </button>
                 <button
                   onClick={handleToggleAspectMode}
@@ -2460,7 +2485,7 @@ export default function CinemaPage() {
                   style={videoFitMode !== "contain" ? { background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#34d399', boxShadow: '0 0 20px rgba(16, 185, 129, 0.08)' } as React.CSSProperties : undefined}
                 >
                   <Maximize className="action-icon w-5 h-5" />
-                  <span>{videoFitMode === "cover" ? "Fill" : videoFitMode === "fill" ? "Stretch" : "Fit 16:9"}</span>
+                  <span>{videoFitMode === "cover" ? "Fill Screen" : videoFitMode === "fill" ? "Stretch" : "Fit 16:9"}</span>
                 </button>
               </div>
             </div>
@@ -2688,35 +2713,6 @@ export default function CinemaPage() {
               </div>
             )}
 
-            {/* Date Interactions Drawer Card */}
-            <div className="cinema-settings-card">
-              <span className="cinema-settings-label">Interactive Date Triggers</span>
-              <div className="grid grid-cols-6 gap-1 justify-items-center">
-                {reactions.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => handleSendReaction(emoji)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-lg transition-all cursor-pointer active:scale-90"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <button
-                  onClick={handleThrowPopcorn}
-                  className="cinema-trigger-btn"
-                >
-                  <span>🍿 {translations[uiLang]?.fight || "Fight"}</span>
-                </button>
-                <button
-                  onClick={handleSendCuddle}
-                  className="cinema-trigger-btn rose"
-                >
-                  <span>🤗 {translations[uiLang]?.cuddle || "Cuddle"}</span>
-                </button>
-              </div>
-            </div>
           </div>
         )}
       </div>
