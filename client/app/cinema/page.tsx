@@ -2206,14 +2206,12 @@ export default function CinemaPage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex border-b border-white/5 p-1 bg-black/10 shrink-0">
+        <div className="cinema-tab-switcher">
           <button
             onClick={() => { setSidebarTab("chat"); playSound("tap"); }}
             className={cn(
-              "flex-1 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-xl cursor-pointer flex items-center justify-center gap-1.5 border border-transparent",
-              sidebarTab === "chat"
-                ? "bg-white/[0.04] text-[#E8587A] border-white/5 shadow-inner"
-                : "text-zinc-500 hover:text-zinc-300"
+              "cinema-tab",
+              sidebarTab === "chat" && "active-chat"
             )}
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -2222,10 +2220,8 @@ export default function CinemaPage() {
           <button
             onClick={() => { setSidebarTab("settings"); playSound("tap"); }}
             className={cn(
-              "flex-1 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-xl cursor-pointer flex items-center justify-center gap-1.5 border border-transparent",
-              sidebarTab === "settings"
-                ? "bg-white/[0.04] text-[#D4A574] border-white/5 shadow-inner"
-                : "text-zinc-500 hover:text-zinc-300"
+              "cinema-tab",
+              sidebarTab === "settings" && "active-settings"
             )}
           >
             <Settings className="w-3.5 h-3.5" />
@@ -2389,17 +2385,14 @@ export default function CinemaPage() {
             </div>
 
             {/* Chat Send Form — Enhanced */}
-            <form onSubmit={handleSendChat} className="p-3 border-t border-white/5 bg-black/20 flex flex-col gap-2 shrink-0">
-              <div className="flex gap-2 items-end">
-                {/* Sticker Toggle Button */}
+            <form onSubmit={handleSendChat} className="cinema-chat-input-wrap flex flex-col gap-2 shrink-0">
+              <div className="flex gap-2 items-center">
                 <button
                   type="button"
                   onClick={() => setStickerPickerOpen(!stickerPickerOpen)}
                   className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0",
-                    stickerPickerOpen
-                      ? "bg-[#D4A574]/15 text-[#D4A574] border border-[#D4A574]/25"
-                      : "bg-white/[0.03] border border-white/5 text-zinc-400 hover:text-white hover:bg-white/5"
+                    "cinema-sticker-toggle",
+                    stickerPickerOpen && "open"
                   )}
                   title="Open sticker picker"
                 >
@@ -2414,16 +2407,14 @@ export default function CinemaPage() {
                     handleChatTyping();
                   }}
                   placeholder={translations[uiLang]?.typeMessage || "Type a message..."}
-                  className="flex-1 bg-white/[0.02] border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#E8587A]/30 transition-colors"
+                  className="cinema-chat-input"
                 />
                 <button
                   type="submit"
                   disabled={!chatInput.trim()}
                   className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-md shrink-0",
-                    chatInput.trim()
-                      ? "bg-[#E8587A] hover:bg-[#BE3A6E] text-white shadow-[#BE3A6E]/10"
-                      : "bg-zinc-800 text-zinc-600 cursor-not-allowed shadow-none"
+                    "cinema-send-btn",
+                    chatInput.trim() ? "ready" : "disabled"
                   )}
                 >
                   <Send className="w-4 h-4" />
@@ -2433,46 +2424,43 @@ export default function CinemaPage() {
           </>
         ) : (
           /* Settings Tab Content */
-          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5 cinema-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 cinema-scrollbar">
             {/* Quick Actions Card */}
-            <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-3">
-              <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Quick Actions</span>
-              <div className="flex gap-3">
+            <div className="cinema-settings-card">
+              <span className="cinema-settings-label">Quick Actions</span>
+              <div className="flex gap-2">
                 <button
                   onClick={handleToggleLights}
                   className={cn(
-                    "flex-1 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5",
-                    dimmed
-                      ? "bg-[#D4A574]/15 border-[#D4A574]/30 text-[#D4A574]"
-                      : "bg-white/[0.02] border-white/5 text-zinc-300 hover:bg-white/[0.04]"
+                    "cinema-action-btn",
+                    dimmed && "active"
                   )}
+                  style={dimmed ? { '--cinema-accent-rose': '#D4A574', background: 'rgba(212, 165, 116, 0.1)', borderColor: 'rgba(212, 165, 116, 0.25)', color: '#D4A574', boxShadow: '0 0 20px rgba(212, 165, 116, 0.08)' } as React.CSSProperties : undefined}
                 >
-                  <Tv className="w-4 h-4" />
-                  <span>{dimmed ? "Brighten Lights" : "Dim Lights"}</span>
+                  <Tv className="action-icon w-5 h-5" />
+                  <span>{dimmed ? "Brighten" : "Dim Lights"}</span>
                 </button>
                 <button
                   onClick={() => setVideoMuted(prev => !prev)}
                   className={cn(
-                    "flex-1 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5",
-                    videoMuted
-                      ? "bg-rose-500/10 border-rose-500/30 text-rose-450"
-                      : "bg-white/[0.02] border-white/5 text-zinc-300 hover:bg-white/[0.04]"
+                    "cinema-action-btn",
+                    videoMuted && "active"
                   )}
+                  style={videoMuted ? { background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.25)', color: '#f87171', boxShadow: '0 0 20px rgba(239, 68, 68, 0.08)' } as React.CSSProperties : undefined}
                 >
-                  {videoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                  <span>{videoMuted ? "Unmute Audio" : "Mute Audio"}</span>
+                  {videoMuted ? <VolumeX className="action-icon w-5 h-5" /> : <Volume2 className="action-icon w-5 h-5" />}
+                  <span>{videoMuted ? "Unmute" : "Mute"}</span>
                 </button>
                 <button
                   onClick={handleToggleAspectMode}
                   className={cn(
-                    "flex-1 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5",
-                    videoFitMode !== "contain"
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                      : "bg-white/[0.02] border-white/5 text-zinc-300 hover:bg-white/[0.04]"
+                    "cinema-action-btn",
+                    videoFitMode !== "contain" && "active"
                   )}
+                  style={videoFitMode !== "contain" ? { background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#34d399', boxShadow: '0 0 20px rgba(16, 185, 129, 0.08)' } as React.CSSProperties : undefined}
                 >
-                  <Maximize className="w-4 h-4" />
-                  <span>{videoFitMode === "cover" ? "Fill Screen" : videoFitMode === "fill" ? "Stretch" : "Fit 16:9"}</span>
+                  <Maximize className="action-icon w-5 h-5" />
+                  <span>{videoFitMode === "cover" ? "Fill" : videoFitMode === "fill" ? "Stretch" : "Fit 16:9"}</span>
                 </button>
               </div>
             </div>
@@ -2482,7 +2470,7 @@ export default function CinemaPage() {
               const totalControls = (detectedControls.servers?.length || 0) + (detectedControls.languages?.length || 0) + (detectedControls.episodes?.length || 0) + (detectedControls.quality?.length || 0);
               if (totalControls === 0) return null;
               return (
-                <div className="p-4 rounded-2xl bg-gradient-to-b from-emerald-500/[0.04] to-transparent border border-emerald-500/15 flex flex-col gap-3">
+                <div className="cinema-settings-card" style={{ borderColor: 'rgba(16, 185, 129, 0.12)' }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
@@ -2550,18 +2538,18 @@ export default function CinemaPage() {
             })()}
 
             {/* Streaming Config Group */}
-            <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-4">
-              <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Streaming Server & Source</span>
+            <div className="cinema-settings-card">
+              <span className="cinema-settings-label">Streaming Server & Source</span>
 
               {/* Source selection */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400">Stream Provider Source</label>
+                <label className="text-[10px] font-semibold text-zinc-500">Stream Provider</label>
                 {session?.movieId?.startsWith("gdrive-") ? (
-                  <div className="bg-zinc-900/60 border border-white/5 text-[10px] font-bold rounded-lg px-2.5 py-2 text-zinc-300 flex items-center justify-between select-none">
+                  <div className="cinema-select" style={{ cursor: 'default' }}>
                     <span>📁 Google Drive</span>
                     <button
                       onClick={() => setGdrivePlayerMode(prev => prev === "iframe" ? "html5" : "iframe")}
-                      className="text-[8px] font-black uppercase text-[#E8587A] hover:underline"
+                      className="text-[8px] font-black uppercase text-[#E8587A] hover:underline absolute right-3 top-1/2 -translate-y-1/2"
                     >
                       {gdrivePlayerMode === "iframe" ? "Force Direct" : "Use Google Player"}
                     </button>
@@ -2575,7 +2563,7 @@ export default function CinemaPage() {
                   <select
                     value={activeSource}
                     onChange={(e) => handleSourceChange(e.target.value)}
-                    className="bg-zinc-900/60 border border-white/5 text-xs font-bold rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer w-full"
+                    className="cinema-select"
                   >
                     <option value="default">🎬 1HD (Default)</option>
                     <option value="cineby">🌟 Cineby (Recommended)</option>
@@ -2597,11 +2585,11 @@ export default function CinemaPage() {
               {/* Server selector (Only if default 1HD active) */}
               {activeSource === "default" && !session?.movieId?.startsWith("gdrive-") && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400">Preferred Mirror Server</label>
+                  <label className="text-[10px] font-semibold text-zinc-500">Mirror Server</label>
                   <select
                     value={session.activeServer || "upcloud"}
                     onChange={(e) => handleServerChange(e.target.value)}
-                    className="bg-zinc-900/60 border border-white/5 text-xs font-bold rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none w-full"
+                    className="cinema-select"
                   >
                     <option value="upcloud">UpCloud</option>
                     <option value="vidmoly">Vidmoly</option>
@@ -2614,7 +2602,7 @@ export default function CinemaPage() {
 
               {/* Subtitles Option */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400">{translations[uiLang]?.subtitles || "Subtitles"}</label>
+                <label className="text-[10px] font-semibold text-zinc-500">{translations[uiLang]?.subtitles || "Subtitles"}</label>
                 <select
                   value={subtitleLang}
                   onChange={(e) => {
@@ -2622,7 +2610,7 @@ export default function CinemaPage() {
                     handleLanguageSync(e.target.value, audioLang);
                     playSound("tap");
                   }}
-                  className="bg-zinc-900/60 border border-white/5 text-xs font-bold rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none w-full"
+                  className="cinema-select"
                 >
                   <option value="none">None</option>
                   <option value="en">🇺🇸 English</option>
@@ -2636,7 +2624,7 @@ export default function CinemaPage() {
 
               {/* Audio Track Option */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400">{translations[uiLang]?.audioTrack || "Audio Track"}</label>
+                <label className="text-[10px] font-semibold text-zinc-500">{translations[uiLang]?.audioTrack || "Audio Track"}</label>
                 <select
                   value={audioLang}
                   onChange={(e) => {
@@ -2644,7 +2632,7 @@ export default function CinemaPage() {
                     handleLanguageSync(subtitleLang, e.target.value);
                     playSound("tap");
                   }}
-                  className="bg-zinc-900/60 border border-white/5 text-xs font-bold rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none w-full"
+                  className="cinema-select"
                 >
                   <option value="original">Original</option>
                   <option value="en">🇺🇸 English Dub</option>
@@ -2657,8 +2645,8 @@ export default function CinemaPage() {
               </div>
 
               {/* UI Translation Selection */}
-              <div className="flex flex-col gap-1.5 pt-3 border-t border-white/5">
-                <label className="text-[10px] font-bold text-zinc-400">{translations[uiLang]?.language || "UI Language"}</label>
+              <div className="flex flex-col gap-1.5 pt-3 border-t border-white/[0.04]">
+                <label className="text-[10px] font-semibold text-zinc-500">{translations[uiLang]?.language || "UI Language"}</label>
                 <select
                   value={uiLang}
                   onChange={(e) => {
@@ -2666,7 +2654,7 @@ export default function CinemaPage() {
                     localStorage.setItem("love-cinema-ui-lang", e.target.value);
                     playSound("tap");
                   }}
-                  className="bg-zinc-900/60 border border-white/5 text-xs font-bold rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none w-full"
+                  className="cinema-select"
                 >
                   {LANGUAGES.map((lang) => (
                     <option key={lang.code} value={lang.code}>
@@ -2679,7 +2667,7 @@ export default function CinemaPage() {
 
             {/* 100% Reliable Embed Connection Fallback Link */}
             {session.watchLink && (
-              <div className="p-4 rounded-2xl bg-[#E8587A]/5 border border-[#E8587A]/20 flex flex-col gap-2.5">
+              <div className="cinema-settings-card" style={{ borderColor: 'rgba(232, 88, 122, 0.15)' }}>
                 <div className="flex items-start gap-2">
                   <Info className="w-4 h-4 text-[#E8587A] flex-shrink-0 mt-0.5" />
                   <div className="flex flex-col">
@@ -2701,8 +2689,8 @@ export default function CinemaPage() {
             )}
 
             {/* Date Interactions Drawer Card */}
-            <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-3">
-              <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Interactive Date Triggers</span>
+            <div className="cinema-settings-card">
+              <span className="cinema-settings-label">Interactive Date Triggers</span>
               <div className="grid grid-cols-6 gap-1 justify-items-center">
                 {reactions.map((emoji) => (
                   <button
@@ -2714,16 +2702,16 @@ export default function CinemaPage() {
                   </button>
                 ))}
               </div>
-              <div className="grid grid-cols-2 gap-2.5 mt-2">
+              <div className="grid grid-cols-2 gap-2 mt-1">
                 <button
                   onClick={handleThrowPopcorn}
-                  className="bg-white/5 hover:bg-white/10 text-zinc-300 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-white/5 flex items-center justify-center gap-1.5"
+                  className="cinema-trigger-btn"
                 >
                   <span>🍿 {translations[uiLang]?.fight || "Fight"}</span>
                 </button>
                 <button
                   onClick={handleSendCuddle}
-                  className="bg-[#E8587A]/15 hover:bg-[#E8587A]/25 text-[#E8587A] py-3 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-[#E8587A]/20 flex items-center justify-center gap-1.5"
+                  className="cinema-trigger-btn rose"
                 >
                   <span>🤗 {translations[uiLang]?.cuddle || "Cuddle"}</span>
                 </button>

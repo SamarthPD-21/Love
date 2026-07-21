@@ -257,21 +257,24 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 360px;
+  width: 380px;
   height: 100%;
   background: linear-gradient(
     180deg,
-    rgba(14, 10, 24, 0.92) 0%,
-    rgba(8, 6, 16, 0.96) 100%
+    rgba(10, 7, 20, 0.97) 0%,
+    rgba(6, 4, 14, 0.99) 50%,
+    rgba(10, 7, 20, 0.97) 100%
   );
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(60px) saturate(200%);
+  -webkit-backdrop-filter: blur(60px) saturate(200%);
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: 0;
   z-index: 45;
   transform: translateX(100%);
   transition: transform 0.5s var(--cinema-ease-smooth);
-  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    -12px 0 60px rgba(0, 0, 0, 0.7),
+    -2px 0 20px rgba(232, 88, 122, 0.03);
 }
 
 /* Gradient top accent border (rose → gold) */
@@ -282,10 +285,24 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--cinema-accent-rose), var(--cinema-accent-gold));
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--cinema-accent-rose) 20%,
+    var(--cinema-accent-gold) 50%,
+    var(--cinema-accent-rose) 80%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
   opacity: 0;
   transition: opacity 0.5s ease;
   z-index: 1;
+  animation: shimmer-accent 3s ease-in-out infinite;
+}
+
+@keyframes shimmer-accent {
+  0%, 100% { background-position: 0% 0%; }
+  50% { background-position: 100% 0%; }
 }
 
 .cinema-chat-drawer.open {
@@ -576,39 +593,52 @@
   max-width: 82%;
   padding: 10px 14px;
   border-radius: 18px;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: 0.8125rem;
+  line-height: 1.55;
   position: relative;
   word-wrap: break-word;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   animation: cinema-fade-in-anim 0.25s var(--cinema-ease-out);
+  letter-spacing: 0.01em;
 }
 
 .cinema-msg-self {
   background: linear-gradient(
     135deg,
-    rgba(232, 88, 122, 0.85) 0%,
-    rgba(232, 88, 122, 0.7) 100%
+    rgba(232, 88, 122, 0.9) 0%,
+    rgba(200, 60, 100, 0.8) 100%
   );
   color: #fff;
   border-bottom-right-radius: 6px;
   margin-left: auto;
   box-shadow:
-    0 2px 12px rgba(232, 88, 122, 0.2),
-    0 1px 4px rgba(0, 0, 0, 0.15);
+    0 4px 20px rgba(232, 88, 122, 0.25),
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.cinema-msg-self:hover {
+  box-shadow:
+    0 6px 28px rgba(232, 88, 122, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .cinema-msg-partner {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--cinema-text);
   border-bottom-left-radius: 6px;
   margin-right: auto;
   box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 4px 16px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.cinema-msg-partner:hover {
+  background: rgba(255, 255, 255, 0.065);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .cinema-msg-sticker {
@@ -619,7 +649,12 @@
   font-size: 3rem;
   line-height: 1;
   animation: sticker-bounce 0.5s var(--cinema-ease-spring);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+  transition: transform 0.2s var(--cinema-ease-spring);
+}
+
+.cinema-msg-sticker:hover {
+  transform: scale(1.1);
 }
 
 
@@ -627,12 +662,13 @@
 .cinema-typing-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.05);
+  gap: 5px;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 18px;
   border-bottom-left-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
 .cinema-typing-indicator span {
@@ -640,7 +676,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(240, 234, 244, 0.4);
+  background: rgba(232, 88, 122, 0.5);
   animation: typing-bounce 1.4s ease-in-out infinite;
 }
 
@@ -655,35 +691,13 @@
 
 /* ─── Sticker Picker ────────────────────────────────────────────── */
 .cinema-sticker-picker {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  max-height: 0;
-  overflow: hidden;
-  background: rgba(12, 10, 22, 0.94);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  position: relative;
+  background: rgba(8, 6, 16, 0.98);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px 16px 0 0;
-  transition:
-    max-height 0.4s var(--cinema-ease-out),
-    opacity 0.3s ease;
-  opacity: 0;
+  border-radius: 0;
   z-index: 10;
-}
-
-.cinema-sticker-picker.open {
-  max-height: 280px;
-  opacity: 1;
-  overflow-y: auto;
-}
-
-.cinema-sticker-picker .sticker-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
-  gap: 8px;
-  padding: 12px;
 }
 
 .cinema-sticker-item {
@@ -693,17 +707,21 @@
   font-size: 2rem;
   width: 56px;
   height: 56px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
   cursor: pointer;
   transition: all 0.2s var(--cinema-ease-spring);
   user-select: none;
+  border: 1px solid transparent;
 }
 
 .cinema-sticker-item:hover {
-  transform: scale(1.2);
+  transform: scale(1.2) translateY(-2px);
   background: rgba(232, 88, 122, 0.1);
-  box-shadow: 0 4px 16px rgba(232, 88, 122, 0.1);
+  box-shadow:
+    0 8px 24px rgba(232, 88, 122, 0.15),
+    0 0 0 1px rgba(232, 88, 122, 0.15);
+  border-color: rgba(232, 88, 122, 0.2);
 }
 
 .cinema-sticker-item:active {
@@ -740,10 +758,11 @@
 /* ─── Emoji Reaction Row ────────────────────────────────────────── */
 .cinema-emoji-row {
   display: flex;
-  gap: 4px;
-  padding: 6px 8px;
+  gap: 2px;
+  padding: 6px 12px;
   overflow-x: auto;
   scrollbar-width: none;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .cinema-emoji-row::-webkit-scrollbar {
@@ -752,9 +771,9 @@
 
 .cinema-emoji-row button {
   flex-shrink: 0;
-  font-size: 1.25rem;
-  padding: 4px 6px;
-  border-radius: 8px;
+  font-size: 1.15rem;
+  padding: 5px 7px;
+  border-radius: 10px;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -762,8 +781,9 @@
 }
 
 .cinema-emoji-row button:hover {
-  transform: scale(1.3);
+  transform: scale(1.35) translateY(-2px);
   background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .cinema-emoji-row button:active {
@@ -773,13 +793,14 @@
 
 /* ─── Chat Header ───────────────────────────────────────────────── */
 .cinema-chat-header {
-  padding: 16px 20px;
+  padding: 18px 20px;
   background: linear-gradient(
     180deg,
-    rgba(232, 88, 122, 0.06) 0%,
+    rgba(232, 88, 122, 0.08) 0%,
+    rgba(232, 88, 122, 0.02) 50%,
     transparent 100%
   );
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   position: relative;
 }
 
@@ -787,14 +808,15 @@
   content: "";
   position: absolute;
   bottom: -1px;
-  left: 20%;
-  right: 20%;
+  left: 10%;
+  right: 10%;
   height: 1px;
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(232, 88, 122, 0.2),
-    rgba(212, 165, 116, 0.2),
+    rgba(232, 88, 122, 0.25),
+    rgba(212, 165, 116, 0.25),
+    rgba(232, 88, 122, 0.25),
     transparent
   );
 }
@@ -1079,4 +1101,303 @@
   .cinema-lobby-card:hover::after {
     animation: none;
   }
+}
+
+/* ─── Premium Settings Card ──────────────────────────────────────── */
+.cinema-settings-card {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.3s ease;
+}
+
+.cinema-settings-card:hover {
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.cinema-settings-label {
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.12em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cinema-settings-label::before {
+  content: "";
+  width: 3px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--cinema-accent-rose);
+  opacity: 0.5;
+}
+
+/* ─── Premium Select ─────────────────────────────────────────────── */
+.cinema-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--cinema-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 10px 36px 10px 14px;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.cinema-select:focus {
+  outline: none;
+  border-color: rgba(232, 88, 122, 0.35);
+  box-shadow: 0 0 0 3px rgba(232, 88, 122, 0.08);
+}
+
+.cinema-select:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.cinema-select option {
+  background: #0c0a16;
+  color: var(--cinema-text);
+  padding: 8px;
+}
+
+/* ─── Premium Quick Action Button ────────────────────────────────── */
+.cinema-action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.25s var(--cinema-ease-spring);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.cinema-action-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.cinema-action-btn:active {
+  transform: scale(0.96);
+}
+
+.cinema-action-btn.active {
+  background: rgba(232, 88, 122, 0.1);
+  border-color: rgba(232, 88, 122, 0.25);
+  color: var(--cinema-accent-rose);
+  box-shadow: 0 0 20px rgba(232, 88, 122, 0.08);
+}
+
+.cinema-action-btn .action-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+}
+
+.cinema-action-btn.active .action-icon {
+  opacity: 1;
+}
+
+/* ─── Chat Input Enhanced ────────────────────────────────────────── */
+.cinema-chat-input-wrap {
+  padding: 12px 16px 14px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cinema-chat-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 10px 16px;
+  font-size: 0.8125rem;
+  color: var(--cinema-text);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.cinema-chat-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.cinema-chat-input:focus {
+  border-color: rgba(232, 88, 122, 0.3);
+  box-shadow:
+    0 0 0 3px rgba(232, 88, 122, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ─── Chat Send Button ───────────────────────────────────────────── */
+.cinema-send-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s var(--cinema-ease-spring);
+  flex-shrink: 0;
+  border: none;
+}
+
+.cinema-send-btn.ready {
+  background: linear-gradient(135deg, var(--cinema-accent-rose) 0%, #c8416a 100%);
+  color: white;
+  box-shadow:
+    0 4px 16px rgba(232, 88, 122, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.cinema-send-btn.ready:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 6px 24px rgba(232, 88, 122, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.cinema-send-btn.disabled {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.15);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ─── Tab Switcher ───────────────────────────────────────────────── */
+.cinema-tab-switcher {
+  display: flex;
+  padding: 6px;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
+}
+
+.cinema-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.25s var(--cinema-ease-spring);
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.cinema-tab:hover {
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cinema-tab.active-chat {
+  color: var(--cinema-accent-rose);
+  background: rgba(232, 88, 122, 0.08);
+  border-color: rgba(232, 88, 122, 0.15);
+  box-shadow: 0 0 12px rgba(232, 88, 122, 0.06);
+}
+
+.cinema-tab.active-settings {
+  color: var(--cinema-accent-gold);
+  background: rgba(212, 165, 116, 0.08);
+  border-color: rgba(212, 165, 116, 0.15);
+  box-shadow: 0 0 12px rgba(212, 165, 116, 0.06);
+}
+
+/* ─── Sticker Toggle ─────────────────────────────────────────────── */
+.cinema-sticker-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s var(--cinema-ease-spring);
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.cinema-sticker-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.cinema-sticker-toggle.open {
+  background: rgba(212, 165, 116, 0.12);
+  border-color: rgba(212, 165, 116, 0.25);
+  color: var(--cinema-accent-gold);
+}
+
+/* ─── Date Interaction Trigger ───────────────────────────────────── */
+.cinema-trigger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s var(--cinema-ease-spring);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.cinema-trigger-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cinema-trigger-btn:active {
+  transform: scale(0.96);
+}
+
+.cinema-trigger-btn.rose {
+  background: rgba(232, 88, 122, 0.1);
+  border-color: rgba(232, 88, 122, 0.2);
+  color: var(--cinema-accent-rose);
+}
+
+.cinema-trigger-btn.rose:hover {
+  background: rgba(232, 88, 122, 0.16);
+  box-shadow: 0 4px 16px rgba(232, 88, 122, 0.1);
 }
