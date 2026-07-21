@@ -51,6 +51,100 @@ function formatTime(seconds: number): string {
   return `${formattedMins}:${formattedSecs}`;
 }
 
+// --- Dynamic Anime Classification Engine (AniList + MAL API + Cache) ---
+const animeClassificationCache = new Map<string, boolean>();
+
+async function isAnimeTitleAsync(title?: string, type?: string, genre?: string, category?: string): Promise<boolean> {
+  if (!title) return false;
+
+  // 1. Direct Metadata Check
+  const typeLower = type?.toLowerCase() || "";
+  const genreLower = genre?.toLowerCase() || "";
+  const catLower = category?.toLowerCase() || "";
+  if (
+    typeLower === "anime" || 
+    genreLower.includes("anime") || 
+    catLower.includes("anime")
+  ) {
+    return true;
+  }
+
+  const cleanTitle = title.trim().toLowerCase();
+  if (animeClassificationCache.has(cleanTitle)) {
+    return animeClassificationCache.get(cleanTitle)!;
+  }
+
+  // 2. Dynamic API Classification Engine (AniList GraphQL API)
+  try {
+    const res = await fetch("https://graphql.anilist.co", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        query: `
+          query ($search: String) {
+            Media(search: $search, type: ANIME) {
+              id
+              title {
+                english
+                romaji
+              }
+            }
+          }
+        `,
+        variables: { search: title },
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const media = data?.data?.Media;
+      if (media && media.title) {
+        const eng = (media.title.english || "").toLowerCase();
+        const rom = (media.title.romaji || "").toLowerCase();
+        if (eng.includes(cleanTitle) || cleanTitle.includes(eng) || rom.includes(cleanTitle) || cleanTitle.includes(rom)) {
+          animeClassificationCache.set(cleanTitle, true);
+          return true;
+        }
+      }
+    }
+  } catch {
+    // Fallback if API unreachable
+  }
+
+  // 3. Dynamic Fallback Classification Engine (Jikan / MAL API)
+  try {
+    const malRes = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`);
+    if (malRes.ok) {
+      const malData = await malRes.json();
+      if (malData.data && malData.data.length > 0) {
+        const malItem = malData.data[0];
+        const malTitle = (malItem.title || "").toLowerCase();
+        const malEng = (malItem.title_english || "").toLowerCase();
+        if (malTitle.includes(cleanTitle) || cleanTitle.includes(malTitle) || malEng.includes(cleanTitle) || cleanTitle.includes(malEng)) {
+          animeClassificationCache.set(cleanTitle, true);
+          return true;
+        }
+      }
+    }
+  } catch {
+    // Fallback
+  }
+
+  animeClassificationCache.set(cleanTitle, false);
+  return false;
+}
+
+function isAnimeTitle(title?: string, type?: string, genre?: string, category?: string): boolean {
+  if (!title) return false;
+  if (type === "anime" || genre?.toLowerCase().includes("anime") || category?.toLowerCase().includes("anime")) return true;
+  const cleanTitle = title.trim().toLowerCase();
+  if (animeClassificationCache.has(cleanTitle)) {
+    return animeClassificationCache.get(cleanTitle)!;
+  }
+  isAnimeTitleAsync(title, type, genre, category);
+  return false;
+}
+
 interface CinemaSession {
   movieId: string;
   movieTitle: string;
@@ -575,6 +669,18 @@ export default function CinemaPage() {
     if (!session || !socket || !user) return;
     setActiveSource(sourceKey);
 
+    if (sourceKey === "miruro") {
+      const miruroUrl = `https://www.miruro.ru/search?query=${encodeURIComponent(session.movieTitle || "")}`;
+      socket.emit("cinema_change_source", {
+        relationshipId: getRelationshipId(user.relationshipId),
+        watchLink: miruroUrl,
+        sourceKey: "miruro",
+      });
+      playSound("chime");
+      showActionToast(`Switched source to Miruro (Anime)`, "🌸");
+      return;
+    }
+
     if (sourceKey === "default") {
       try {
         setResolvingSource(true);
@@ -1053,10 +1159,36 @@ export default function CinemaPage() {
     playSound("tap");
   };
 
-  const handleLoadMovie = (movie: any) => {
+  const handleSearchMiruroDirect = (queryTitle: string) => {
+    if (!socket || !user || !user.relationshipId || !queryTitle.trim()) return;
+    const relId = getRelationshipId(user.relationshipId);
+    const title = queryTitle.trim();
+    const searchUrl = `https://www.miruro.ru/search?query=${encodeURIComponent(title)}`;
+
+    socket.emit("cinema_select_movie", {
+      relationshipId: relId,
+      movieId: `miruro-${Date.now()}`,
+      movieTitle: title,
+      movieType: "anime",
+      watchLink: searchUrl,
+    });
+    setActiveSource("miruro");
+    playSound("chime");
+    showActionToast(`Searching "${title}" on Miruro`, "🌸");
+  };
+
+  const handleLoadMovie = async (movie: any) => {
     if (!socket || !user || !user.relationshipId) return;
     const relId = getRelationshipId(user.relationshipId);
     let link = movie.watchLink || "";
+
+    const isAnime = await isAnimeTitleAsync(movie.title, movie.type, movie.genre, movie.category);
+
+    // If title is an Anime or lacks direct link, default/first search on Miruro
+    if (isAnime || (!link && movie.title)) {
+      link = `https://www.miruro.ru/search?query=${encodeURIComponent(movie.title || "")}`;
+      setActiveSource("miruro");
+    }
 
     // If watchlist movie contains a Google Drive link, parse it and set correct ID prefix
     if (link.includes("drive.google.com")) {
@@ -1080,9 +1212,10 @@ export default function CinemaPage() {
       relationshipId: relId,
       movieId: movie._id,
       movieTitle: movie.title,
-      movieType: movie.type,
+      movieType: movie.type || (isAnime ? "anime" : "movie"),
       watchLink: link,
     });
+    if (isAnime) setActiveSource("miruro");
     playSound("chime");
   };
 
@@ -1699,42 +1832,66 @@ export default function CinemaPage() {
             </div>
 
             {/* Filters and Search */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={translations[uiLang]?.searchPlaceholder || "Search movies & TV shows..."}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all"
-                />
+            <div className="flex flex-col gap-3 mb-8">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={translations[uiLang]?.searchPlaceholder || "Search movies, anime & TV shows..."}
+                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all"
+                  />
+                </div>
+
+                <div className="flex bg-zinc-900/60 border border-white/10 rounded-2xl p-1.5 self-start sm:self-auto shadow-inner">
+                  <button
+                    onClick={() => setActiveFilter("watchlist")}
+                    className={cn(
+                      "px-6 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all",
+                      activeFilter === "watchlist"
+                        ? "bg-[#E8587A] text-white shadow-lg shadow-[#E8587A]/15"
+                        : "text-zinc-500 hover:text-zinc-350"
+                    )}
+                  >
+                    {translations[uiLang]?.watchlist || "Watchlist"}
+                  </button>
+                  <button
+                    onClick={() => setActiveFilter("watched")}
+                    className={cn(
+                      "px-6 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all",
+                      activeFilter === "watched"
+                        ? "bg-[#E8587A] text-white shadow-lg shadow-[#E8587A]/15"
+                        : "text-zinc-500 hover:text-zinc-355"
+                    )}
+                  >
+                    {translations[uiLang]?.history || "Watched History"}
+                  </button>
+                </div>
               </div>
 
-              <div className="flex bg-zinc-900/60 border border-white/10 rounded-2xl p-1.5 self-start sm:self-auto shadow-inner">
-                <button
-                  onClick={() => setActiveFilter("watchlist")}
-                  className={cn(
-                    "px-6 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all",
-                    activeFilter === "watchlist"
-                      ? "bg-[#E8587A] text-white shadow-lg shadow-[#E8587A]/15"
-                      : "text-zinc-500 hover:text-zinc-350"
-                  )}
+              {/* Quick Miruro Anime Search Bar Trigger */}
+              {searchQuery.trim().length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-rose-500/10 via-pink-500/5 to-transparent border border-rose-500/20"
                 >
-                  {translations[uiLang]?.watchlist || "Watchlist"}
-                </button>
-                <button
-                  onClick={() => setActiveFilter("watched")}
-                  className={cn(
-                    "px-6 py-2.5 rounded-xl text-xs font-extrabold cursor-pointer transition-all",
-                    activeFilter === "watched"
-                      ? "bg-[#E8587A] text-white shadow-lg shadow-[#E8587A]/15"
-                      : "text-zinc-500 hover:text-zinc-355"
-                  )}
-                >
-                  {translations[uiLang]?.history || "Watched History"}
-                </button>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">🌸</span>
+                    <span className="text-xs font-bold text-zinc-200">
+                      Search <span className="text-[#E8587A]">"{searchQuery.trim()}"</span> on Miruro Anime Engine
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleSearchMiruroDirect(searchQuery)}
+                    className="px-4 py-1.5 rounded-lg bg-[#E8587A] hover:bg-[#BE3A6E] text-white text-xs font-extrabold shadow-md transition-all active:scale-95 cursor-pointer"
+                  >
+                    Search on Miruro ↗
+                  </button>
+                </motion.div>
+              )}
             </div>
 
             {/* Movie List Section */}
@@ -1755,12 +1912,15 @@ export default function CinemaPage() {
                   return (
                     <div className="flex-1 flex flex-col items-center justify-center text-center p-12 border border-dashed border-white/5 rounded-3xl bg-white/[0.005]">
                       <Film className="w-12 h-12 text-zinc-800 mb-3 animate-pulse" />
-                      <p className="text-base font-bold text-zinc-400">No movies found</p>
-                      <p className="text-xs text-zinc-600 max-w-xs mt-2">
-                        {searchQuery
-                          ? "Try searching for a different title."
-                          : "Add titles to your list in the main app to select them here!"}
-                      </p>
+                      <p className="text-base font-bold text-zinc-400">No lobby titles match "{searchQuery}"</p>
+                      {searchQuery.trim() && (
+                        <button
+                          onClick={() => handleSearchMiruroDirect(searchQuery)}
+                          className="mt-4 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-extrabold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2 border border-white/10"
+                        >
+                          <span>🌸 Search "{searchQuery.trim()}" on Miruro Anime</span>
+                        </button>
+                      )}
                     </div>
                   );
                 }
