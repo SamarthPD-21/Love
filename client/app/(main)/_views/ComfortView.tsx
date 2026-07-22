@@ -53,7 +53,7 @@ export default function ComfortPage() {
       isFlushing.current = false;
       // If more taps came in while flushing, schedule another flush
       if (pendingHugsRef.current > 0) {
-        flushTimerRef.current = setTimeout(flushHugs, 600);
+        flushTimerRef.current = setTimeout(flushHugs, 1000);
       }
     }
   }, []);
@@ -105,7 +105,7 @@ export default function ComfortPage() {
 
     // Reset the debounce timer
     if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
-    flushTimerRef.current = setTimeout(flushHugs, 600);
+    flushTimerRef.current = setTimeout(flushHugs, 1000);
   };
 
   const handleNextQuote = () => {

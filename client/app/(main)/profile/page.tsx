@@ -119,7 +119,7 @@ export default function ProfilePage() {
     } finally {
       isHugFlushing.current = false;
       if (pendingHugsRef.current > 0) {
-        hugFlushTimerRef.current = setTimeout(flushHugs, 600);
+        hugFlushTimerRef.current = setTimeout(flushHugs, 1000);
       }
     }
   }, [queryClient, showToast]);
@@ -230,7 +230,7 @@ export default function ProfilePage() {
 
     // Reset the debounce timer
     if (hugFlushTimerRef.current) clearTimeout(hugFlushTimerRef.current);
-    hugFlushTimerRef.current = setTimeout(flushHugs, 600);
+    hugFlushTimerRef.current = setTimeout(flushHugs, 1000);
   };
 
   // Clean up heart particles after animation finishes
