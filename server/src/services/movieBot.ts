@@ -344,6 +344,28 @@ async function fetchWatchLinkFromVidSrc(
 }
 
 // ---------------------------------------------------------------------------
+// Source 0 – Cineby (cineby.at - FIRST option)
+// ---------------------------------------------------------------------------
+
+export async function fetchWatchLinkFromCineby(
+  title: string,
+  type: "movie" | "show"
+): Promise<string | null> {
+  try {
+    const { tmdbId } = await fetchIdsFromWikidata(title, type);
+    if (tmdbId) {
+      const mediaType = type === "movie" ? "movie" : "tv";
+      const cinebyUrl = `https://www.cineby.at/${mediaType}/${tmdbId}`;
+      console.log(`[MovieBot] Cineby resolved for "${title}": ${cinebyUrl}`);
+      return cinebyUrl;
+    }
+  } catch (err) {
+    console.error(`[MovieBot] fetchWatchLinkFromCineby error for "${title}":`, err);
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Main orchestrator
 // ---------------------------------------------------------------------------
 
@@ -362,26 +384,32 @@ export async function fetchWatchLink(movieId: string): Promise<void> {
 
     console.log(`[MovieBot] Resolving link for "${movie.title}" (${movie.type})...`);
 
-    // Attempt 1: vidking.net (first & default)
-    console.log(`[MovieBot] Trying Vidking for "${movie.title}"...`);
-    let link = await fetchWatchLinkFromVidking(movie.title, movie.type);
+    // Attempt 1: Cineby (cineby.at - FIRST option)
+    console.log(`[MovieBot] Trying Cineby (first option) for "${movie.title}"...`);
+    let link = await fetchWatchLinkFromCineby(movie.title, movie.type);
 
-    // Attempt 2: netmirror.global (fast, uses clean backend API)
+    // Attempt 2: 1hd.art / 1hd.to (SECOND option)
     if (!link) {
-      console.log(`[MovieBot] Trying NetMirror for "${movie.title}"...`);
-      link = await fetchWatchLinkFromNetMirror(movie.title, movie.type);
-    }
-
-    // Attempt 3: 1hd.art (fast, works on residential IPs)
-    if (!link) {
-      console.log(`[MovieBot] Trying 1hd.art for "${movie.title}"...`);
+      console.log(`[MovieBot] Trying 1hd.art (second option) for "${movie.title}"...`);
       link = await fetchWatchLinkFrom1HD(movie.title, movie.type);
     }
 
-    // Attempt 4: Wikidata → VidSrc (always works on Render, no API key needed)
+    // Attempt 3: vidking.net
     if (!link) {
-      console.log(`[MovieBot] 1hd.art blocked, trying Wikidata → VidSrc for "${movie.title}"...`);
+      console.log(`[MovieBot] Trying Vidking for "${movie.title}"...`);
+      link = await fetchWatchLinkFromVidking(movie.title, movie.type);
+    }
+
+    // Attempt 4: Wikidata → VidSrc
+    if (!link) {
+      console.log(`[MovieBot] Trying Wikidata → VidSrc for "${movie.title}"...`);
       link = await fetchWatchLinkFromVidSrc(movie.title, movie.type);
+    }
+
+    // Attempt 5: NetMirror (last fallback only)
+    if (!link) {
+      console.log(`[MovieBot] Trying NetMirror fallback for "${movie.title}"...`);
+      link = await fetchWatchLinkFromNetMirror(movie.title, movie.type);
     }
 
     if (link) {
@@ -395,7 +423,7 @@ export async function fetchWatchLink(movieId: string): Promise<void> {
         emitToUser(user.partnerId.toString(), "movie_updated", movie);
       }
     } else {
-      // Attempt 3: Extension fallback (works if the browser extension is connected)
+      // Attempt 6: Extension fallback (works if the browser extension is connected)
       console.log(
         `[MovieBot] No server-side link found for "${movie.title}". Requesting via extension...`
       );

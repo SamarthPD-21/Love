@@ -2750,9 +2750,9 @@ export default function CinemaPage() {
                     onChange={(e) => handleSourceChange(e.target.value)}
                     className="cinema-select"
                   >
-                    <option value="default">🎬 1HD (Default)</option>
-                    <option value="cineby">🌟 Cineby (Recommended)</option>
-                    <option value="miruro">🌸 Miruro (Anime)</option>
+                    <option value="cineby">🌟 Cineby.at (Primary / First)</option>
+                    <option value="default">🎬 1HD.to (Second Option)</option>
+                    <option value="miruro">🌸 Miruro (Anime Engine)</option>
                     <option value="bflix">🅱️ BFlix</option>
                     <option value="vidsrc_to">⚡ VidSrc.to</option>
                     <option value="vidsrc_me">⚡ VidSrc.me</option>

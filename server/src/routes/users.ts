@@ -185,8 +185,13 @@ router.get("/hugs", async (req: Request, res: Response) => {
 });
 
 // ── POST /hugs ─────────────────────────────────────────────────
+// Accepts optional body { count?: number } to batch multiple hugs
+// in a single request. Capped at 50 per call to prevent abuse.
 router.post("/hugs", async (req: Request, res: Response) => {
   try {
+    const rawCount = Number(req.body?.count) || 1;
+    const count = Math.max(1, Math.min(rawCount, 50)); // clamp 1–50
+
     const user = await User.findById(req.userId);
     if (!user || !user.relationshipId) {
       res.json({
@@ -211,12 +216,13 @@ router.post("/hugs", async (req: Request, res: Response) => {
 
     const myId = user._id.toString();
     const currentHugs = relationship.hugs.get(myId) || 0;
-    relationship.hugs.set(myId, currentHugs + 1);
+    relationship.hugs.set(myId, currentHugs + count);
     await relationship.save();
 
     const partnerId = user.partnerId ? user.partnerId.toString() : null;
     const partnerHugs = partnerId ? (relationship.hugs.get(partnerId) || 0) : 0;
 
+    // Only one notification per batch to avoid spam
     createNotification({
       actorId: user._id.toString(),
       type: "hug_sent",
@@ -226,7 +232,7 @@ router.post("/hugs", async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      myHugs: currentHugs + 1,
+      myHugs: currentHugs + count,
       partnerHugs,
     });
   } catch (error) {

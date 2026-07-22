@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -98,16 +98,43 @@ export default function ProfilePage() {
     },
   });
 
-  const sendHugMutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post("/users/hugs");
-      return res.data;
-    },
-    onSuccess: () => {
+  // ── Batched hug sending ──────────────────────────────────────
+  const pendingHugsRef = useRef(0);
+  const hugFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isHugFlushing = useRef(false);
+
+  const flushHugs = useCallback(async () => {
+    const count = pendingHugsRef.current;
+    if (count === 0 || isHugFlushing.current) return;
+
+    pendingHugsRef.current = 0;
+    isHugFlushing.current = true;
+
+    try {
+      await api.post("/users/hugs", { count });
       queryClient.invalidateQueries({ queryKey: ["hugs"] });
-      showToast("Sent a warm hug to your partner! 🫂", "success");
-    },
-  });
+      showToast(`Sent ${count} warm hug${count > 1 ? "s" : ""} to your partner! 🫂`, "success");
+    } catch (e) {
+      console.error("Failed to flush batched hugs:", e);
+    } finally {
+      isHugFlushing.current = false;
+      if (pendingHugsRef.current > 0) {
+        hugFlushTimerRef.current = setTimeout(flushHugs, 600);
+      }
+    }
+  }, [queryClient, showToast]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (hugFlushTimerRef.current) clearTimeout(hugFlushTimerRef.current);
+      if (pendingHugsRef.current > 0) {
+        const count = pendingHugsRef.current;
+        pendingHugsRef.current = 0;
+        api.post("/users/hugs", { count }).catch(() => {});
+      }
+    };
+  }, []);
 
   const updateRelationshipMutation = useMutation({
     mutationFn: async (startDate: string) => {
@@ -180,19 +207,30 @@ export default function ProfilePage() {
 
   const handleSendHug = () => {
     playSound("heartbeat");
-    sendHugMutation.mutate();
 
-    // Trigger local floating particle explosions
+    // Accumulate into batch
+    pendingHugsRef.current += 1;
+
+    // Trigger local floating particle explosions (capped to avoid lag)
     const emojis = ["❤️", "💖", "🫂", "✨", "🌸", "💕"];
-    const newHearts = Array.from({ length: 8 }).map((_, i) => ({
+    const particleCount = pendingHugsRef.current <= 3 ? 8 : 3; // fewer particles on rapid taps
+    const newHearts = Array.from({ length: particleCount }).map((_, i) => ({
       id: Date.now() + i,
       x: (Math.random() - 0.5) * 260,
       y: -100 - Math.random() * 160,
       scale: 0.6 + Math.random() * 0.9,
       emoji: emojis[Math.floor(Math.random() * emojis.length)],
     }));
-    
-    setHearts((prev) => [...prev, ...newHearts]);
+
+    setHearts((prev) => {
+      const combined = [...prev, ...newHearts];
+      // Cap total heart particles to 30 to prevent DOM bloat
+      return combined.length > 30 ? combined.slice(-30) : combined;
+    });
+
+    // Reset the debounce timer
+    if (hugFlushTimerRef.current) clearTimeout(hugFlushTimerRef.current);
+    hugFlushTimerRef.current = setTimeout(flushHugs, 600);
   };
 
   // Clean up heart particles after animation finishes

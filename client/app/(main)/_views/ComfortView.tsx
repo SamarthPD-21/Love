@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HandHeart, Heart, Sparkles, Smile, Loader2 } from "lucide-react";
 import api from "@/lib/api";
@@ -28,6 +28,49 @@ export default function ComfortPage() {
   const { playSound } = useSoundEffects();
   const celebrate = useCelebration();
 
+  // ── Batched hug sending ──────────────────────────────────────
+  // Accumulate rapid taps and flush to a single POST after 600ms idle.
+  const pendingHugsRef = useRef(0);
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFlushing = useRef(false);
+
+  const flushHugs = useCallback(async () => {
+    const count = pendingHugsRef.current;
+    if (count === 0 || isFlushing.current) return;
+
+    pendingHugsRef.current = 0;
+    isFlushing.current = true;
+
+    try {
+      const res = await api.post("/users/hugs", { count });
+      if (res.data.success) {
+        setMyHugs(res.data.myHugs);
+        setPartnerHugs(res.data.partnerHugs);
+      }
+    } catch (e) {
+      console.error("Failed to flush batched hugs:", e);
+    } finally {
+      isFlushing.current = false;
+      // If more taps came in while flushing, schedule another flush
+      if (pendingHugsRef.current > 0) {
+        flushTimerRef.current = setTimeout(flushHugs, 600);
+      }
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+      // Fire any remaining hugs before unmount
+      if (pendingHugsRef.current > 0) {
+        const count = pendingHugsRef.current;
+        pendingHugsRef.current = 0;
+        api.post("/users/hugs", { count }).catch(() => {});
+      }
+    };
+  }, []);
+
   const fetchHugs = async () => {
     try {
       const res = await api.get("/users/hugs");
@@ -46,24 +89,23 @@ export default function ComfortPage() {
     Promise.resolve().then(() => fetchHugs());
   }, []);
 
-  const handleHugClick = async () => {
+  const handleHugClick = () => {
     playSound("heartbeat");
-    celebrate("big", "🫂");
     setShowHeartBurst(true);
     setTimeout(() => setShowHeartBurst(false), 800);
 
-    try {
-      // Optimistic update
-      setMyHugs((prev) => prev + 1);
+    // Optimistic local increment
+    setMyHugs((prev) => prev + 1);
+    pendingHugsRef.current += 1;
 
-      const res = await api.post("/users/hugs");
-      if (res.data.success) {
-        setMyHugs(res.data.myHugs);
-        setPartnerHugs(res.data.partnerHugs);
-      }
-    } catch (e) {
-      console.error("Failed to increment hugs count:", e);
+    // Only fire confetti on the first tap, not every rapid tap
+    if (pendingHugsRef.current === 1) {
+      celebrate("small", "🫂");
     }
+
+    // Reset the debounce timer
+    if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+    flushTimerRef.current = setTimeout(flushHugs, 600);
   };
 
   const handleNextQuote = () => {
