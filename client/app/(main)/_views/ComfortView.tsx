@@ -98,10 +98,8 @@ export default function ComfortPage() {
     setMyHugs((prev) => prev + 1);
     pendingHugsRef.current += 1;
 
-    // Only fire confetti on the first tap, not every rapid tap
-    if (pendingHugsRef.current === 1) {
-      celebrate("small", "🫂");
-    }
+    // Fire confetti on every tap
+    celebrate("small", "🫂");
 
     // Reset the debounce timer
     if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
