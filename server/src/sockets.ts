@@ -218,7 +218,30 @@ const getRelId = (rel: any): string => {
       const relationshipId = getRelId(payload.relationshipId);
       if (!relationshipId) return;
 
+      io?.to(`cinema:${relationshipId}`).emit("cinema_countdown", { relationshipId, userId });
       io?.to(`cinema:${relationshipId}`).emit("cinema_countdown_trigger", { userId });
+    });
+
+    socket.on("cinema_focus_change", (payload: { relationshipId: any; isFocused?: boolean; hasFocus?: boolean }) => {
+      const relationshipId = getRelId(payload.relationshipId);
+      if (!relationshipId) return;
+
+      const isFocused = payload.isFocused !== undefined ? payload.isFocused : (payload.hasFocus ?? true);
+
+      io?.to(`cinema:${relationshipId}`).emit("cinema_focus_change", {
+        relationshipId,
+        userId,
+        isFocused,
+      });
+      socket.to(`cinema:${relationshipId}`).emit("partner_focus_changed", {
+        userId,
+        hasFocus: isFocused,
+      });
+    });
+
+    socket.on("cinema_heartbeat_ping", (payload: { timestamp?: number }) => {
+      const timestamp = payload?.timestamp ?? Date.now();
+      socket.emit("cinema_heartbeat_pong", { timestamp, serverTime: Date.now() });
     });
 
     socket.on("cinema_chat", (payload: { relationshipId: any; text: string; senderName: string; type?: string }) => {

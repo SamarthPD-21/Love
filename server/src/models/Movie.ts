@@ -8,6 +8,7 @@ export interface IMovie extends Document {
   rating?: number; // 1-5
   review?: string;
   watchLink?: string;
+  posterUrl?: string;
   relationshipId: Types.ObjectId;
   userId: Types.ObjectId;
   createdAt: Date;
@@ -39,6 +40,10 @@ const movieSchema = new Schema<IMovie>({
     default: "",
   },
   watchLink: {
+    type: String,
+    trim: true,
+  },
+  posterUrl: {
     type: String,
     trim: true,
   },

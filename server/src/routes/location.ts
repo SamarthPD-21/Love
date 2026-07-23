@@ -54,17 +54,17 @@ router.get("/partner", async (req: any, res: Response) => {
     }
 
     if (!user.partnerId) {
-      res.status(404).json({ error: "No partner linked" });
+      res.json({ success: true, partnerLocation: null, partnerName: null, noPartner: true });
       return;
     }
 
     const partner = await User.findById(user.partnerId).select("name avatar lastLocation");
     if (!partner) {
-      res.status(404).json({ error: "Partner not found" });
+      res.json({ success: true, partnerLocation: null, partnerName: null });
       return;
     }
 
-    res.json({ success: true, partnerLocation: partner.lastLocation, partnerName: partner.name });
+    res.json({ success: true, partnerLocation: partner.lastLocation || null, partnerName: partner.name });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

@@ -412,28 +412,7 @@
 }
 
 
-/* ─── Floating Particles ────────────────────────────────────────── */
-@keyframes float-up {
-  0% {
-    transform: translateY(100%) scale(0.6) rotate(0deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-120vh) scale(1.4) rotate(360deg);
-    opacity: 0;
-  }
-}
 
-.cinema-floating-particle {
-  animation: float-up 3s var(--cinema-ease-out) forwards;
-  pointer-events: none;
-}
 
 
 /* ─── Spotlight Floor Reflection ────────────────────────────────── */
@@ -1089,10 +1068,7 @@
     animation: none;
   }
 
-  .cinema-floating-particle {
-    animation: none;
-    display: none;
-  }
+
 
   .cinema-entrance-reveal::before,
   .cinema-entrance-reveal::after {

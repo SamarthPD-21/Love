@@ -44,8 +44,10 @@ export function useDistance() {
     const updateMyLocationOnServer = async (lat: number, lng: number) => {
       try {
         await api.put("/location", { lat, lng });
-      } catch (err) {
-        console.error("Failed to update location on server:", err);
+      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (err?.response?.status !== 404) {
+          console.error("Failed to update location on server:", err);
+        }
       }
     };
 
@@ -63,8 +65,10 @@ export function useDistance() {
             setPartnerLocation(null);
           }
         }
-      } catch (err) {
-        console.error("Failed to fetch partner location:", err);
+      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (err?.response?.status !== 404) {
+          console.error("Failed to fetch partner location:", err);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -79,7 +83,7 @@ export function useDistance() {
         updateMyLocationOnServer(latitude, longitude);
       },
       (err) => {
-        console.error("Geolocation error:", err);
+        console.warn("Geolocation permission unavailable:", err?.message || err);
         setError("Location permission denied or unavailable");
         setIsLoading(false);
       },

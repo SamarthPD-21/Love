@@ -16,18 +16,22 @@ const movieSchema = z.object({
   rating: z.number().min(1).max(5).optional().nullable(),
   review: z.string().optional(),
   watchLink: z.string().optional().nullable(),
+  posterUrl: z.string().optional().nullable(),
 });
 
 // GET /api/movies
 router.get("/", async (req: any, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || !user.relationshipId) {
-      res.status(404).json({ error: "Relationship not found" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
       return;
     }
 
-    const movies = await Movie.find({ relationshipId: user.relationshipId })
+    const relId = user.relationshipId || user._id;
+    const movies = await Movie.find({
+      $or: [{ relationshipId: relId }, { userId: user._id }],
+    })
       .populate("userId", "name avatar")
       .sort({ createdAt: -1 });
 
@@ -41,14 +45,15 @@ router.get("/", async (req: any, res: Response) => {
 router.get("/:id", async (req: any, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || !user.relationshipId) {
-      res.status(404).json({ error: "Relationship not found" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
       return;
     }
 
+    const relId = user.relationshipId || user._id;
     const movie = await Movie.findOne({
       _id: req.params.id,
-      relationshipId: user.relationshipId,
+      $or: [{ relationshipId: relId }, { userId: user._id }],
     }).populate("userId", "name avatar");
 
     if (!movie) {
@@ -72,14 +77,14 @@ router.post("/", async (req: any, res: Response) => {
     }
 
     const user = await User.findById(req.userId);
-    if (!user || !user.relationshipId) {
-      res.status(404).json({ error: "Relationship not found" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
       return;
     }
 
     const movie = new Movie({
       ...validation.data,
-      relationshipId: user.relationshipId,
+      relationshipId: user.relationshipId || user._id,
       userId: user._id,
     });
 
@@ -91,14 +96,16 @@ router.post("/", async (req: any, res: Response) => {
       console.error("[MovieBot] background fetch failed:", err)
     );
 
-    // Notify partner
-    createNotification({
-      actorId: user._id.toString(),
-      type: "movie_added",
-      entityType: "Movie",
-      entityId: movie._id.toString(),
-      meta: { detail: movie.title },
-    });
+    // Notify partner if connected
+    if (user.partnerId) {
+      createNotification({
+        actorId: user._id.toString(),
+        type: "movie_added",
+        entityType: "Movie",
+        entityId: movie._id.toString(),
+        meta: { detail: movie.title },
+      });
+    }
 
     res.status(201).json({ success: true, data: populated });
   } catch (error: any) {
@@ -116,13 +123,17 @@ router.put("/:id", async (req: any, res: Response) => {
     }
 
     const user = await User.findById(req.userId);
-    if (!user || !user.relationshipId) {
-      res.status(404).json({ error: "Relationship not found" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
       return;
     }
 
+    const relId = user.relationshipId || user._id;
     const movie = await Movie.findOneAndUpdate(
-      { _id: req.params.id, relationshipId: user.relationshipId },
+      {
+        _id: req.params.id,
+        $or: [{ relationshipId: relId }, { userId: user._id }],
+      },
       { $set: validation.data },
       { new: true }
     );
@@ -150,14 +161,15 @@ router.put("/:id", async (req: any, res: Response) => {
 router.delete("/:id", async (req: any, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || !user.relationshipId) {
-      res.status(404).json({ error: "Relationship not found" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
       return;
     }
 
+    const relId = user.relationshipId || user._id;
     const movie = await Movie.findOneAndDelete({
       _id: req.params.id,
-      relationshipId: user.relationshipId,
+      $or: [{ relationshipId: relId }, { userId: user._id }],
     });
 
     if (!movie) {

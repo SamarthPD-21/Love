@@ -124,6 +124,53 @@ export async function fetchWatchLinkFromNetMirror(
 }
 
 // ---------------------------------------------------------------------------
+// Helper – Fetch Poster URL via TMDB API search
+// ---------------------------------------------------------------------------
+
+export async function fetchPosterUrl(
+  title: string,
+  type: "movie" | "show"
+): Promise<string | null> {
+  try {
+    const query = title.trim();
+    const searchUrl = `https://api2.imdb4.shop/api/search2/${encodeURIComponent(query)}?page=0`;
+
+    const response = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Origin": "https://netmirror.global",
+        "Referer": "https://netmirror.global/"
+      }
+    });
+
+    if (!response.ok) return null;
+
+    const data: any = await response.json();
+    const results = data.results || [];
+    if (!results.length) return null;
+
+    const targetType = type === "movie" ? "movie" : "tv";
+    const norm = normalizeTitle(title);
+
+    const matched = results.filter((r: any) => {
+      const mediaType = r.media_type === "movie" ? "movie" : "tv";
+      return mediaType === targetType;
+    });
+
+    const bestResult = matched.find((r: any) => normalizeTitle(r.title) === norm) || matched[0] || results[0];
+
+    if (bestResult?.poster_path) {
+      const path = bestResult.poster_path;
+      if (path.startsWith("http")) return path;
+      return `https://image.tmdb.org/t/p/w500${path.startsWith("/") ? "" : "/"}${path}`;
+    }
+  } catch (err) {
+    console.error(`[MovieBot] fetchPosterUrl error for "${title}":`, err);
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Source 1 – 1hd.art  (works from residential IPs / extension fallback)
 // ---------------------------------------------------------------------------
 
@@ -377,21 +424,34 @@ export async function fetchWatchLink(movieId: string): Promise<void> {
       return;
     }
 
+    // Resolve poster URL if missing
+    if (!movie.posterUrl) {
+      const poster = await fetchPosterUrl(movie.title, movie.type);
+      if (poster) {
+        movie.posterUrl = poster;
+        console.log(`[MovieBot] 🖼️ Resolved poster for "${movie.title}": ${poster}`);
+      }
+    }
+
     if (movie.watchLink && movie.watchLink.trim() !== "") {
-      console.log(`[MovieBot] Movie "${movie.title}" already has a watchLink. Skipping resolution.`);
+      if (movie.isModified("posterUrl")) {
+        await movie.save();
+        emitToUser(movie.userId.toString(), "movie_updated", movie);
+      }
+      console.log(`[MovieBot] Movie "${movie.title}" already has a watchLink. Skipping link resolution.`);
       return;
     }
 
     console.log(`[MovieBot] Resolving link for "${movie.title}" (${movie.type})...`);
 
-    // Attempt 1: Cineby (cineby.at - FIRST option)
-    console.log(`[MovieBot] Trying Cineby (first option) for "${movie.title}"...`);
-    let link = await fetchWatchLinkFromCineby(movie.title, movie.type);
+    // Attempt 1: 1hd.art / 1hd.to (FIRST option - clean embed)
+    console.log(`[MovieBot] Trying 1hd.art (first option) for "${movie.title}"...`);
+    let link = await fetchWatchLinkFrom1HD(movie.title, movie.type);
 
-    // Attempt 2: 1hd.art / 1hd.to (SECOND option)
+    // Attempt 2: Wikidata → VidSrc (SECOND option - clean embed)
     if (!link) {
-      console.log(`[MovieBot] Trying 1hd.art (second option) for "${movie.title}"...`);
-      link = await fetchWatchLinkFrom1HD(movie.title, movie.type);
+      console.log(`[MovieBot] Trying Wikidata → VidSrc for "${movie.title}"...`);
+      link = await fetchWatchLinkFromVidSrc(movie.title, movie.type);
     }
 
     // Attempt 3: vidking.net
@@ -400,10 +460,10 @@ export async function fetchWatchLink(movieId: string): Promise<void> {
       link = await fetchWatchLinkFromVidking(movie.title, movie.type);
     }
 
-    // Attempt 4: Wikidata → VidSrc
+    // Attempt 4: Cineby
     if (!link) {
-      console.log(`[MovieBot] Trying Wikidata → VidSrc for "${movie.title}"...`);
-      link = await fetchWatchLinkFromVidSrc(movie.title, movie.type);
+      console.log(`[MovieBot] Trying Cineby for "${movie.title}"...`);
+      link = await fetchWatchLinkFromCineby(movie.title, movie.type);
     }
 
     // Attempt 5: NetMirror (last fallback only)

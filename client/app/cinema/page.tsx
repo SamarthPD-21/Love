@@ -167,12 +167,6 @@ interface ChatMessage {
   type?: "text" | "sticker";
 }
 
-interface FloatingParticle {
-  id: string;
-  emoji: string;
-  left: number;
-  delay?: number;
-}
 
 interface DetectedControlItem {
   label: string;
@@ -187,251 +181,21 @@ interface DetectedControls {
   quality: DetectedControlItem[];
 }
 
-const LANGUAGES = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "es", name: "Español", flag: "🇪🇸" },
-  { code: "fr", name: "Français", flag: "🇫🇷" },
-  { code: "de", name: "Deutsch", flag: "🇩🇪" },
-  { code: "hi", name: "हिन्दी", flag: "🇮🇳" },
-  { code: "ja", name: "日本語", flag: "🇯🇵" },
-];
-
-const translations: Record<string, Record<string, string>> = {
-  en: {
-    lobby: "Cinema Lobby",
-    exit: "Exit Cinema Hall",
-    waiting: "Waiting for partner...",
-    partnerLobby: "Partner in Lobby",
-    partnerHall: "Partner in Hall",
-    chooseDifferent: "Choose Different Movie",
-    readyWatch: "I am Ready to Watch 🍿",
-    readyWaiting: "Ready! Waiting",
-    theaterSetup: "Theater Setup",
-    dateSnacks: "Configure Date Snacks",
-    syncLocal: "Syncing Local Video Playback",
-    gdriveTitle: "Watch via Google Drive Link",
-    localTitle: "Watch a Local File (Zero Buffering)",
-    searchPlaceholder: "Search movies & TV shows...",
-    watchlist: "Watchlist",
-    history: "Watched History",
-    streamReady: "Stream Ready",
-    remoteOnly: "Remote Only",
-    coWatching: "Co-Watching",
-    soloViewing: "Solo Viewing",
-    syncOffline: "Sync Offline",
-    active: "Active",
-    theaterChat: "Theater Chat",
-    typeMessage: "Type a message...",
-    whisper: "Whisper something sweet...",
-    noMessages: "No messages yet",
-    lights: "💡 Lights",
-    audio: "🔊 Audio",
-    fight: "🍿 Fight",
-    cuddle: "🤗 Cuddle",
-    stickers: "Stickers",
-    openTab: "Open in New Tab",
-    tryAgain: "Try Again",
-    embedError: "This source doesn't support embedding",
-    language: "Language",
-    subtitles: "Subtitles",
-    audioTrack: "Audio Track"
-  },
-  es: {
-    lobby: "Vestíbulo del Cine",
-    exit: "Salir de la Sala de Cine",
-    waiting: "Esperando al compañero...",
-    partnerLobby: "Compañero en el Vestíbulo",
-    partnerHall: "Compañero en la Sala",
-    chooseDifferent: "Elegir otra Película",
-    readyWatch: "¡Estoy Listo para Ver! 🍿",
-    readyWaiting: "¡Listo! Esperando",
-    theaterSetup: "Configuración de la Sala",
-    dateSnacks: "Configurar Snacks para la Cita",
-    syncLocal: "Sincronizando Reproducción Local",
-    gdriveTitle: "Ver vía Enlace de Google Drive",
-    localTitle: "Ver Archivo Local (Sin Buffering)",
-    searchPlaceholder: "Buscar películas y series...",
-    watchlist: "Lista de Seguimiento",
-    history: "Historial de Visto",
-    streamReady: "Transmisión Lista",
-    remoteOnly: "Solo Remoto",
-    coWatching: "Co-reproducción",
-    soloViewing: "Viendo Solo",
-    syncOffline: "Sincronización Desconectada",
-    active: "Activo",
-    theaterChat: "Chat de la Sala",
-    typeMessage: "Escribe un mensaje...",
-    whisper: "Susurra algo dulce...",
-    noMessages: "Sin mensajes aún",
-    lights: "💡 Luces",
-    audio: "🔊 Audio",
-    fight: "🍿 Pelea",
-    cuddle: "🤗 Abrazo",
-    stickers: "Pegatinas",
-    openTab: "Abrir en Nueva Pestaña",
-    tryAgain: "Intentar de Nuevo",
-    embedError: "Esta fuente no admite incrustación",
-    language: "Idioma",
-    subtitles: "Subtítulos",
-    audioTrack: "Pista de Audio"
-  },
-  fr: {
-    lobby: "Hall du Cinéma",
-    exit: "Quitter la Salle de Cinéma",
-    waiting: "En attente du partenaire...",
-    partnerLobby: "Partenaire dans le Hall",
-    partnerHall: "Partenaire dans la Salle",
-    chooseDifferent: "Choisir un autre Film",
-    readyWatch: "Je suis Prêt à Regarder 🍿",
-    readyWaiting: "Prêt ! En attente",
-    theaterSetup: "Configuration de la Salle",
-    dateSnacks: "Configurer les Snacks",
-    syncLocal: "Lecture Vidéo Locale Synchronisée",
-    gdriveTitle: "Regarder via Google Drive",
-    localTitle: "Regarder un Fichier Local (Sans Buffering)",
-    searchPlaceholder: "Rechercher des films et séries...",
-    watchlist: "Liste de Suivi",
-    history: "Historique",
-    streamReady: "Prêt à Diffuser",
-    remoteOnly: "À distance uniquement",
-    coWatching: "Co-Lecture",
-    soloViewing: "Visionnage Solo",
-    syncOffline: "Sync Hors ligne",
-    active: "Actif",
-    theaterChat: "Chat de la Salle",
-    typeMessage: "Écrire un message...",
-    whisper: "Chuchoter quelque chose de doux...",
-    noMessages: "Aucun message pour l'instant",
-    lights: "💡 Lumières",
-    audio: "🔊 Audio",
-    fight: "🍿 Bataille",
-    cuddle: "🤗 Câlin",
-    stickers: "Stickers",
-    openTab: "Ouvrir dans un Nouvel Onglet",
-    tryAgain: "Réessayer",
-    embedError: "Cette source ne prend pas en charge l'intégration",
-    language: "Langue",
-    subtitles: "Sous-titres",
-    audioTrack: "Piste Audio"
-  },
-  de: {
-    lobby: "Kino-Lobby",
-    exit: "Kinosaal verlassen",
-    waiting: "Warten auf Partner...",
-    partnerLobby: "Partner in der Lobby",
-    partnerHall: "Partner im Saal",
-    chooseDifferent: "Anderen Film wählen",
-    readyWatch: "Ich bin bereit zum Anschauen 🍿",
-    readyWaiting: "Bereit! Warten",
-    theaterSetup: "Kino-Einrichtung",
-    dateSnacks: "Date-Snacks konfigurieren",
-    syncLocal: "Lokale Videowiedergabe synchronisieren",
-    gdriveTitle: "Über Google Drive ansehen",
-    localTitle: "Lokale Datei ansehen (Kein Puffern)",
-    searchPlaceholder: "Filme & Serien suchen...",
-    watchlist: "Merkliste",
-    history: "Verlauf",
-    streamReady: "Stream bereit",
-    remoteOnly: "Nur Remote",
-    coWatching: "Zusammen ansehen",
-    soloViewing: "Einzelwiedergabe",
-    syncOffline: "Sync offline",
-    active: "Aktiv",
-    theaterChat: "Kino-Chat",
-    typeMessage: "Nachricht schreiben...",
-    whisper: "Flüstere etwas Süßes...",
-    noMessages: "Noch keine Nachrichten",
-    lights: "💡 Licht",
-    audio: "🔊 Audio",
-    fight: "🍿 Kampf",
-    cuddle: "🤗 Kuscheln",
-    stickers: "Sticker",
-    openTab: "In neuem Tab öffnen",
-    tryAgain: "Erneut versuchen",
-    embedError: "Diese Quelle unterstützt keine Einbettung",
-    language: "Sprache",
-    subtitles: "Untertitel",
-    audioTrack: "Tonspur"
-  },
-  hi: {
-    lobby: "सिनेमा लॉबी",
-    exit: "सिनेमा हॉल से बाहर निकलें",
-    waiting: "साथी की प्रतीक्षा कर रहे हैं...",
-    partnerLobby: "साथी लॉबी में है",
-    partnerHall: "साथी हॉल में है",
-    chooseDifferent: "दूसरी फिल्म चुनें",
-    readyWatch: "मैं देखने के लिए तैयार हूँ 🍿",
-    readyWaiting: "तैयार! प्रतीक्षा जारी",
-    theaterSetup: "थिएटर सेटअप",
-    dateSnacks: "डेट स्नैक्स सेट करें",
-    syncLocal: "लोकल वीडियो प्लेबैक सिंक करें",
-    gdriveTitle: "गूगल ड्राइव लिंक से देखें",
-    localTitle: "लोकल फ़ाइल देखें (बिना बफरिंग)",
-    searchPlaceholder: "फिल्में और टीवी शोज़ खोजें...",
-    watchlist: "वॉचलिस्ट",
-    history: "देखा गया इतिहास",
-    streamReady: "स्ट्रीम तैयार",
-    remoteOnly: "केवल रिमोट",
-    coWatching: "साथ में देखना",
-    soloViewing: "अकेले देखना",
-    syncOffline: "सिंक ऑफलाइन",
-    active: "सक्रिय",
-    theaterChat: "थिएटर चैट",
-    typeMessage: "संदेश टाइप करें...",
-    whisper: "कुछ मीठा फुसफुसाएं...",
-    noMessages: "कोई संदेश नहीं",
-    lights: "💡 लाइट्स",
-    audio: "🔊 ऑडियो",
-    fight: "🍿 फाइट",
-    cuddle: "🤗 गले लगाना",
-    stickers: "स्टिकर",
-    openTab: "नए टैब में खोलें",
-    tryAgain: "पुनः प्रयास करें",
-    embedError: "यह स्रोत एम्बेडिंग का समर्थन नहीं करता है",
-    language: "भाषा",
-    subtitles: "सबटाइटल्स",
-    audioTrack: "ऑडियो ट्रैक"
-  },
-  ja: {
-    lobby: "シネマロビー",
-    exit: "シアターを退室する",
-    waiting: "パートナーを待っています...",
-    partnerLobby: "パートナーがロビーにいます",
-    partnerHall: "パートナーがシアターにいます",
-    chooseDifferent: "別の映画を選ぶ",
-    readyWatch: "視聴の準備完了 🍿",
-    readyWaiting: "準備完了！待機中",
-    theaterSetup: "シアター設定",
-    dateSnacks: "デートのスナックを設定",
-    syncLocal: "ローカル動画の同期再生",
-    gdriveTitle: "Googleドライブ経由で視聴",
-    localTitle: "ローカルファイルを再生 (バッファなし)",
-    searchPlaceholder: "映画やドラマを検索...",
-    watchlist: "ウォッチリスト",
-    history: "視聴履歴",
-    streamReady: "配信準備完了",
-    remoteOnly: "リモートのみ",
-    coWatching: "同時視聴中",
-    soloViewing: "ソロ視聴中",
-    syncOffline: "オフライン同期",
-    active: "アクティブ",
-    theaterChat: "シアターチャット",
-    typeMessage: "メッセージを入力...",
-    whisper: "甘い言葉をささやいて...",
-    noMessages: "メッセージはまだありません",
-    lights: "💡 照明",
-    audio: "🔊 音声",
-    fight: "🍿 投げ合い",
-    cuddle: "🤗 ハグ",
-    stickers: "ステッカー",
-    openTab: "新しいタブで開く",
-    tryAgain: "再試行",
-    embedError: "このソースは埋め込みに対応していません",
-    language: "言語",
-    subtitles: "字幕",
-    audioTrack: "音声トラック"
-  }
-};
+const STREAM_SOURCES = [
+  { key: 'cineby', label: 'Cineby.at (Primary)', emoji: '🌟' },
+  { key: 'default', label: '1HD.to', emoji: '🎬' },
+  { key: 'vidsrc_to', label: 'VidSrc.to', emoji: '⚡' },
+  { key: 'vidsrc_me', label: 'VidSrc.me', emoji: '⚡' },
+  { key: 'two_embed', label: '2Embed', emoji: '🎞️' },
+  { key: 'embedsu', label: 'Embed.su', emoji: '🎥' },
+  { key: 'miruro', label: 'Miruro (Anime)', emoji: '🌸' },
+  { key: 'bflix', label: 'BFlix', emoji: '🅱️' },
+  { key: 'vidsrcme_ru', label: 'VidSrcMe.ru', emoji: '🇷🇺' },
+  { key: 'vidsrc_xyz', label: 'VidSrc.xyz', emoji: '⚡' },
+  { key: 'multiembed', label: 'MultiEmbed', emoji: '🔗' },
+  { key: 'autoembed', label: 'AutoEmbed', emoji: '🤖' },
+  { key: 'smashystream', label: 'SmashyStream', emoji: '💥' },
+] as const;
 
 export default function CinemaPage() {
   const router = useRouter();
@@ -442,7 +206,9 @@ export default function CinemaPage() {
   const [session, setSession] = useState<CinemaSession | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const [floatingParticles, setFloatingParticles] = useState<FloatingParticle[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<{emoji:string, x:number, y:number, opacity:number, vy:number, scale:number, swayOffset?:number}[]>([]);
+  const animationFrameRef = useRef<number>(0);
   const [isPartnerPresent, setIsPartnerPresent] = useState(false);
   const [actionToast, setActionToast] = useState<{ message: string; icon: string } | null>(null);
   const [cuddleAlert, setCuddleAlert] = useState<{ visible: boolean; sender: string } | null>(null);
@@ -452,6 +218,8 @@ export default function CinemaPage() {
     soda: false,
     candy: false,
   });
+  const [countdown, setCountdown] = useState<number|null>(null);
+  const [latency, setLatency] = useState<number|null>(null);
 
   const [isExtensionActive, setIsExtensionActive] = useState(false);
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
@@ -475,6 +243,83 @@ export default function CinemaPage() {
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const socket = getSocket();
+  // Keyboard shortcuts (Phase 5.3)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      switch(e.key.toLowerCase()) {
+        case ' ':
+          if (session?.showStarted) {
+            e.preventDefault();
+            const relId = user?.relationshipId ? (typeof user.relationshipId === "string" ? user.relationshipId : user.relationshipId._id) : "";
+            if (session.status === 'playing') {
+              if (relId) socket?.emit('cinema_state_change', { relationshipId: relId, status: 'paused' });
+            } else {
+              if (relId) socket?.emit('cinema_state_change', { relationshipId: relId, status: 'playing' });
+            }
+          }
+          break;
+        case 'f':
+          e.preventDefault();
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(console.error);
+          } else {
+            document.exitFullscreen();
+          }
+          break;
+        case 'm':
+          if (videoRef.current) {
+            videoRef.current.muted = !videoRef.current.muted;
+          }
+          break;
+        case 'd':
+          break;
+        case 'escape':
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [session, socket, user]);
+
+  // Smart auto-pause on tab switch (Phase 5.5)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && session?.status === 'playing') {
+        const relId = user?.relationshipId ? (typeof user.relationshipId === "string" ? user.relationshipId : user.relationshipId._id) : "";
+        if (relId) socket?.emit('cinema_state_change', { relationshipId: relId, status: 'paused' });
+      } else if (!document.hidden && session?.showStarted) {
+        showActionToast("Welcome back! Press play to resume", "👋");
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [session, socket, user, showActionToast]);
+
+  // Sync heartbeat indicator (Phase 5.6)
+  useEffect(() => {
+    if (!session?.showStarted || !socket) return;
+    
+    const interval = setInterval(() => {
+      socket.emit('cinema_heartbeat_ping', { timestamp: Date.now() });
+    }, 10000);
+
+    const handlePong = (data: { timestamp: number }) => {
+      setLatency(Date.now() - data.timestamp);
+    };
+
+    socket.on('cinema_heartbeat_pong', handlePong);
+    return () => {
+      clearInterval(interval);
+      socket.off('cinema_heartbeat_pong', handlePong);
+    };
+  }, [session?.showStarted, socket]);
+
 
   // Chat Enhancement States
   const [stickerPickerOpen, setStickerPickerOpen] = useState(false);
@@ -485,12 +330,6 @@ export default function CinemaPage() {
   const [sidebarTab, setSidebarTab] = useState<"chat" | "settings">("chat");
 
   // Language States
-  const [uiLang, setUiLang] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("love-cinema-ui-lang") || "en";
-    }
-    return "en";
-  });
   const [subtitleLang, setSubtitleLang] = useState<string>("en");
   const [audioLang, setAudioLang] = useState<string>("original");
 
@@ -669,186 +508,43 @@ export default function CinemaPage() {
     if (!session || !socket || !user) return;
     setActiveSource(sourceKey);
 
-    if (sourceKey === "miruro") {
-      const miruroUrl = `https://www.miruro.ru/search?query=${encodeURIComponent(session.movieTitle || "")}`;
+    const titleEnc = encodeURIComponent(session.movieTitle || "");
+    const mediaType = session.movieType === "movie" ? "movie" : "tv";
+    let targetLink = "";
+
+    if (sourceKey === "cineby") targetLink = `https://www.cineby.at/${mediaType}/${titleEnc}`;
+    else if (sourceKey === "bflix") targetLink = `https://bflixs.us/${mediaType}/${titleEnc}`;
+    else if (sourceKey === "miruro") targetLink = `https://www.miruro.ru/search?query=${titleEnc}`;
+    else if (sourceKey === "vidsrc_to") targetLink = `https://vidsrc.to/embed/${mediaType}/${titleEnc}`;
+    else if (sourceKey === "vidsrc_me") targetLink = `https://vidsrc.me/embed/${mediaType}/${titleEnc}`;
+    else if (sourceKey === "vidsrcme_ru") targetLink = `https://vidsrcme.ru/embed/${mediaType}/${titleEnc}`;
+    else if (sourceKey === "vidsrc_xyz") targetLink = `https://vidsrc.xyz/embed/${mediaType}/${titleEnc}`;
+    else if (sourceKey === "two_embed") targetLink = `https://2embed.cc/embed/${titleEnc}`;
+    else if (sourceKey === "multiembed") targetLink = `https://multiembed.mov/directstream.php?video_id=${titleEnc}&tmdb=0`;
+    else if (sourceKey === "embedsu") targetLink = `https://embed.su/embed/${mediaType}/${titleEnc}`;
+    else if (sourceKey === "autoembed") targetLink = `https://player.autoembed.cc/embed/${mediaType}/${titleEnc}`;
+    else if (sourceKey === "smashystream") targetLink = `https://player.smashy.stream/${mediaType}/${titleEnc}`;
+    else targetLink = `https://1hd.art/search?keyword=${titleEnc}`;
+
+    const relId = getRelationshipId(user.relationshipId);
+    if (session.showStarted) {
       socket.emit("cinema_change_source", {
-        relationshipId: getRelationshipId(user.relationshipId),
-        watchLink: miruroUrl,
-        sourceKey: "miruro",
+        relationshipId: relId,
+        watchLink: targetLink,
+        sourceKey,
       });
-      playSound("chime");
-      showActionToast(`Switched source to Miruro (Anime)`, "🌸");
-      return;
-    }
-
-    if (sourceKey === "default") {
-      try {
-        setResolvingSource(true);
-        const res = await api.get(`/movies/${session.movieId}`);
-        if (res.data.success && res.data.data.watchLink) {
-          if (session.showStarted) {
-            socket.emit("cinema_change_source", {
-              relationshipId: getRelationshipId(user.relationshipId),
-              watchLink: res.data.data.watchLink,
-              sourceKey: "default",
-            });
-          } else {
-            socket.emit("cinema_select_movie", {
-              relationshipId: getRelationshipId(user.relationshipId),
-              movieId: session.movieId,
-              movieTitle: session.movieTitle,
-              movieType: session.movieType,
-              watchLink: res.data.data.watchLink,
-            });
-          }
-        }
-      } catch (e) {
-        console.error("Failed to restore default source link:", e);
-      } finally {
-        setResolvingSource(false);
-      }
-      return;
-    }
-
-    let links = cachedAlternativeLinks[session.movieId];
-    if (!links) {
-      try {
-        setResolvingSource(true);
-        const escapedTitle = session.movieTitle.replace(/"/g, '\\"');
-        const mediaType = session.movieType === "movie" ? "movie" : "tv";
-        let imdbId: string | null = null;
-        let tmdbId: string | null = null;
-
-        // --- Attempt 1: Wikidata SPARQL (exact match) ---
-        const typeFilter =
-          session.movieType === "movie"
-            ? `VALUES ?class { wd:Q11424 wd:Q29168811 wd:Q24869 }`
-            : `VALUES ?class { wd:Q5398426 wd:Q21191270 wd:Q63952888 }`;
-
-        const exactQuery = `
-          SELECT ?imdbID ?tmdbID WHERE {
-            ${typeFilter}
-            ?item wdt:P31 ?class .
-            ?item wdt:P345 ?imdbID .
-            OPTIONAL { ?item wdt:P4947 ?tmdbID . }
-            ?item rdfs:label ?label .
-            FILTER(LCASE(STR(?label)) = LCASE("${escapedTitle}"))
-          }
-          LIMIT 3
-        `;
-
-        const endpoint = "https://query.wikidata.org/sparql";
-        try {
-          const res = await fetch(`${endpoint}?query=${encodeURIComponent(exactQuery)}`, {
-            headers: { Accept: "application/sparql-results+json" },
-          });
-          if (res.ok) {
-            const json = await res.json();
-            const bindings = json.results?.bindings ?? [];
-            if (bindings.length > 0 && bindings[0].imdbID) {
-              imdbId = bindings[0].imdbID.value;
-              if (bindings[0].tmdbID) tmdbId = bindings[0].tmdbID.value;
-            }
-          }
-        } catch {
-          console.warn("Wikidata exact query failed, trying fuzzy...");
-        }
-
-        // --- Attempt 2: Wikidata SPARQL (fuzzy CONTAINS match) ---
-        if (!imdbId) {
-          const fuzzyQuery = `
-            SELECT ?imdbID ?tmdbID WHERE {
-              ${typeFilter}
-              ?item wdt:P31 ?class .
-              ?item wdt:P345 ?imdbID .
-              OPTIONAL { ?item wdt:P4947 ?tmdbID . }
-              ?item rdfs:label ?label .
-              FILTER(CONTAINS(LCASE(STR(?label)), LCASE("${escapedTitle}")))
-            }
-            LIMIT 5
-          `;
-          try {
-            const res = await fetch(`${endpoint}?query=${encodeURIComponent(fuzzyQuery)}`, {
-              headers: { Accept: "application/sparql-results+json" },
-            });
-            if (res.ok) {
-              const json = await res.json();
-              const bindings = json.results?.bindings ?? [];
-              if (bindings.length > 0 && bindings[0].imdbID) {
-                imdbId = bindings[0].imdbID.value;
-                if (!tmdbId && bindings[0].tmdbID) tmdbId = bindings[0].tmdbID.value;
-              }
-            }
-          } catch {
-            console.warn("Wikidata fuzzy query also failed.");
-          }
-        }
-
-        // --- Attempt 3: OMDB API free tier fallback (1000 req/day) ---
-        if (!imdbId) {
-          try {
-            const omdbRes = await fetch(
-              `https://www.omdbapi.com/?t=${encodeURIComponent(session.movieTitle)}&type=${session.movieType === "movie" ? "movie" : "series"}&apikey=4a3b711b`
-            );
-            if (omdbRes.ok) {
-              const omdbJson = await omdbRes.json();
-              if (omdbJson.imdbID) {
-                imdbId = omdbJson.imdbID;
-              }
-            }
-          } catch {
-            console.warn("OMDB fallback also failed.");
-          }
-        }
-
-        // Build all alternative links from our resolved IMDB ID + TMDB ID
-        if (imdbId || tmdbId) {
-          const built: Record<string, string> = {};
-          if (imdbId) {
-            for (const [key, builder] of Object.entries(altSourceBuilders)) {
-              built[key] = builder(imdbId, mediaType, session.movieTitle);
-            }
-          }
-          if (tmdbId) {
-            for (const [key, builder] of Object.entries(tmdbSourceBuilders)) {
-              built[key] = builder(tmdbId, mediaType, session.movieTitle);
-            }
-          }
-          links = built;
-          setCachedAlternativeLinks((prev) => ({
-            ...prev,
-            [session.movieId]: links!,
-          }));
-        }
-      } catch (e) {
-        console.error("Failed to resolve alternative links:", e);
-      } finally {
-        setResolvingSource(false);
-      }
-    }
-
-    if (links && links[sourceKey]) {
-      // Use cinema_change_source when show is already started to preserve session state
-      if (session.showStarted) {
-        socket.emit("cinema_change_source", {
-          relationshipId: getRelationshipId(user.relationshipId),
-          watchLink: links[sourceKey],
-          sourceKey,
-        });
-      } else {
-        socket.emit("cinema_select_movie", {
-          relationshipId: getRelationshipId(user.relationshipId),
-          movieId: session.movieId,
-          movieTitle: session.movieTitle,
-          movieType: session.movieType,
-          watchLink: links[sourceKey],
-        });
-      }
     } else {
-      setSourceError(`Couldn't find "${session.movieTitle}" on external databases. Try a different source.`);
-      setTimeout(() => setSourceError(null), 5000);
-      setActiveSource("default");
+      socket.emit("cinema_select_movie", {
+        relationshipId: relId,
+        movieId: session.movieId,
+        movieTitle: session.movieTitle,
+        movieType: session.movieType,
+        watchLink: targetLink,
+      });
     }
+    setSession((prev) => (prev ? { ...prev, watchLink: targetLink } : prev));
+    playSound("chime");
+    showActionToast(`Switched source to ${sourceKey}`, "🌟");
   };
 
   // Lobby states
@@ -1094,34 +790,75 @@ export default function CinemaPage() {
     };
   }, [chatOpen, session?.showStarted]);
 
-  // Reaction Animation Generators
-  const triggerReaction = (emoji: string, count = 1) => {
-    const batch: FloatingParticle[] = Array.from({ length: count }).map(() => ({
-      id: Math.random().toString(),
+  // Reaction Animation Generators — Smooth 60FPS Floating Emojis
+  const triggerReaction = useCallback((emoji: string, count = 1) => {
+    if (!chatSoundEnabled && isPartnerPresent) {
+      playSound("pop");
+    }
+    const newParticles = Array.from({ length: count }).map(() => ({
       emoji,
-      left: Math.random() * 70 + 15,
-      delay: Math.random() * 0.4,
+      x: 15 + Math.random() * 70,
+      y: 105,
+      opacity: 1,
+      vy: -(0.12 + Math.random() * 0.18),
+      scale: 0.8 + Math.random() * 0.35,
+      swayOffset: Math.random() * 100
     }));
-    setFloatingParticles((prev) => [...prev, ...batch]);
-    const t = setTimeout(() => {
-      setFloatingParticles((prev) => prev.filter((r) => !batch.some((b) => b.id === r.id)));
-    }, 3200);
-    timeoutsRef.current.push(t);
-  };
+    
+    particlesRef.current = [...particlesRef.current, ...newParticles].slice(-35);
+    
+    if (!animationFrameRef.current) {
+      let lastTime = performance.now();
 
-  const triggerPopcornFight = () => {
-    const batch: FloatingParticle[] = Array.from({ length: 16 }).map(() => ({
-      id: Math.random().toString(),
-      emoji: "🍿",
-      left: Math.random() * 80 + 10,
-      delay: Math.random() * 0.5,
-    }));
-    setFloatingParticles((prev) => [...prev, ...batch]);
-    const t = setTimeout(() => {
-      setFloatingParticles((prev) => prev.filter((r) => !batch.some((b) => b.id === r.id)));
-    }, 3200);
-    timeoutsRef.current.push(t);
-  };
+      const animate = (currentTime: number) => {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (!ctx || !canvas) {
+          animationFrameRef.current = requestAnimationFrame(animate);
+          return;
+        }
+        
+        const delta = Math.min((currentTime - lastTime) / 16.67, 2);
+        lastTime = currentTime;
+
+        const rect = canvas.getBoundingClientRect();
+        if (canvas.width !== Math.floor(rect.width) || canvas.height !== Math.floor(rect.height)) {
+          canvas.width = Math.floor(rect.width) || window.innerWidth;
+          canvas.height = Math.floor(rect.height) || window.innerHeight;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let activeParticles = false;
+        
+        particlesRef.current.forEach(p => {
+          if (p.opacity > 0) {
+            activeParticles = true;
+            p.y += p.vy * delta;
+            p.x += Math.sin((currentTime / 400) + (p.swayOffset || 0)) * 0.05 * delta;
+            p.opacity -= 0.0025 * delta;
+            
+            ctx.globalAlpha = Math.max(0, p.opacity);
+            ctx.font = `${Math.floor(p.scale * 26)}px sans-serif`;
+            ctx.fillText(p.emoji, (p.x / 100) * canvas.width, (p.y / 100) * canvas.height);
+          }
+        });
+        
+        particlesRef.current = particlesRef.current.filter(p => p.opacity > 0);
+        
+        if (activeParticles) {
+          animationFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          animationFrameRef.current = 0;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      };
+      animationFrameRef.current = requestAnimationFrame(animate);
+    }
+  }, [chatSoundEnabled, isPartnerPresent, playSound]);
+
+  const triggerPopcornFight = useCallback(() => {
+    triggerReaction('🍿', 16);
+  }, [triggerReaction]);
 
   // User Actions Handlers
   const handleSendReaction = (emoji: string) => {
@@ -1530,6 +1267,7 @@ export default function CinemaPage() {
 
     return (
       <iframe
+        key={session.watchLink}
         src={session.watchLink}
         className="w-full h-full border-0 animate-fade-in"
         allow="autoplay; encrypted-media"
@@ -1608,26 +1346,7 @@ export default function CinemaPage() {
 
       {/* Floating Particles Layer */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-[55]">
-        <AnimatePresence>
-          {floatingParticles.map((r) => (
-            <motion.div
-              key={r.id}
-              initial={{ y: "110vh", opacity: 0, scale: 0.5, rotate: 0 }}
-              animate={{
-                y: "-15vh",
-                opacity: [0, 1, 1, 0],
-                scale: [0.6, 1.4, 1.2, 0.7],
-                rotate: r.left % 2 === 0 ? 360 : -360,
-              }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 3, ease: "easeOut", delay: r.delay || 0 }}
-              style={{ left: `${r.left}%` }}
-              className="absolute text-5xl bottom-0 cinema-floating-particle"
-            >
-              {r.emoji}
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[55]" style={{width:'100%',height:'100%'}} />
       </div>
 
       {/* Cozy Cuddle Alert Banner */}
@@ -1668,49 +1387,24 @@ export default function CinemaPage() {
                   className="flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors mb-3 cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>{translations[uiLang]?.exit || "Exit Cinema Hall"}</span>
+                  <span>Exit Cinema Hall</span>
                 </button>
                 <h1 className="text-3xl font-extrabold text-white tracking-wide font-serif cinema-spotlight">
-                  {translations[uiLang]?.lobby || "Cinema Lobby"}
+                  Cinema Lobby
                 </h1>
                 <p className="text-xs text-zinc-500 mt-1">
-                  {uiLang === "en" ? "Select a movie from your shared list to watch together" : 
-                   uiLang === "es" ? "Selecciona una película de tu lista compartida para verla juntos" :
-                   uiLang === "fr" ? "Sélectionnez un film de votre liste partagée pour le regarder ensemble" :
-                   uiLang === "de" ? "Wähle einen Film aus deiner geteilten Liste aus, um ihn zusammen anzusehen" :
-                   uiLang === "hi" ? "साथ में देखने के लिए अपनी साझा सूची से एक फिल्म चुनें" :
-                   "共同視聴するために共有リストから映画を選択します"}
+                  Select a movie from your shared list to watch together
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-4">
-                {/* Language Selector */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white/[0.02] border border-white/5 shadow-inner">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{translations[uiLang]?.language || "Language"}:</span>
-                  <select
-                    value={uiLang}
-                    onChange={(e) => {
-                      setUiLang(e.target.value);
-                      localStorage.setItem("love-cinema-ui-lang", e.target.value);
-                      playSound("tap");
-                    }}
-                    className="bg-zinc-900/60 border border-white/5 text-[10px] font-bold rounded-lg px-2.5 py-1 text-zinc-305 focus:outline-none focus:border-[#E8587A]/30 cursor-pointer"
-                  >
-                    {LANGUAGES.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.flag} {lang.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 {/* Status Badge */}
                 <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/[0.02] border border-white/5 shadow-inner">
                   <Users className="w-4 h-4 text-[#E8587A]" />
                   <span className="text-xs font-bold text-zinc-300">
                     {isPartnerPresent
-                      ? (translations[uiLang]?.partnerLobby || "Partner in Lobby")
-                      : (translations[uiLang]?.waiting || "Waiting for partner...")}
+                      ? "Partner in Lobby"
+                      : "Waiting for partner..."}
                   </span>
                   <span
                     className={cn(
@@ -1733,22 +1427,17 @@ export default function CinemaPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
-                      {translations[uiLang]?.gdriveTitle || "Watch via Google Drive Link"}
+                      Watch via Google Drive Link
                     </h3>
                     <p className="text-[10px] text-zinc-400">
-                      {uiLang === "en" ? "Paste any shared Google Drive video link to watch it in real-time sync with your partner" :
-                       uiLang === "es" ? "Pega cualquier enlace de video compartido de Google Drive para verlo en sincronización con tu pareja" :
-                       uiLang === "fr" ? "Collez n'importe quel lien vidéo Google Drive partagé pour le regarder en synchronisation avec votre partenaire" :
-                       uiLang === "de" ? "Füge einen geteilten Google Drive-Videolink ein, um ihn mit deinem Partner synchronisiert anzusehen" :
-                       uiLang === "hi" ? "अपने साथी के साथ वास्तविक समय में सिंक करके देखने के लिए कोई भी साझा Google ड्राइव वीडियो लिंक पेस्ट करें" :
-                       "共有されたGoogleドライブの動画リンクを貼り付けて、パートナーとリアルタイムで同期して視聴します"}
+                      Paste any shared Google Drive video link to watch it in real-time sync with your partner
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 w-full">
                   <input
                     type="text"
-                    placeholder={uiLang === "hi" ? "शीर्षक दर्ज करें (वैकल्पिक)" : uiLang === "es" ? "Ingresar título (opcional)" : uiLang === "ja" ? "タイトルを入力 (任意)" : "Enter Title (optional)"}
+                    placeholder="Enter Title (optional)"
                     value={gdriveTitle}
                     onChange={(e) => setGdriveTitle(e.target.value)}
                     className="px-4 py-3 rounded-2xl text-xs bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all sm:w-1/3"
@@ -1765,7 +1454,7 @@ export default function CinemaPage() {
                       onClick={() => handleLoadGDriveLink(gdriveLink, gdriveTitle)}
                       className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2 flex-shrink-0"
                     >
-                      <span>{uiLang === "hi" ? "लोड करें" : uiLang === "ja" ? "読み込む" : uiLang === "es" ? "Cargar" : "Load"}</span>
+                      <span>Load</span>
                       <Play className="w-3 h-3 fill-white stroke-none" />
                     </button>
                   </div>
@@ -1781,21 +1470,16 @@ export default function CinemaPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
-                      {translations[uiLang]?.localTitle || "Watch a Local File (Zero Buffering)"}
+                      Watch a Local File (Zero Buffering)
                     </h3>
                     <p className="text-[10px] text-zinc-400">
-                      {uiLang === "en" ? "Play a video file (MP4/MKV) from your PC. Partner loads their copy of the file for 100% sync!" :
-                       uiLang === "es" ? "Reproduce un archivo de video (MP4/MKV) desde tu PC. ¡El compañero carga su copia para una sincronización del 100%!" :
-                       uiLang === "fr" ? "Lisez un fichier vidéo (MP4/MKV) depuis votre PC. Le partenaire charge sa copie pour une synchronisation à 100% !" :
-                       uiLang === "de" ? "Spiele eine Videodatei (MP4/MKV) von deinem PC ab. Der Partner lädt seine Kopie für eine 100%ige Synchronisierung!" :
-                       uiLang === "hi" ? "अपने पीसी से एक वीडियो फ़ाइल (MP4/MKV) चलाएं। 100% सिंक के लिए साथी फ़ाइल की अपनी प्रति लोड करता है!" :
-                       "PCから動画ファイル(MP4/MKV)を再生します。パートナーも同じファイルを読み込むことで100%同期再生されます！"}
+                      Play a video file (MP4/MKV) from your PC. Partner loads their copy of the file for 100% sync!
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 w-full">
                   <label className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#D4A574] to-[#E8587A] text-white text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer flex items-center gap-2 flex-shrink-0">
-                    <span>{uiLang === "es" ? "Elegir archivo" : uiLang === "fr" ? "Choisir un fichier" : uiLang === "de" ? "Datei auswählen" : uiLang === "hi" ? "फ़ाइल चुनें" : uiLang === "ja" ? "ファイルを選択" : "Choose Video File"}</span>
+                    <span>Choose Video File</span>
                     <input
                       type="file"
                       accept="video/*"
@@ -1820,11 +1504,11 @@ export default function CinemaPage() {
                   </label>
                   {localFile ? (
                     <span className="text-xs text-zinc-400 truncate max-w-[200px]" title={localFile.name}>
-                      {uiLang === "es" ? "Seleccionado" : uiLang === "ja" ? "選択済み" : "Selected"}: {localFile.name}
+                      "Selected": {localFile.name}
                     </span>
                   ) : (
                     <span className="text-[10px] text-zinc-500 italic">
-                      {uiLang === "es" ? "Ningún archivo seleccionado" : uiLang === "ja" ? "ファイル未選択" : uiLang === "hi" ? "कोई फ़ाइल नहीं चुनी गई" : "No file chosen"}
+                      "No file chosen"
                     </span>
                   )}
                 </div>
@@ -1840,7 +1524,7 @@ export default function CinemaPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={translations[uiLang]?.searchPlaceholder || "Search movies, anime & TV shows..."}
+                    placeholder="Search movies, anime & TV shows..."
                     className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm bg-zinc-900/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-[#E8587A]/30 transition-all"
                   />
                 </div>
@@ -1855,7 +1539,7 @@ export default function CinemaPage() {
                         : "text-zinc-500 hover:text-zinc-350"
                     )}
                   >
-                    {translations[uiLang]?.watchlist || "Watchlist"}
+                    "Watchlist"
                   </button>
                   <button
                     onClick={() => setActiveFilter("watched")}
@@ -1866,7 +1550,7 @@ export default function CinemaPage() {
                         : "text-zinc-500 hover:text-zinc-355"
                     )}
                   >
-                    {translations[uiLang]?.history || "Watched History"}
+                    "Watched History"
                   </button>
                 </div>
               </div>
@@ -1945,7 +1629,7 @@ export default function CinemaPage() {
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950 flex flex-col items-center justify-center text-zinc-650 p-2 text-center">
                               <Film className="w-6 h-6 mb-1 text-zinc-700 animate-pulse" />
-                              <span className="text-[8px] font-black uppercase tracking-wider text-zinc-500">{uiLang === "es" ? "Sin portada" : uiLang === "ja" ? "カバーなし" : "No Cover"}</span>
+                              <span className="text-[8px] font-black uppercase tracking-wider text-zinc-500">No Cover</span>
                             </div>
                           )}
                           
@@ -1966,7 +1650,7 @@ export default function CinemaPage() {
                                 {movie.type}
                               </span>
                               <span className="text-[9px] font-semibold text-zinc-500">
-                                {movie.watchLink ? (uiLang === "es" ? "Disponible" : uiLang === "ja" ? "再生可能" : "Available") : (uiLang === "es" ? "Sinc. Solo" : "Sync Only")}
+                                {movie.watchLink ? "Available" : "Sync Only"}
                               </span>
                             </div>
                             <h3 className="text-sm font-extrabold text-white tracking-wide mt-2 line-clamp-2 leading-snug font-serif">
@@ -1979,17 +1663,17 @@ export default function CinemaPage() {
                               {movie.watchLink ? (
                                 <>
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_#10b981]" />
-                                  <span className="text-zinc-400">{translations[uiLang]?.streamReady || "Stream Ready"}</span>
+                                  <span className="text-zinc-400">Stream Ready</span>
                                 </>
                               ) : (
                                 <>
                                   <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-                                  <span className="text-zinc-500">{translations[uiLang]?.remoteOnly || "Remote Only"}</span>
+                                  <span className="text-zinc-500">Remote Only</span>
                                 </>
                               )}
                             </span>
                             <button className="px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-[#E8587A] text-white text-[10px] font-bold transition-all cursor-pointer hover:shadow-lg hover:shadow-[#E8587A]/25 active:scale-95">
-                              {uiLang === "es" ? "Cargar 🎬" : uiLang === "fr" ? "Lancer 🎬" : uiLang === "de" ? "Laden 🎬" : uiLang === "hi" ? "लोड 🎬" : uiLang === "ja" ? "読み込む 🎬" : "Load 🎬"}
+                              Load 🎬
                             </button>
                           </div>
                         </div>
@@ -2012,15 +1696,15 @@ export default function CinemaPage() {
                 className="flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>{translations[uiLang]?.chooseDifferent || "Choose Different Movie"}</span>
+                <span>"Choose Different Movie"</span>
               </button>
 
               <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/[0.02] border border-white/5 text-zinc-400">
                 <Users className="w-4 h-4 text-[#E8587A]" />
                 <span className="text-xs font-bold">
                   {isPartnerPresent
-                    ? (translations[uiLang]?.partnerHall || "Partner in Hall")
-                    : (translations[uiLang]?.waiting || "Waiting for partner...")}
+                    ? ("Partner in Hall")
+                    : ("Waiting for partner...")}
                 </span>
                 <span
                   className={cn(
@@ -2035,25 +1719,15 @@ export default function CinemaPage() {
             <div className="my-auto text-center flex flex-col items-center max-w-xl px-4">
               <Film className="w-16 h-16 text-[#D4A574] animate-pulse mb-6" />
               <span className="text-[10px] font-black tracking-widest text-[#E8587A] uppercase bg-[#E8587A]/10 px-3 py-1 rounded-full">
-                {translations[uiLang]?.theaterSetup || "Theater Setup"}
+                Theater Setup
               </span>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-wide mt-4 mb-3 font-serif cinema-spotlight leading-tight">
                 {session.movieTitle}
               </h2>
               <p className="text-xs sm:text-sm text-zinc-500 leading-relaxed max-w-md">
                 {!isPartnerPresent
-                  ? (uiLang === "es" ? "Esperando a que tu pareja entre. ¡Ponte cómodo, prepara las bebidas y los snacks! 🍿" :
-                     uiLang === "fr" ? "En attente de l'entrée de votre partenaire. Installez-vous confortablement, préparez les boissons et les snacks ! 🍿" :
-                     uiLang === "de" ? "Warte darauf, dass dein Partner eintritt. Mach es dir gemütlich, bereite die Getränke vor und stelle die Snacks bereit! 🍿" :
-                     uiLang === "hi" ? "आपके साथी के प्रवेश करने की प्रतीक्षा की जा रही है। सहज हो जाएं, पेय तैयार करें और स्नैक्स सेट करें! 🍿" :
-                     uiLang === "ja" ? "パートナーが入室するのを待っています。快適にして、飲み物を準備し、スナックをセットしましょう！ 🍿" :
-                     "Waiting for your partner to enter. Get cozy, prepare the drinks, and set the snacks! 🍿")
-                  : (uiLang === "es" ? "¡Ambos asientos están ocupados! Confirma que estás listo para abrir las cortinas. 🎬" :
-                     uiLang === "fr" ? "Les deux places sont occupées ! Confirmez que vous êtes prêt pour ouvrir les rideaux. 🎬" :
-                     uiLang === "de" ? "Beide Plätze sind besetzt! Bestätige die Bereitschaft, um die Vorhänge zu öffnen. 🎬" :
-                     uiLang === "hi" ? "दोनों सीटें भरी हुई हैं! पर्दे खोलने के लिए तत्परता की पुष्टि करें। 🎬" :
-                     uiLang === "ja" ? "両方の席が埋まりました！準備完了を確認してカーテンを開けましょう。 🎬" :
-                     "Both watching seats are filled! Confirm readiness to open the screen curtains. 🎬")}
+                  ? "Waiting for your partner to enter. Get cozy, prepare the drinks, and set the snacks! 🍿"
+                  : "Both watching seats are filled! Confirm readiness to open the screen curtains. 🎬"}
               </p>
 
               {/* Ready Status Circles */}
@@ -2064,7 +1738,7 @@ export default function CinemaPage() {
                     <Users className="w-6 h-6 text-zinc-500" />
                   </div>
                   <span className="text-xs font-extrabold text-zinc-400">
-                    {uiLang === "es" ? "Tú" : uiLang === "fr" ? "Toi" : uiLang === "de" ? "Du" : uiLang === "hi" ? "आप" : uiLang === "ja" ? "あなた" : "You"}
+                    You
                   </span>
                 </div>
 
@@ -2079,7 +1753,7 @@ export default function CinemaPage() {
                     <Users className="w-6 h-6 text-zinc-500" />
                   </div>
                   <span className="text-xs font-extrabold text-zinc-400">
-                    {uiLang === "es" ? "Pareja" : uiLang === "fr" ? "Partenaire" : uiLang === "de" ? "Partner" : uiLang === "hi" ? "साथी" : uiLang === "ja" ? "パートナー" : "Partner"}
+                    Partner
                   </span>
                 </div>
               </div>
@@ -2098,8 +1772,8 @@ export default function CinemaPage() {
                   <Check className="w-4 h-4" />
                   <span>
                     {isSelfReady
-                      ? `${translations[uiLang]?.readyWaiting || "Ready! Waiting"} (${readyCount}/2)`
-                      : (translations[uiLang]?.readyWatch || "I am Ready to Watch 🍿")}
+                      ? `Ready! Waiting (${readyCount}/2)`
+                      : "I am Ready to Watch 🍿"}
                   </span>
                 </button>
               </div>
@@ -2110,7 +1784,7 @@ export default function CinemaPage() {
               <div className="flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
                 <Coffee className="w-4 h-4 text-[#D4A574]" />
                 <h4 className="text-xs font-black uppercase text-zinc-400 tracking-wider">
-                  {translations[uiLang]?.dateSnacks || "Configure Date Snacks"}
+                  Configure Date Snacks
                 </h4>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -2173,13 +1847,13 @@ export default function CinemaPage() {
                 {isPartnerPresent ? (
                   <div className="hidden sm:flex cinema-live-badge items-center gap-2 px-3 py-1.5 rounded-xl bg-[#E8587A]/10 border border-[#E8587A]/20 text-xs text-[#E8587A] font-bold">
                     <span className="w-2 h-2 rounded-full bg-[#E8587A] animate-pulse shadow-[0_0_8px_#E8587A]" />
-                    <span>{translations[uiLang]?.active?.toUpperCase() || "LIVE"}</span>
+                    <span>LIVE</span>
                     <Users className="w-3.5 h-3.5" />
                   </div>
                 ) : (
                   <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-xs text-zinc-500">
                     <Users className="w-3.5 h-3.5" />
-                    <span>{translations[uiLang]?.soloViewing || "Solo Viewing"}</span>
+                    <span>Solo Viewing</span>
                   </div>
                 )}
 
@@ -2195,9 +1869,7 @@ export default function CinemaPage() {
                 >
                   <Sparkles className="w-3 h-3" />
                   <span className="hidden xs:inline">
-                    {isExtensionActive
-                      ? (translations[uiLang]?.active || "Active")
-                      : (translations[uiLang]?.syncOffline || "Sync Offline")}
+                    {isExtensionActive ? "Active" : "Sync Offline"}
                   </span>
                 </div>
 
@@ -2222,6 +1894,33 @@ export default function CinemaPage() {
             {/* Video Player Display Container */}
             <div className="w-full h-full relative flex items-center justify-center bg-black">
               {playerIframe}
+
+              {/* Cineby / External Site Cross-Origin Helper Overlay */}
+              {session.watchLink?.includes("cineby.at") && (
+                <div className="absolute top-20 left-6 z-40 bg-black/85 backdrop-blur-md border border-white/10 p-3.5 rounded-2xl flex items-center gap-3 shadow-2xl animate-fade-in max-w-md">
+                  <div className="text-xl">🌟</div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-extrabold text-white font-serif">Cineby Streaming Mode</span>
+                    <span className="text-[10px] text-zinc-400">If browser blocks embedded frame, open in new tab or switch provider</span>
+                  </div>
+                  <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                    <a
+                      href={session.watchLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-xl bg-[#E8587A] text-white text-[10px] font-extrabold flex items-center gap-1 hover:brightness-110 active:scale-95 transition-all"
+                    >
+                      Open Cineby ↗
+                    </a>
+                    <button
+                      onClick={() => handleSourceChange("default")}
+                      className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[10px] font-extrabold transition-all active:scale-95"
+                    >
+                      Switch to 1HD 🎬
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Extension Inactive Warning Overlay */}
               {!isExtensionActive && (
@@ -2349,12 +2048,12 @@ export default function CinemaPage() {
             </div>
             <div>
               <h3 className="text-sm font-extrabold text-white font-serif tracking-wide">
-                {sidebarTab === "chat" ? (translations[uiLang]?.theaterChat || "Theater Chat") : (translations[uiLang]?.settings || "Settings")}
+                {sidebarTab === "chat" ? "Theater Chat" : "Settings"}
               </h3>
               {isPartnerPresent && (
                 <span className="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  {uiLang === "es" ? "Pareja en línea" : uiLang === "ja" ? "パートナーオンライン" : uiLang === "hi" ? "साथी ऑनलाइन है" : "Partner online"}
+                  Partner online
                 </span>
               )}
             </div>
@@ -2402,7 +2101,7 @@ export default function CinemaPage() {
             )}
           >
             <Settings className="w-3.5 h-3.5" />
-            <span>{translations[uiLang]?.settings || "Settings"}</span>
+            <span>Settings</span>
           </button>
         </div>
 
@@ -2415,14 +2114,9 @@ export default function CinemaPage() {
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E8587A]/10 to-[#D4A574]/10 flex items-center justify-center mb-4 border border-white/5">
                     <Heart className="w-7 h-7 text-[#E8587A] animate-pulse" />
                   </div>
-                  <p className="text-sm font-extrabold text-zinc-300 font-serif">{translations[uiLang]?.whisper || "Whisper something sweet..."}</p>
+                  <p className="text-sm font-extrabold text-zinc-300 font-serif">Whisper something sweet...</p>
                   <p className="text-[10px] text-zinc-600 mt-2 max-w-[200px] leading-relaxed">
-                    {uiLang === "es" ? "El chat de tu cita de cine — comparte reacciones, envía pegatinas y susurra dulces palabras 💕" :
-                     uiLang === "fr" ? "Le chat de votre soirée cinéma — partagez des réactions, envoyez des stickers et chuchotez des mots doux 💕" :
-                     uiLang === "de" ? "Dein Kino-Date-Chat — teile Reaktionen, sende Sticker und flüstere süße Worte 💕" :
-                     uiLang === "hi" ? "आपकी सिनेमा डेट चैट — प्रतिक्रियाएं साझा करें, स्टिकर भेजें और कुछ मीठा फुसफुसाएं 💕" :
-                     uiLang === "ja" ? "映画デートのチャット — リアクションを共有し、ステッカーを送り、甘い言葉をささやき合いましょう 💕" :
-                     "Your movie date chat — share reactions, send stickers, and whisper sweet nothings 💕"}
+                    Your movie date chat — share reactions, send stickers, and whisper sweet nothings 💕
                   </p>
                 </div>
               ) : (
@@ -2481,7 +2175,7 @@ export default function CinemaPage() {
                     <span /><span /><span />
                   </div>
                   <span className="text-[9px] text-zinc-500 font-medium italic">
-                    {uiLang === "es" ? "escribiendo..." : uiLang === "ja" ? "入力中..." : uiLang === "hi" ? "टाइप कर रहे हैं..." : "typing..."}
+                    "typing..."
                   </span>
                 </motion.div>
               )}
@@ -2512,13 +2206,7 @@ export default function CinemaPage() {
                         )}
                       >
                         <span className="mr-1">{pack.icon}</span>
-                        {pack.label === "Romantic" && uiLang === "es" ? "Romántico" : 
-                         pack.label === "Romantic" && uiLang === "ja" ? "恋愛" :
-                         pack.label === "Reactions" && uiLang === "es" ? "Reacciones" :
-                         pack.label === "Reactions" && uiLang === "ja" ? "リアクション" :
-                         pack.label === "Cozy Vibes" && uiLang === "es" ? "Acogedor" :
-                         pack.label === "Cozy Vibes" && uiLang === "ja" ? "まったり" :
-                         pack.label}
+                        {pack.label}
                       </button>
                     ))}
                   </div>
@@ -2556,13 +2244,13 @@ export default function CinemaPage() {
                     onClick={handleThrowPopcorn}
                     className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 text-[10px] font-bold border border-white/5 transition-all cursor-pointer active:scale-95 flex items-center gap-1"
                   >
-                    <span>🍿 {translations[uiLang]?.fight || "Fight"}</span>
+                    <span>🍿 "Fight"</span>
                   </button>
                   <button
                     onClick={handleSendCuddle}
                     className="px-2 py-0.5 rounded-lg bg-[#E8587A]/15 hover:bg-[#E8587A]/25 text-[#E8587A] text-[10px] font-bold border border-[#E8587A]/20 transition-all cursor-pointer active:scale-95 flex items-center gap-1"
                   >
-                    <span>🤗 {translations[uiLang]?.cuddle || "Cuddle"}</span>
+                    <span>🤗 "Cuddle"</span>
                   </button>
                 </div>
               </div>
@@ -2602,7 +2290,7 @@ export default function CinemaPage() {
                     setChatInput(e.target.value);
                     handleChatTyping();
                   }}
-                  placeholder={translations[uiLang]?.typeMessage || "Type a message..."}
+                  placeholder="Type a message..."
                   className="cinema-chat-input"
                 />
                 <button
@@ -2672,7 +2360,7 @@ export default function CinemaPage() {
                   </div>
                   {detectedControls.servers.length > 0 && (
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">{"\uD83D\uDDA5"} Servers</span>
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">"\uD83D\uDDA5" Servers</span>
                       <div className="flex flex-wrap gap-1.5">
                         {detectedControls.servers.map((ctrl) => (
                           <button key={`srv-${ctrl.index}`} onClick={() => sendControlClick("servers", ctrl.index)} className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer active:scale-95", ctrl.active ? "bg-[#E8587A]/15 border-[#E8587A]/40 text-[#E8587A] shadow-[0_0_8px_rgba(232,88,122,0.15)]" : "bg-white/[0.03] border-white/8 text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200")}>
@@ -2684,7 +2372,7 @@ export default function CinemaPage() {
                   )}
                   {detectedControls.languages.length > 0 && (
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">{"\uD83C\uDF10"} Audio</span>
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">"\uD83C\uDF10" Audio</span>
                       <div className="flex flex-wrap gap-1.5">
                         {detectedControls.languages.map((ctrl) => (
                           <button key={`lang-${ctrl.index}`} onClick={() => sendControlClick("languages", ctrl.index)} className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer active:scale-95", ctrl.active ? "bg-[#E8587A]/15 border-[#E8587A]/40 text-[#E8587A] shadow-[0_0_8px_rgba(232,88,122,0.15)]" : "bg-white/[0.03] border-white/8 text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200")}>
@@ -2696,7 +2384,7 @@ export default function CinemaPage() {
                   )}
                   {detectedControls.episodes.length > 0 && (
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">{"\uD83D\uDCFA"} Episodes</span>
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">"\uD83D\uDCFA" Episodes</span>
                       <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto cinema-scrollbar">
                         {detectedControls.episodes.map((ctrl) => (
                           <button key={`ep-${ctrl.index}`} onClick={() => sendControlClick("episodes", ctrl.index)} className={cn("px-2 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer active:scale-95", ctrl.active ? "bg-[#E8587A]/15 border-[#E8587A]/40 text-[#E8587A] shadow-[0_0_8px_rgba(232,88,122,0.15)]" : "bg-white/[0.03] border-white/8 text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200")}>
@@ -2708,7 +2396,7 @@ export default function CinemaPage() {
                   )}
                   {detectedControls.quality.length > 0 && (
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">{"\u2699"} Quality</span>
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide">"\u2699" Quality</span>
                       <div className="flex flex-wrap gap-1.5">
                         {detectedControls.quality.map((ctrl) => (
                           <button key={`q-${ctrl.index}`} onClick={() => sendControlClick("quality", ctrl.index)} className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer active:scale-95", ctrl.active ? "bg-[#E8587A]/15 border-[#E8587A]/40 text-[#E8587A] shadow-[0_0_8px_rgba(232,88,122,0.15)]" : "bg-white/[0.03] border-white/8 text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-200")}>
@@ -2729,40 +2417,13 @@ export default function CinemaPage() {
               {/* Source selection */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-semibold text-zinc-500">Stream Provider</label>
-                {session?.movieId?.startsWith("gdrive-") ? (
-                  <div className="cinema-select" style={{ cursor: 'default' }}>
-                    <span>📁 Google Drive</span>
-                    <button
-                      onClick={() => setGdrivePlayerMode(prev => prev === "iframe" ? "html5" : "iframe")}
-                      className="text-[8px] font-black uppercase text-[#E8587A] hover:underline absolute right-3 top-1/2 -translate-y-1/2"
-                    >
-                      {gdrivePlayerMode === "iframe" ? "Force Direct" : "Use Google Player"}
-                    </button>
-                  </div>
-                ) : resolvingSource ? (
-                  <div className="flex items-center gap-2 text-xs text-zinc-500 py-2">
-                    <Loader2 className="w-3 animate-spin text-[#E8587A]" />
-                    <span>Resolving stream links...</span>
-                  </div>
-                ) : (
+                {STREAM_SOURCES.length > 0 && (
                   <select
                     value={activeSource}
                     onChange={(e) => handleSourceChange(e.target.value)}
                     className="cinema-select"
                   >
-                    <option value="cineby">🌟 Cineby.at (Primary / First)</option>
-                    <option value="default">🎬 1HD.to (Second Option)</option>
-                    <option value="miruro">🌸 Miruro (Anime Engine)</option>
-                    <option value="bflix">🅱️ BFlix</option>
-                    <option value="vidsrc_to">⚡ VidSrc.to</option>
-                    <option value="vidsrc_me">⚡ VidSrc.me</option>
-                    <option value="vidsrcme_ru">🇷🇺 VidSrcMe.ru</option>
-                    <option value="vidsrc_xyz">⚡ VidSrc.xyz</option>
-                    <option value="two_embed">🎞️ 2Embed</option>
-                    <option value="multiembed">🔗 MultiEmbed</option>
-                    <option value="embedsu">🎥 Embed.su</option>
-                    <option value="autoembed">🤖 AutoEmbed</option>
-                    <option value="smashystream">💥 SmashyStream</option>
+                    {STREAM_SOURCES.map(s => (<option key={s.key} value={s.key}>{s.emoji} {s.label}</option>))}
                   </select>
                 )}
               </div>
@@ -2787,7 +2448,7 @@ export default function CinemaPage() {
 
               {/* Subtitles Option */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-semibold text-zinc-500">{translations[uiLang]?.subtitles || "Subtitles"}</label>
+                <label className="text-[10px] font-semibold text-zinc-500">Subtitles</label>
                 <select
                   value={subtitleLang}
                   onChange={(e) => {
@@ -2809,7 +2470,7 @@ export default function CinemaPage() {
 
               {/* Audio Track Option */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-semibold text-zinc-500">{translations[uiLang]?.audioTrack || "Audio Track"}</label>
+                <label className="text-[10px] font-semibold text-zinc-500">Audio Track</label>
                 <select
                   value={audioLang}
                   onChange={(e) => {
@@ -2828,26 +2489,6 @@ export default function CinemaPage() {
                   <option value="ja">🇯🇵 Japanese Dub</option>
                 </select>
               </div>
-
-              {/* UI Translation Selection */}
-              <div className="flex flex-col gap-1.5 pt-3 border-t border-white/[0.04]">
-                <label className="text-[10px] font-semibold text-zinc-500">{translations[uiLang]?.language || "UI Language"}</label>
-                <select
-                  value={uiLang}
-                  onChange={(e) => {
-                    setUiLang(e.target.value);
-                    localStorage.setItem("love-cinema-ui-lang", e.target.value);
-                    playSound("tap");
-                  }}
-                  className="cinema-select"
-                >
-                  {LANGUAGES.map((lang) => (
-                    <option key={lang.code} value={lang.code}>
-                      {lang.flag} {lang.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
 
             {/* 100% Reliable Embed Connection Fallback Link */}
@@ -2857,7 +2498,7 @@ export default function CinemaPage() {
                   <Info className="w-4 h-4 text-[#E8587A] flex-shrink-0 mt-0.5" />
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black uppercase text-[#E8587A] tracking-wider">Embed Fallback</span>
-                    <p className="text-[10px] text-zinc-400 mt-1 leading-relaxed">
+                    <p className="text-[10px] text-zinc-400 mt-1 leading-normal">
                       If the video fails to load, displays connection errors, or states embedding is blocked:
                     </p>
                   </div>
@@ -2866,9 +2507,9 @@ export default function CinemaPage() {
                   href={session.watchLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-extrabold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer border border-white/10"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#E8587A] to-[#D4A574] text-white text-xs font-extrabold shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer border border-white/10 mt-3"
                 >
-                  <span>{translations[uiLang]?.openTab || "Open in New Tab"} ↗</span>
+                  <span>Open in New Tab ↗</span>
                 </a>
               </div>
             )}

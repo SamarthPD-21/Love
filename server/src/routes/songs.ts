@@ -306,12 +306,15 @@ router.post("/spotify-info", async (req: any, res: Response) => {
 router.get("/", async (req: any, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || !user.relationshipId) {
-      res.status(404).json({ error: "Relationship not found" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
       return;
     }
 
-    const songs = await Song.find({ relationshipId: user.relationshipId })
+    const relId = user.relationshipId || user._id;
+    const songs = await Song.find({
+      $or: [{ relationshipId: relId }, { userId: user._id }],
+    })
       .populate("userId", "name avatar")
       .sort({ createdAt: -1 });
 
@@ -360,8 +363,8 @@ router.post("/", async (req: any, res: Response) => {
     }
 
     const user = await User.findById(req.userId);
-    if (!user || !user.relationshipId) {
-      res.status(404).json({ error: "Relationship not found" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
       return;
     }
 
@@ -379,20 +382,22 @@ router.post("/", async (req: any, res: Response) => {
     const song = new Song({
       ...validation.data,
       youtubeVideoId,
-      relationshipId: user.relationshipId,
+      relationshipId: user.relationshipId || user._id,
       userId: user._id,
     });
 
     await song.save();
     const populated = await song.populate("userId", "name avatar");
 
-    createNotification({
-      actorId: user._id.toString(),
-      type: "song_added",
-      entityType: "Song",
-      entityId: song._id.toString(),
-      meta: { detail: `${song.title} — ${song.artist}` },
-    });
+    if (user.partnerId) {
+      createNotification({
+        actorId: user._id.toString(),
+        type: "song_added",
+        entityType: "Song",
+        entityId: song._id.toString(),
+        meta: { detail: `${song.title} — ${song.artist}` },
+      });
+    }
 
     res.status(201).json({ success: true, data: populated });
   } catch (error: any) {
@@ -404,14 +409,15 @@ router.post("/", async (req: any, res: Response) => {
 router.delete("/:id", async (req: any, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || !user.relationshipId) {
-      res.status(404).json({ error: "Relationship not found" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
       return;
     }
 
+    const relId = user.relationshipId || user._id;
     const song = await Song.findOneAndDelete({
       _id: req.params.id,
-      relationshipId: user.relationshipId,
+      $or: [{ relationshipId: relId }, { userId: user._id }],
     });
 
     if (!song) {

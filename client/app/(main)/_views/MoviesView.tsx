@@ -1,13 +1,77 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Film, Plus, Trash2, CheckCircle2, Star, Loader2, X, AlertCircle, Play, Users, Link as LinkIcon } from "lucide-react";
+import { 
+  Film, Plus, Trash2, CheckCircle2, Star, Loader2, X, 
+  AlertCircle, Play, Users, Link as LinkIcon, Tv, 
+  Settings, ChevronDown, Check, Image as ImageIcon
+} from "lucide-react";
 import api from "@/lib/api";
 import { cn, getRelationshipId } from "@/lib/utils";
 import { format } from "date-fns";
 import { getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/stores/useAuthStore";
+
+const STREAM_SOURCES = [
+  { key: 'cineby', label: 'Cineby.at', emoji: '🌟', recommended: true },
+  { key: 'default', label: '1HD.to', emoji: '🎬' },
+  { key: 'miruro', label: 'Miruro (Anime)', emoji: '🌸' },
+  { key: 'bflix', label: 'BFlix', emoji: '🅱️' },
+  { key: 'vidsrc_to', label: 'VidSrc.to', emoji: '⚡' },
+  { key: 'vidsrc_me', label: 'VidSrc.me', emoji: '⚡' },
+  { key: 'vidsrcme_ru', label: 'VidSrcMe.ru', emoji: '🇷🇺' },
+  { key: 'vidsrc_xyz', label: 'VidSrc.xyz', emoji: '⚡' },
+  { key: 'two_embed', label: '2Embed', emoji: '🎞️' },
+  { key: 'multiembed', label: 'MultiEmbed', emoji: '🔗' },
+  { key: 'embedsu', label: 'Embed.su', emoji: '🎥' },
+  { key: 'autoembed', label: 'AutoEmbed', emoji: '🤖' },
+  { key: 'smashystream', label: 'SmashyStream', emoji: '💥' },
+] as const;
+
+function getStreamUrlForSource(sourceKey: string, title: string, type: "movie" | "show"): string {
+  const titleEnc = encodeURIComponent(title);
+  const mType = type === "movie" ? "movie" : "tv";
+  if (sourceKey === "cineby") return `https://www.cineby.at/${mType}/${titleEnc}`;
+  if (sourceKey === "miruro") return `https://www.miruro.ru/search?query=${titleEnc}`;
+  if (sourceKey === "bflix") return `https://bflixs.us/${mType}/${titleEnc}`;
+  if (sourceKey === "vidsrc_to") return `https://vidsrc.to/embed/${mType}/${titleEnc}`;
+  if (sourceKey === "vidsrc_me") return `https://vidsrc.me/embed/${mType}/${titleEnc}`;
+  if (sourceKey === "vidsrcme_ru") return `https://vidsrcme.ru/embed/${mType}/${titleEnc}`;
+  if (sourceKey === "vidsrc_xyz") return `https://vidsrc.xyz/embed/${mType}/${titleEnc}`;
+  if (sourceKey === "two_embed") return `https://2embed.cc/embed/${titleEnc}`;
+  if (sourceKey === "multiembed") return `https://multiembed.mov/directstream.php?video_id=${titleEnc}&tmdb=0`;
+  if (sourceKey === "embedsu") return `https://embed.su/embed/${mType}/${titleEnc}`;
+  if (sourceKey === "autoembed") return `https://player.autoembed.cc/embed/${mType}/${titleEnc}`;
+  if (sourceKey === "smashystream") return `https://player.smashy.stream/${mType}/${titleEnc}`;
+  return `https://1hd.art/search?keyword=${titleEnc}`;
+}
+
+async function fetchPosterForTitle(title: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://api2.imdb4.shop/api/search2/${encodeURIComponent(title)}?page=0`);
+    if (res.ok) {
+      const data = await res.json();
+      const results = data.results || [];
+      if (results.length > 0 && results[0].poster_path) {
+        const path = results[0].poster_path;
+        if (path.startsWith("http")) return path;
+        return `https://image.tmdb.org/t/p/w500${path.startsWith("/") ? "" : "/"}${path}`;
+      }
+    }
+  } catch {}
+  try {
+    const omdbRes = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=4a3b711b`);
+    if (omdbRes.ok) {
+      const omdbData = await omdbRes.json();
+      if (omdbData.Poster && omdbData.Poster !== "N/A") {
+        return omdbData.Poster;
+      }
+    }
+  } catch {}
+  return null;
+}
 
 interface Movie {
   _id: string;
@@ -17,18 +81,20 @@ interface Movie {
   rating?: number;
   review?: string;
   watchLink?: string;
+  posterUrl?: string;
   createdAt: string;
 }
 
 export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => void }) {
+  const router = useRouter();
   const { user } = useAuthStore();
-  const socket = getSocket();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState("");
 
   const handleStartWatchTogether = (movie: Movie) => {
+    const socket = getSocket();
     if (!socket || !user || !user.relationshipId) return;
     socket.emit("start_cinema", {
       relationshipId: getRelationshipId(user.relationshipId),
@@ -39,6 +105,8 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
     });
     if (onStartCinema) {
       onStartCinema();
+    } else {
+      router.push("/cinema");
     }
   };
 
@@ -48,6 +116,7 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
   // Form State
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"movie" | "show">("movie");
+  const [linkType, setLinkType] = useState<"auto" | "custom" | "gdrive">("auto");
   const [watchLink, setWatchLink] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -60,6 +129,10 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
   const [reviewText, setReviewText] = useState("");
   const [ratingVal, setRatingVal] = useState(5);
   const [updatingReview, setUpdatingReview] = useState(false);
+
+  // Source Dropdown State
+  const [sourceDropdownOpen, setSourceDropdownOpen] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchMovies = async () => {
     try {
@@ -75,8 +148,23 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
   };
 
   useEffect(() => {
-    Promise.resolve().then(() => fetchMovies());
+    fetchMovies();
   }, []);
+
+  useEffect(() => {
+    if (!movies.length) return;
+    movies.forEach(async (movie) => {
+      if (!movie.posterUrl) {
+        const poster = await fetchPosterForTitle(movie.title);
+        if (poster) {
+          setMovies((prev) =>
+            prev.map((m) => (m._id === movie._id ? { ...m, posterUrl: poster } : m))
+          );
+          api.put(`/movies/${movie._id}`, { posterUrl: poster }).catch(() => {});
+        }
+      }
+    });
+  }, [movies.length]);
 
   useEffect(() => {
     const socket = getSocket();
@@ -94,6 +182,18 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
     };
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setSourceDropdownOpen(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return;
@@ -104,7 +204,7 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
       const response = await api.post("/movies", {
         title,
         type,
-        watchLink: watchLink.trim() || undefined,
+        watchLink: linkType === "auto" ? undefined : watchLink.trim() || undefined,
         status: "watchlist",
       });
 
@@ -113,28 +213,33 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
         setIsModalOpen(false);
         setTitle("");
         setType("movie");
+        setLinkType("auto");
         setWatchLink("");
       }
-    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       setError(err.response?.data?.error || "Failed to add movie");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleSaveWatchLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingLinkMovieId) return;
+  const handleSaveWatchLink = async (e?: React.FormEvent, movieId?: string, link?: string) => {
+    if (e) e.preventDefault();
+    const targetId = movieId || editingLinkMovieId;
+    const targetLink = link !== undefined ? link : editLinkValue;
+    if (!targetId) return;
     try {
-      const response = await api.put(`/movies/${editingLinkMovieId}`, {
-        watchLink: editLinkValue.trim() || null,
+      const response = await api.put(`/movies/${targetId}`, {
+        watchLink: targetLink.trim() || null,
       });
       if (response.data.success) {
         setMovies((prev) =>
-          prev.map((m) => (m._id === editingLinkMovieId ? response.data.data : m))
+          prev.map((m) => (m._id === targetId ? response.data.data : m))
         );
-        setEditingLinkMovieId(null);
-        setEditLinkValue("");
+        if (targetId === editingLinkMovieId) {
+          setEditingLinkMovieId(null);
+          setEditLinkValue("");
+        }
       }
     } catch (err) {
       console.error("Failed to update watch link:", err);
@@ -143,12 +248,10 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
 
   const handleToggleStatus = async (movie: Movie) => {
     if (movie.status === "watchlist") {
-      // Prompt review modal
       setEditingMovieId(movie._id);
       setReviewText("");
       setRatingVal(5);
     } else {
-      // Toggle back to watchlist
       try {
         const response = await api.put(`/movies/${movie._id}`, {
           status: "watchlist",
@@ -195,7 +298,7 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this watchlist item?")) return;
+    if (!confirm("Are you sure you want to delete this item?")) return;
     try {
       await api.delete(`/movies/${id}`);
       setMovies((prev) => prev.filter((m) => m._id !== id));
@@ -208,6 +311,33 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
 
   return (
     <div className="min-h-[calc(100dvh-6rem)] flex flex-col pb-8">
+      {/* Full-screen Theater Date Experience Banner */}
+      <div className="relative overflow-hidden rounded-3xl p-5 mb-8 bg-gradient-to-r from-rose-500/10 via-purple-500/10 to-amber-500/10 border border-primary/20 backdrop-blur-sm flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary/15 border border-primary/20 flex items-center justify-center text-primary shrink-0 shadow-inner">
+            <Tv className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-foreground text-sm sm:text-base font-display">
+              Want a real movie date experience?
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Try the new immersive full-screen cinema hall with integrated side chat.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            if (onStartCinema) onStartCinema();
+            else router.push("/cinema");
+          }}
+          className="px-5 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-md active:scale-95 transition-all cursor-pointer shrink-0 flex items-center gap-2"
+        >
+          <span>Launch Full-screen Theater 🍿</span>
+        </button>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -268,135 +398,263 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <AnimatePresence>
-            {filteredMovies.map((movie) => (
-              <motion.div
-                layout
-                key={movie._id}
-                className="card-cozy p-6 flex flex-col justify-between"
-                whileHover={{ y: -4 }}
-              >
-                <div>
-                  {/* Card Header: Metadata on left, Actions on right */}
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex flex-col gap-1">
-                      <span className="self-start text-[9px] font-bold text-primary uppercase tracking-wider bg-primary/10 py-0.5 px-2 rounded-full">
-                        {movie.type}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                        Added: {format(new Date(movie.createdAt), "MMM d, yyyy")}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      {/* Mark Watched Toggle Button */}
-                      <button
-                        onClick={() => handleToggleStatus(movie)}
-                        title={movie.status === "watched" ? "Mark as Unwatched" : "Mark as Watched"}
-                        className={cn(
-                          "p-1.5 rounded-lg border transition-all cursor-pointer",
-                          movie.status === "watched"
-                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20"
-                            : "bg-zinc-800/20 border-zinc-700/30 text-zinc-400 hover:text-emerald-500 hover:border-emerald-500/30 hover:bg-emerald-500/5"
-                        )}
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                      </button>
-
-                      {/* Edit Link Button */}
-                      <button
-                        onClick={() => {
-                          setEditingLinkMovieId(movie._id);
-                          setEditLinkValue(movie.watchLink || "");
-                        }}
-                        title="Edit Watch Link"
-                        className="p-1.5 rounded-lg bg-zinc-800/20 border border-zinc-700/30 text-zinc-400 hover:text-amber-500 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all cursor-pointer"
-                      >
-                        <LinkIcon className="w-4 h-4" />
-                      </button>
-
-                      {/* Delete Button */}
-                      <button
-                        onClick={(e) => handleDelete(movie._id, e)}
-                        title="Delete from Watchlist"
-                        className="p-1.5 rounded-lg bg-zinc-800/20 border border-zinc-700/30 text-zinc-400 hover:text-rose-500 hover:border-rose-500/30 hover:bg-rose-500/5 transition-all cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <h3 className="font-bold text-foreground text-base leading-tight mt-1">
-                    {movie.title}
-                  </h3>
-
-                  {movie.status === "watched" && movie.rating && (
-                    <div className="flex gap-0.5 mt-2 mb-3">
-                      {Array.from({ length: 5 }).map((_, idx) => (
-                        <Star
-                          key={idx}
-                          className={cn(
-                            "w-3.5 h-3.5",
-                            idx < (movie.rating || 0)
-                              ? "text-amber-400 fill-amber-400"
-                              : "text-muted-foreground/30"
-                          )}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {movie.status === "watched" && movie.review && (
-                    <p className="handwritten text-base text-foreground bg-background border border-border p-3 rounded-xl mb-4 leading-relaxed italic">
-                      &ldquo;{movie.review}&rdquo;
-                    </p>
-                  )}
-                </div>
-
-                {/* Bottom Section: Primary Streaming Actions */}
-                {movie.status === "watchlist" && (
-                  <div className="border-t border-border/40 pt-4 mt-4 flex gap-2">
-                    {movie.watchLink ? (
-                      <>
-                        <a
-                          href={movie.watchLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => {
-                            try {
-                              const audio = new Audio("/sounds/tap.mp3");
-                              audio.volume = 0.2;
-                              audio.play().catch(() => {});
-                            } catch (e) {}
+        <div className={cn(
+          "grid gap-6",
+          activeTab === "watchlist" ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-8"
+        )}>
+          <AnimatePresence mode="popLayout">
+            {filteredMovies.map((movie) => {
+              const isGdrive = movie.watchLink?.includes("drive.google.com");
+              const hasLink = !!movie.watchLink;
+              
+              if (activeTab === "watchlist") {
+                // Horizontal Card Layout for Watch Queue
+                return (
+                  <motion.div
+                    layout
+                    key={movie._id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="flex flex-col sm:flex-row bg-zinc-900 border border-white/10 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 relative"
+                  >
+                    {/* Left side: Poster */}
+                    <div className="relative w-full sm:w-48 shrink-0 aspect-[2/3] sm:aspect-auto sm:h-full bg-zinc-800 rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none overflow-hidden">
+                      {movie.posterUrl ? (
+                        <img 
+                          src={movie.posterUrl} 
+                          alt={movie.title}
+                          className="w-full h-full object-cover"
+                          onError={async (e) => {
+                            // If poster fails to load, attempt client-side TMDB recovery
+                            const imgElement = e.currentTarget;
+                            imgElement.onerror = null;
+                            const newPoster = await fetchPosterForTitle(movie.title);
+                            if (newPoster) {
+                              imgElement.src = newPoster;
+                              setMovies((prev) =>
+                                prev.map((m) => (m._id === movie._id ? { ...m, posterUrl: newPoster } : m))
+                              );
+                            }
                           }}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm hover:shadow active:scale-95"
-                        >
-                          <Play className="w-3.5 h-3.5 fill-white" />
-                          <span>Watch Now</span>
-                        </a>
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 to-zinc-900 flex flex-col items-center justify-center text-zinc-500">
+                          <Film className="w-12 h-12 opacity-50 mb-2" />
+                          <span className="text-xs font-semibold uppercase tracking-widest opacity-50">No Poster</span>
+                        </div>
+                      )}
+                      
+                      {/* Status Badge Overlay */}
+                      <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md border border-white/10 px-2 py-1 rounded-lg flex items-center gap-1.5 shadow-lg">
+                        {isGdrive ? (
+                          <><div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" /><span className="text-[10px] font-bold text-blue-100">Google Drive</span></>
+                        ) : hasLink ? (
+                          <><div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /><span className="text-[10px] font-bold text-emerald-100">Stream Ready</span></>
+                        ) : (
+                          <><div className="w-2 h-2 rounded-full bg-rose-500" /><span className="text-[10px] font-bold text-rose-100">No Link</span></>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right side: Content */}
+                    <div className="flex flex-col flex-1 p-5 justify-between">
+                      <div>
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <div className="flex flex-col gap-1.5">
+                            <span className="self-start text-[9px] font-bold text-primary uppercase tracking-wider bg-primary/10 py-0.5 px-2 rounded-full border border-primary/20">
+                              {movie.type}
+                            </span>
+                            <h3 className="font-extrabold text-white text-xl sm:text-2xl leading-tight line-clamp-2">
+                              {movie.title}
+                            </h3>
+                          </div>
+                          
+                          {/* Mini Actions */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() => handleToggleStatus(movie)}
+                              title="Mark as Watched"
+                              className="p-2 rounded-xl bg-zinc-800 border border-white/5 text-zinc-400 hover:text-emerald-500 hover:border-emerald-500/30 hover:bg-emerald-500/10 transition-all cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => handleDelete(movie._id, e)}
+                              title="Delete"
+                              className="p-2 rounded-xl bg-zinc-800 border border-white/5 text-zinc-400 hover:text-rose-500 hover:border-rose-500/30 hover:bg-rose-500/10 transition-all cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-zinc-500 font-medium mb-4">
+                          Added {format(new Date(movie.createdAt), "MMM d, yyyy")}
+                        </p>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-white/10">
+                        {hasLink ? (
+                          <a
+                            href={movie.watchLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer bg-white text-black hover:bg-zinc-200 active:scale-95 shadow-lg"
+                          >
+                            <Play className="w-4 h-4 fill-black" />
+                            <span>Watch Solo</span>
+                          </a>
+                        ) : null}
 
                         <button
                           onClick={() => handleStartWatchTogether(movie)}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer bg-amber-500/10 border border-amber-500/20 text-amber-500 hover:bg-amber-500/20 active:scale-95"
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer active:scale-95 shadow-lg border",
+                            hasLink 
+                              ? "bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20"
+                              : "bg-amber-500 hover:bg-amber-600 text-white border-transparent"
+                          )}
                         >
-                          <Users className="w-3.5 h-3.5" />
+                          <Users className="w-4 h-4" />
                           <span>Together</span>
                         </button>
-                      </>
+
+                        <div className="relative" ref={sourceDropdownOpen === movie._id ? dropdownRef : null}>
+                          <button
+                            onClick={() => setSourceDropdownOpen(sourceDropdownOpen === movie._id ? null : movie._id)}
+                            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-zinc-800 border border-white/10 hover:bg-zinc-700 transition-all cursor-pointer text-zinc-300"
+                            title="Streaming Source Settings"
+                          >
+                            <Settings className="w-4 h-4" />
+                            <ChevronDown className="w-3 h-3 opacity-50" />
+                          </button>
+                          
+                          {sourceDropdownOpen === movie._id && (
+                            <div className="absolute right-0 top-full mt-2 w-56 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl p-1 z-50 origin-top-right">
+                              <div className="px-3 py-2 border-b border-white/10 mb-1">
+                                <span className="text-[10px] font-bold uppercase text-zinc-500 tracking-wider">Select Source</span>
+                              </div>
+                              <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                                {STREAM_SOURCES.map(src => (
+                                  <button
+                                    key={src.key}
+                                    onClick={() => {
+                                      const generatedUrl = getStreamUrlForSource(src.key, movie.title, movie.type);
+                                      handleSaveWatchLink(undefined, movie._id, generatedUrl);
+                                      setSourceDropdownOpen(null);
+                                    }}
+                                    className="w-full text-left px-3 py-2 rounded-lg text-sm text-zinc-300 hover:bg-zinc-800 flex items-center justify-between group transition-colors"
+                                  >
+                                    <span className="flex items-center gap-2">
+                                      <span>{src.emoji}</span>
+                                      <span>{src.label}</span>
+                                    </span>
+                                    {movie.watchLink?.includes(src.key) && <Check className="w-3.5 h-3.5 text-primary" />}
+                                  </button>
+                                ))}
+                              </div>
+                              <div className="p-1 border-t border-white/10 mt-1">
+                                <button
+                                  onClick={() => {
+                                    setEditingLinkMovieId(movie._id);
+                                    setEditLinkValue(movie.watchLink || "");
+                                    setSourceDropdownOpen(null);
+                                  }}
+                                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-amber-500 font-semibold hover:bg-amber-500/10 flex items-center gap-2 transition-colors"
+                                >
+                                  <LinkIcon className="w-3.5 h-3.5" />
+                                  <span>Custom Link</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              } else {
+                // Compact Poster Grid for Watched Tab
+                return (
+                  <motion.div
+                    layout
+                    key={movie._id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="group relative rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 aspect-[2/3] shadow-lg hover:shadow-2xl transition-all duration-300"
+                  >
+                    {movie.posterUrl ? (
+                      <img 
+                        src={movie.posterUrl} 
+                        alt={movie.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
                     ) : (
-                      <button
-                        onClick={() => handleStartWatchTogether(movie)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer bg-amber-500/10 border border-amber-500/20 text-amber-500 hover:bg-amber-500/20 active:scale-95"
-                      >
-                        <Users className="w-3.5 h-3.5" />
-                        <span>Watch Together</span>
-                      </button>
+                      <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-black flex flex-col items-center justify-center text-zinc-600">
+                        <Film className="w-12 h-12 opacity-50 mb-2" />
+                        <span className="text-xs font-semibold uppercase tracking-widest text-center px-4 leading-tight">{movie.title}</span>
+                      </div>
                     )}
-                  </div>
-                )}
-              </motion.div>
-            ))}
+                    
+                    {/* Watched Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                    
+                    <div className="absolute inset-0 p-4 flex flex-col justify-end">
+                      <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                        <span className="text-[8px] font-bold text-primary uppercase tracking-wider bg-primary/20 py-0.5 px-2 rounded-full border border-primary/30 inline-block mb-1.5">
+                          {movie.type}
+                        </span>
+                        <h3 className="font-bold text-white text-base leading-tight mb-2">
+                          {movie.title}
+                        </h3>
+                        
+                        {movie.rating ? (
+                          <div className="flex gap-0.5 mb-2">
+                            {Array.from({ length: 5 }).map((_, idx) => (
+                              <Star
+                                key={idx}
+                                className={cn(
+                                  "w-3 h-3",
+                                  idx < movie.rating!
+                                    ? "text-amber-400 fill-amber-400"
+                                    : "text-white/20"
+                                )}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+
+                        {movie.review && (
+                          <p className="text-[10px] text-zinc-300 line-clamp-3 italic opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100 handwritten">
+                            "{movie.review}"
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Top actions hidden by default, visible on hover */}
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <button
+                        onClick={() => handleToggleStatus(movie)}
+                        title="Mark as Unwatched"
+                        className="p-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/20 text-white hover:text-primary transition-all cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDelete(movie._id, e)}
+                        title="Delete"
+                        className="p-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/20 text-white hover:text-rose-500 transition-all cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              }
+            })}
           </AnimatePresence>
         </div>
       )}
@@ -409,7 +667,7 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setIsModalOpen(false)}
             />
             <motion.div
@@ -417,43 +675,43 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="absolute right-4 top-4 p-1.5 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="absolute right-4 top-4 p-2 rounded-xl hover:bg-white/5 text-zinc-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
                 <Film className="w-5 h-5 text-primary" /> Add Watchlist Item
               </h3>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Title</label>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Title <span className="text-rose-500">*</span></label>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. La La Land, Succession"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200"
+                    placeholder="e.g. Inception, The Office"
+                    className="w-full px-4 py-3 rounded-xl text-sm bg-black/50 border border-white/10 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Type</label>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Type</label>
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setType("movie")}
                       className={cn(
-                        "py-3 rounded-xl border text-sm font-semibold cursor-pointer transition-all",
+                        "py-3 rounded-xl border text-sm font-semibold cursor-pointer transition-all flex items-center justify-center gap-2",
                         type === "movie"
-                          ? "bg-primary border-primary text-white"
-                          : "bg-muted/50 border-border/50 text-muted-foreground"
+                          ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
+                          : "bg-zinc-800/50 border-white/10 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300"
                       )}
                     >
                       🎬 Movie
@@ -462,10 +720,10 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                       type="button"
                       onClick={() => setType("show")}
                       className={cn(
-                        "py-3 rounded-xl border text-sm font-semibold cursor-pointer transition-all",
+                        "py-3 rounded-xl border text-sm font-semibold cursor-pointer transition-all flex items-center justify-center gap-2",
                         type === "show"
-                          ? "bg-primary border-primary text-white"
-                          : "bg-muted/50 border-border/50 text-muted-foreground"
+                          ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
+                          : "bg-zinc-800/50 border-white/10 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300"
                       )}
                     >
                       📺 TV Show
@@ -473,37 +731,66 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Custom Watch Link (Optional)</label>
-                  <input
-                    type="url"
-                    value={watchLink}
-                    onChange={(e) => setWatchLink(e.target.value)}
-                    placeholder="e.g. https://vidsrc.to/embed/movie/tt... or Google Drive URL"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200"
-                  />
-                  <p className="text-[10px] text-muted-foreground leading-normal">
-                    Leave blank to let MovieBot search automatically, or paste your own streaming/embed URL (including Google Drive links).
-                  </p>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Source Options</span>
+                  </label>
+                  
+                  <div className="flex gap-2 p-1 bg-black/30 rounded-lg mb-3">
+                    <button type="button" onClick={() => setLinkType("auto")} className={cn("flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors", linkType === "auto" ? "bg-zinc-700 text-white shadow" : "text-zinc-500 hover:text-zinc-300")}>Auto</button>
+                    <button type="button" onClick={() => setLinkType("custom")} className={cn("flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors", linkType === "custom" ? "bg-zinc-700 text-white shadow" : "text-zinc-500 hover:text-zinc-300")}>Custom URL</button>
+                    <button type="button" onClick={() => setLinkType("gdrive")} className={cn("flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors", linkType === "gdrive" ? "bg-zinc-700 text-white shadow" : "text-zinc-500 hover:text-zinc-300")}>Google Drive</button>
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    {linkType === "auto" && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="text-[11px] text-zinc-500 bg-black/30 p-3 rounded-xl border border-white/5">
+                        🤖 <strong className="text-zinc-300">Auto Source:</strong> The app will automatically try to find a high-quality streaming source for you. You can change this later!
+                      </motion.div>
+                    )}
+                    {linkType === "custom" && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                        <input
+                          type="url"
+                          value={watchLink}
+                          onChange={(e) => setWatchLink(e.target.value)}
+                          placeholder="e.g. https://vidsrc.to/embed/..."
+                          className="w-full px-4 py-3 rounded-xl text-sm bg-black/50 border border-white/10 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                        />
+                      </motion.div>
+                    )}
+                    {linkType === "gdrive" && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                        <input
+                          type="url"
+                          value={watchLink}
+                          onChange={(e) => setWatchLink(e.target.value)}
+                          placeholder="Paste Google Drive sharing link here..."
+                          className="w-full px-4 py-3 rounded-xl text-sm bg-blue-500/5 border border-blue-500/30 text-white placeholder:text-blue-500/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {error && (
-                  <p className="text-xs text-rose-500 font-semibold bg-rose-50 dark:bg-rose-950/20 py-1.5 px-3 rounded-lg border border-rose-100 dark:border-rose-900/30">
-                    {error}
+                  <p className="text-xs text-rose-400 font-semibold bg-rose-500/10 py-2 px-3 rounded-lg border border-rose-500/20 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{error}</span>
                   </p>
                 )}
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-3 rounded-xl font-semibold text-sm bg-primary text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg mt-2 cursor-pointer"
+                  className="w-full py-3.5 rounded-xl font-bold text-sm bg-primary text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-xl shadow-primary/20 mt-4 cursor-pointer"
                 >
                   {submitting ? (
                     <span className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" /> Adding...
                     </span>
                   ) : (
-                    "Save to List"
+                    "Save to Watchlist"
                   )}
                 </button>
               </form>
@@ -520,7 +807,7 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setEditingMovieId(null)}
             />
             <motion.div
@@ -528,35 +815,34 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setEditingMovieId(null)}
-                className="absolute right-4 top-4 p-1.5 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="absolute right-4 top-4 p-2 rounded-xl hover:bg-white/5 text-zinc-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
-                <AlertCircle className="w-5 h-5 text-primary" /> Movie Review Note
+              <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" /> Complete & Review
               </h3>
 
-              <form onSubmit={handleSaveReview} className="space-y-4">
-                {/* Stars selector */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Rating</label>
-                  <div className="flex gap-2 text-2xl">
+              <form onSubmit={handleSaveReview} className="space-y-5">
+                <div className="space-y-2 flex flex-col items-center">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider text-center">Rate this</label>
+                  <div className="flex gap-1 py-2">
                     {Array.from({ length: 5 }).map((_, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => setRatingVal(idx + 1)}
-                        className="p-1 cursor-pointer transition-transform active:scale-125"
+                        className="p-1.5 cursor-pointer transition-transform hover:scale-110 active:scale-90"
                       >
                         <Star
                           className={cn(
-                            "w-8 h-8 transition-colors",
-                            idx < ratingVal ? "text-amber-400 fill-amber-400" : "text-muted-foreground/30"
+                            "w-8 h-8 transition-colors duration-200",
+                            idx < ratingVal ? "text-amber-400 fill-amber-400" : "text-zinc-700"
                           )}
                         />
                       </button>
@@ -564,28 +850,28 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cozy Review</label>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Cozy Review Note</label>
                   <textarea
-                    rows={3}
+                    rows={4}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                     placeholder="Write your review notes (e.g. loved the soundtrack, cried three times!)"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 rounded-xl text-sm bg-black/50 border border-white/10 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none handwritten"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={updatingReview}
-                  className="w-full py-3 rounded-xl font-semibold text-sm bg-primary text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg mt-2 cursor-pointer"
+                  className="w-full py-3.5 rounded-xl font-bold text-sm bg-emerald-500 text-white hover:bg-emerald-600 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-xl shadow-emerald-500/20 mt-2 cursor-pointer"
                 >
                   {updatingReview ? (
                     <span className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" /> Saving...
                     </span>
                   ) : (
-                    "Save Review"
+                    "Save & Mark Watched"
                   )}
                 </button>
               </form>
@@ -594,7 +880,7 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
         )}
       </AnimatePresence>
 
-      {/* Edit Watch Link Modal */}
+      {/* Edit Watch Link Modal (Custom URL specific) */}
       <AnimatePresence>
         {editingLinkMovieId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -602,7 +888,7 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setEditingLinkMovieId(null)}
             />
             <motion.div
@@ -610,40 +896,40 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.4 }}
-              className="relative w-full max-w-md bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
+              className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl z-10"
             >
               <button
                 onClick={() => setEditingLinkMovieId(null)}
-                className="absolute right-4 top-4 p-1.5 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="absolute right-4 top-4 p-2 rounded-xl hover:bg-white/5 text-zinc-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
-                <LinkIcon className="w-5 h-5 text-primary" /> Edit Watch Link
+              <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
+                <LinkIcon className="w-5 h-5 text-amber-500" /> Custom Watch Link
               </h3>
 
-              <form onSubmit={handleSaveWatchLink} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Streaming/Embed URL</label>
+              <form onSubmit={handleSaveWatchLink} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Streaming / Embed / Drive URL</label>
                   <input
                     type="url"
                     required
                     value={editLinkValue}
                     onChange={(e) => setEditLinkValue(e.target.value)}
-                    placeholder="e.g. https://vidsrc.to/embed/movie/tt... or Google Drive URL"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    placeholder="https://..."
+                    className="w-full px-4 py-3 rounded-xl text-sm bg-black/50 border border-white/10 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                   />
-                  <p className="text-[10px] text-muted-foreground leading-normal">
-                    Enter the streaming link, embed URL, or Google Drive link for this movie.
+                  <p className="text-[11px] text-zinc-500 leading-relaxed mt-2">
+                    Enter the exact URL you want to embed in the theater or open in a new tab.
                   </p>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl font-semibold text-sm bg-primary text-white hover:bg-primary-hover active:scale-[0.98] transition-all duration-200 shadow-md hover:shadow-lg mt-2 cursor-pointer"
+                  className="w-full py-3.5 rounded-xl font-bold text-sm bg-amber-500 text-black hover:bg-amber-600 active:scale-[0.98] transition-all duration-200 shadow-xl shadow-amber-500/20 mt-2 cursor-pointer"
                 >
-                  Save Link
+                  Save Custom Link
                 </button>
               </form>
             </motion.div>
