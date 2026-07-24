@@ -473,7 +473,7 @@ export default function CinemaPage() {
 
   // Map of TMDB-based sources (key → url builder fn using TMDB ID)
   const tmdbSourceBuilders: Record<string, (tmdbId: string, mediaType: string, title?: string) => string> = {
-    cineby: (id, t) => `https://www.cineby.at/${t}/${id}`,
+    cineby: (id, t) => `https://www.cineby.at/${t}/${id}?play=true`,
     bflix: (id, t) => `https://bflixs.us/${t}/${id}`,
   };
 
@@ -512,16 +512,36 @@ export default function CinemaPage() {
     const mediaType = session.movieType === "movie" ? "movie" : "tv";
     let targetLink = "";
 
-    if (sourceKey === "cineby") targetLink = `https://www.cineby.at/${mediaType}/${titleEnc}`;
-    else if (sourceKey === "bflix") targetLink = `https://bflixs.us/${mediaType}/${titleEnc}`;
+    let tmdbId: string | null = null;
+    if (sourceKey === "cineby" || sourceKey === "bflix" || sourceKey === "vidsrc_to" || sourceKey === "embedsu") {
+      try {
+        const res = await fetch(`https://api2.imdb4.shop/api/search2/${titleEnc}?page=0`);
+        if (res.ok) {
+          const data = await res.json();
+          const results = data.results || [];
+          const matched = results.filter((r: any) => (r.media_type === "movie" ? "movie" : "tv") === mediaType);
+          const best = matched[0] || results[0];
+          if (best && (best.id || best.tmdb_id)) {
+            tmdbId = String(best.id || best.tmdb_id);
+          }
+        }
+      } catch {}
+    }
+
+    if (sourceKey === "cineby") {
+      targetLink = tmdbId 
+        ? `https://www.cineby.at/${mediaType}/${tmdbId}?play=true`
+        : `https://www.cineby.at/${mediaType}/${titleEnc}?play=true`;
+    }
+    else if (sourceKey === "bflix") targetLink = tmdbId ? `https://bflixs.us/${mediaType}/${tmdbId}` : `https://bflixs.us/${mediaType}/${titleEnc}`;
     else if (sourceKey === "miruro") targetLink = `https://www.miruro.ru/search?query=${titleEnc}`;
-    else if (sourceKey === "vidsrc_to") targetLink = `https://vidsrc.to/embed/${mediaType}/${titleEnc}`;
+    else if (sourceKey === "vidsrc_to") targetLink = tmdbId ? `https://vidsrc.to/embed/${mediaType}/${tmdbId}` : `https://vidsrc.to/embed/${mediaType}/${titleEnc}`;
     else if (sourceKey === "vidsrc_me") targetLink = `https://vidsrc.me/embed/${mediaType}/${titleEnc}`;
     else if (sourceKey === "vidsrcme_ru") targetLink = `https://vidsrcme.ru/embed/${mediaType}/${titleEnc}`;
     else if (sourceKey === "vidsrc_xyz") targetLink = `https://vidsrc.xyz/embed/${mediaType}/${titleEnc}`;
     else if (sourceKey === "two_embed") targetLink = `https://2embed.cc/embed/${titleEnc}`;
     else if (sourceKey === "multiembed") targetLink = `https://multiembed.mov/directstream.php?video_id=${titleEnc}&tmdb=0`;
-    else if (sourceKey === "embedsu") targetLink = `https://embed.su/embed/${mediaType}/${titleEnc}`;
+    else if (sourceKey === "embedsu") targetLink = tmdbId ? `https://embed.su/embed/${mediaType}/${tmdbId}` : `https://embed.su/embed/${mediaType}/${titleEnc}`;
     else if (sourceKey === "autoembed") targetLink = `https://player.autoembed.cc/embed/${mediaType}/${titleEnc}`;
     else if (sourceKey === "smashystream") targetLink = `https://player.smashy.stream/${mediaType}/${titleEnc}`;
     else targetLink = `https://1hd.art/search?keyword=${titleEnc}`;

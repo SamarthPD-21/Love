@@ -30,10 +30,30 @@ const STREAM_SOURCES = [
   { key: 'smashystream', label: 'SmashyStream', emoji: '💥' },
 ] as const;
 
-function getStreamUrlForSource(sourceKey: string, title: string, type: "movie" | "show"): string {
+async function getStreamUrlForSource(sourceKey: string, title: string, type: "movie" | "show"): Promise<string> {
   const titleEnc = encodeURIComponent(title);
   const mType = type === "movie" ? "movie" : "tv";
-  if (sourceKey === "cineby") return `https://www.cineby.at/${mType}/${titleEnc}`;
+
+  if (sourceKey === "cineby" || sourceKey === "bflix" || sourceKey === "vidsrc_to" || sourceKey === "embedsu") {
+    try {
+      const res = await fetch(`https://api2.imdb4.shop/api/search2/${titleEnc}?page=0`);
+      if (res.ok) {
+        const data = await res.json();
+        const results = data.results || [];
+        const matched = results.filter((r: any) => (r.media_type === "movie" ? "movie" : "tv") === mType);
+        const best = matched[0] || results[0];
+        if (best && (best.id || best.tmdb_id)) {
+          const tmdbId = String(best.id || best.tmdb_id);
+          if (sourceKey === "cineby") return `https://www.cineby.at/${mType}/${tmdbId}?play=true`;
+          if (sourceKey === "bflix") return `https://bflixs.us/${mType}/${tmdbId}`;
+          if (sourceKey === "vidsrc_to") return `https://vidsrc.to/embed/${mType}/${tmdbId}`;
+          if (sourceKey === "embedsu") return `https://embed.su/embed/${mType}/${tmdbId}`;
+        }
+      }
+    } catch {}
+  }
+
+  if (sourceKey === "cineby") return `https://www.cineby.at/${mType}/${titleEnc}?play=true`;
   if (sourceKey === "miruro") return `https://www.miruro.ru/search?query=${titleEnc}`;
   if (sourceKey === "bflix") return `https://bflixs.us/${mType}/${titleEnc}`;
   if (sourceKey === "vidsrc_to") return `https://vidsrc.to/embed/${mType}/${titleEnc}`;
@@ -491,8 +511,8 @@ export default function MoviesPage({ onStartCinema }: { onStartCinema?: () => vo
                                     {STREAM_SOURCES.map(src => (
                                       <button
                                         key={src.key}
-                                        onClick={() => {
-                                          const generatedUrl = getStreamUrlForSource(src.key, movie.title, movie.type);
+                                        onClick={async () => {
+                                          const generatedUrl = await getStreamUrlForSource(src.key, movie.title, movie.type);
                                           handleSaveWatchLink(undefined, movie._id, generatedUrl);
                                           setSourceDropdownOpen(null);
                                         }}

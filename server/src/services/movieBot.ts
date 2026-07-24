@@ -330,17 +330,90 @@ async function fetchIdsFromWikidata(
   }
 }
 
+export async function fetchTmdbAndImdbId(
+  title: string,
+  type: "movie" | "show"
+): Promise<{ tmdbId: string | null; imdbId: string | null }> {
+  let tmdbId: string | null = null;
+  let imdbId: string | null = null;
+
+  // 1. Primary TMDB Search API
+  try {
+    const query = title.trim();
+    const searchUrl = `https://api2.imdb4.shop/api/search2/${encodeURIComponent(query)}?page=0`;
+    const response = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Origin": "https://netmirror.global",
+        "Referer": "https://netmirror.global/"
+      }
+    });
+
+    if (response.ok) {
+      const data: any = await response.json();
+      const results = data.results || [];
+      if (results.length > 0) {
+        const targetType = type === "movie" ? "movie" : "tv";
+        const norm = normalizeTitle(title);
+        const matched = results.filter((r: any) => {
+          const mType = r.media_type === "movie" ? "movie" : "tv";
+          return mType === targetType;
+        });
+        const best = matched.find((r: any) => normalizeTitle(r.title || r.name || "") === norm) || matched[0] || results[0];
+        if (best) {
+          if (best.id) tmdbId = String(best.id);
+          else if (best.tmdb_id) tmdbId = String(best.tmdb_id);
+          if (best.imdb_id) imdbId = String(best.imdb_id);
+          console.log(`[MovieBot] TMDB API resolved "${title}": tmdbId=${tmdbId}, imdbId=${imdbId}`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error(`[MovieBot] TMDB Search API error for "${title}":`, err);
+  }
+
+  // 2. Secondary Wikidata SPARQL fallback
+  if (!tmdbId || !imdbId) {
+    try {
+      const wikiRes = await fetchIdsFromWikidata(title, type);
+      if (!tmdbId && wikiRes.tmdbId) tmdbId = wikiRes.tmdbId;
+      if (!imdbId && wikiRes.imdbId) imdbId = wikiRes.imdbId;
+    } catch {}
+  }
+
+  // 3. Tertiary OMDB fallback for IMDB ID
+  if (!imdbId) {
+    try {
+      const omdbRes = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=4a3b711b`);
+      if (omdbRes.ok) {
+        const omdbData: any = await omdbRes.json();
+        if (omdbData.imdbID && omdbData.imdbID !== "N/A") {
+          imdbId = omdbData.imdbID;
+        }
+      }
+    } catch {}
+  }
+
+  return { tmdbId, imdbId };
+}
+
 async function fetchWatchLinkFromVidSrc(
   title: string,
   type: "movie" | "show"
 ): Promise<string | null> {
-  const { imdbId, tmdbId } = await fetchIdsFromWikidata(title, type);
+  const { imdbId, tmdbId } = await fetchTmdbAndImdbId(title, type);
   if (!imdbId && !tmdbId) return null;
 
   const mediaType = type === "movie" ? "movie" : "tv";
 
-  // Build embed sources list: IMDB-based sources + TMDB-based sources
   const embedSources: Array<{ name: string; url: string }> = [];
+
+  if (tmdbId) {
+    embedSources.push(
+      { name: "Cineby", url: `https://www.cineby.at/${mediaType}/${tmdbId}?play=true` },
+      { name: "BFlix", url: `https://bflixs.us/${mediaType}/${tmdbId}` },
+    );
+  }
 
   if (imdbId) {
     embedSources.push(
@@ -354,14 +427,6 @@ async function fetchWatchLinkFromVidSrc(
     );
   }
 
-  if (tmdbId) {
-    embedSources.push(
-      { name: "Cineby", url: `https://www.cineby.at/${mediaType}/${tmdbId}` },
-      { name: "BFlix", url: `https://bflixs.us/${mediaType}/${tmdbId}` },
-    );
-  }
-
-  // Quick HEAD check to find first responding source
   for (const source of embedSources) {
     try {
       const controller = new AbortController();
@@ -376,12 +441,9 @@ async function fetchWatchLinkFromVidSrc(
         console.log(`[MovieBot] ${source.name} responded for "${title}": ${source.url}`);
         return source.url;
       }
-    } catch {
-      // Source timed out or errored, try next
-    }
+    } catch {}
   }
 
-  // Fallback: return first available embed anyway (may work client-side with extension headers)
   const fallback = embedSources[0]?.url;
   if (fallback) {
     console.log(`[MovieBot] No embed source responded via HEAD, using fallback for "${title}": ${fallback}`);
@@ -391,7 +453,7 @@ async function fetchWatchLinkFromVidSrc(
 }
 
 // ---------------------------------------------------------------------------
-// Source 0 – Cineby (cineby.at - FIRST option)
+// Source 0 – Cineby (cineby.at - Direct TMDB ID + ?play=true)
 // ---------------------------------------------------------------------------
 
 export async function fetchWatchLinkFromCineby(
@@ -399,10 +461,10 @@ export async function fetchWatchLinkFromCineby(
   type: "movie" | "show"
 ): Promise<string | null> {
   try {
-    const { tmdbId } = await fetchIdsFromWikidata(title, type);
+    const { tmdbId } = await fetchTmdbAndImdbId(title, type);
     if (tmdbId) {
       const mediaType = type === "movie" ? "movie" : "tv";
-      const cinebyUrl = `https://www.cineby.at/${mediaType}/${tmdbId}`;
+      const cinebyUrl = `https://www.cineby.at/${mediaType}/${tmdbId}?play=true`;
       console.log(`[MovieBot] Cineby resolved for "${title}": ${cinebyUrl}`);
       return cinebyUrl;
     }
@@ -444,26 +506,26 @@ export async function fetchWatchLink(movieId: string): Promise<void> {
 
     console.log(`[MovieBot] Resolving link for "${movie.title}" (${movie.type})...`);
 
-    // Attempt 1: 1hd.art / 1hd.to (FIRST option - clean embed)
-    console.log(`[MovieBot] Trying 1hd.art (first option) for "${movie.title}"...`);
-    let link = await fetchWatchLinkFrom1HD(movie.title, movie.type);
+    // Attempt 1: Cineby (Primary option with TMDB ID + ?play=true)
+    console.log(`[MovieBot] Trying Cineby (with ?play=true) for "${movie.title}"...`);
+    let link = await fetchWatchLinkFromCineby(movie.title, movie.type);
 
-    // Attempt 2: Wikidata → VidSrc (SECOND option - clean embed)
+    // Attempt 2: 1hd.art / 1hd.to
     if (!link) {
-      console.log(`[MovieBot] Trying Wikidata → VidSrc for "${movie.title}"...`);
+      console.log(`[MovieBot] Trying 1hd.art for "${movie.title}"...`);
+      link = await fetchWatchLinkFrom1HD(movie.title, movie.type);
+    }
+
+    // Attempt 3: Wikidata / TMDB → VidSrc
+    if (!link) {
+      console.log(`[MovieBot] Trying VidSrc embed for "${movie.title}"...`);
       link = await fetchWatchLinkFromVidSrc(movie.title, movie.type);
     }
 
-    // Attempt 3: vidking.net
+    // Attempt 4: vidking.net
     if (!link) {
       console.log(`[MovieBot] Trying Vidking for "${movie.title}"...`);
       link = await fetchWatchLinkFromVidking(movie.title, movie.type);
-    }
-
-    // Attempt 4: Cineby
-    if (!link) {
-      console.log(`[MovieBot] Trying Cineby for "${movie.title}"...`);
-      link = await fetchWatchLinkFromCineby(movie.title, movie.type);
     }
 
     // Attempt 5: NetMirror (last fallback only)
